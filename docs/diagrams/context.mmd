@@ -1,0 +1,14 @@
+flowchart LR
+    admin[Admin]
+    staff[Staff]
+    tenant[Penghuni]
+
+    system[Sistem Manajemen Kos + Chatbot]
+
+    admin -->|Kelola akun| system
+    staff -->|Kelola operasional| system
+    tenant -->|Interaksi dengan chatbot| system
+
+    system -->|Info akun| admin
+    system -->|Data operasional| staff
+    system -->|Tagihan, notifikasi, respon chatbot| tenant

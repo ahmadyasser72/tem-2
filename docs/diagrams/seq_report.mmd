@@ -1,0 +1,16 @@
+sequenceDiagram
+    autonumber
+    actor Staff
+    participant Sistem
+    participant Basis Data
+
+    Staff->>Sistem: Minta laporan
+    Sistem->>Sistem: Verifikasi akun
+
+    alt valid
+        Sistem->>Basis Data: Ambil data tagihan
+        Basis Data-->>Sistem: Data
+        Sistem-->>Staff: Laporan
+    else tidak valid
+        Sistem-->>Staff: Kesalahan
+    end

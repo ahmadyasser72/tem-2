@@ -1,0 +1,16 @@
+@startuml
+|Pengguna|
+start
+:Input detail login;
+
+|Sistem|
+:Validasi ke basis data;
+
+if (Valid?) then (ya)
+  :Berikan akses;
+else (tidak)
+  :Tampilkan pesan kesalahan;
+endif
+
+stop
+@enduml

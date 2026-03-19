@@ -1,0 +1,13 @@
+sequenceDiagram
+    autonumber
+    participant Penjadwal
+    participant Sistem
+    participant Basis Data
+
+    Penjadwal->>Sistem: Pemicu harian
+    Sistem->>Basis Data: Cari tagihan jatuh tempo
+
+    loop setiap tagihan
+        Sistem->>Basis Data: Simpan riwayat notifikasi
+        Sistem->>Sistem: Kirim pesan chatbot
+    end

@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    actor Pengguna
+    participant Sistem
+    participant Basis Data
+
+    Pengguna->>Sistem: Login (nama pengguna + kata sandi)
+    Sistem->>Basis Data: Validasi kredensial
+    Basis Data-->>Sistem: Data pengguna / kosong
+
+    alt valid
+        Sistem-->>Pengguna: Login sukses
+    else tidak valid
+        Sistem-->>Pengguna: Kesalahan
+    end

@@ -1,0 +1,18 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+
+    Penghuni->>Sistem: Kirim pesan
+    Sistem->>Basis Data: Simpan pesan
+
+    alt cek tagihan
+        Sistem->>Basis Data: Ambil tagihan
+        Sistem-->>Penghuni: Info tagihan
+    else riwayat pembayaran
+        Sistem->>Basis Data: Ambil riwayat tagihan
+        Sistem-->>Penghuni: Riwayat
+    else komplain
+        Sistem-->>Penghuni: Catat komplain
+    end

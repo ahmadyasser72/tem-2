@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor Staff
+    participant Sistem
+    participant Basis Data
+
+    Staff->>Sistem: Kelola penghuni
+    Sistem->>Sistem: Verifikasi akun
+
+    alt valid
+        Staff->>Sistem: Kelola data penghuni (tambah/ubah/hapus)
+        Sistem->>Basis Data: Perbarui penghuni
+        Basis Data-->>Sistem: Oke
+        Sistem-->>Staff: Sukses
+    else gagal
+        Sistem-->>Staff: Kesalahan
+    end

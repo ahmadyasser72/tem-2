@@ -1,0 +1,16 @@
+@startuml
+|Staff|
+start
+:Kelola kamar;
+
+|Sistem|
+:Verifikasi akun;
+
+if (Valid?) then (ya)
+  :Kelola data kamar (tambah/ubah/hapus);
+else (tidak)
+  :Tolak akses;
+endif
+
+stop
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+|Staff|
+start
+:Buka menu komplain;
+
+|Sistem|
+:Verifikasi akun;
+
+if (Valid?) then (ya)
+  :Ambil data komplain;
+  :Tampilkan daftar komplain;
+  
+  |Staff|
+  :Lihat detail komplain;
+  :Ubah status (diproses/selesai);
+  
+  |Sistem|
+  :Ubah status di Basis Data;
+  :Tampilkan notifikasi sukses;
+else (tidak)
+  :Tolak akses;
+endif
+
+stop
+@enduml

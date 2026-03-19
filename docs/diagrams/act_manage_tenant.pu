@@ -1,0 +1,37 @@
+@startuml
+|Staff|
+start
+:Pilih aksi (tambah/ubah/hapus);
+
+|Sistem|
+:Verifikasi akun;
+
+if (Valid?) then (ya)
+
+  if (Tambah?) then (ya)
+    :Input data;
+    if (Validasi lolos?) then (ya)
+      :Simpan ke Basis Data;
+    else (tidak)
+      :Tampilkan peringatan;
+    endif
+
+  elseif (Ubah?) then (ya)
+    :Ambil data lama;
+    :Ubah data;
+
+  elseif (Hapus?) then (ya)
+    :Cek relasi sewa;
+    if (Masih dipakai?) then (ya)
+      :Tolak penghapusan;
+    else (tidak)
+      :Hapus data;
+    endif
+  endif
+
+else (tidak)
+  :Tolak akses;
+endif
+
+stop
+@enduml

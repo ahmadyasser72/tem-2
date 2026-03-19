@@ -1,0 +1,18 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+    participant Payment Gateway
+
+    Penghuni->>Sistem: Bayar tagihan via chatbot
+    Sistem->>Basis Data: Ambil data tagihan
+
+    alt status belum dibayar
+        Sistem->>Payment Gateway: Permintaan pembayaran
+        Payment Gateway-->>Sistem: Konfirmasi sukses
+        Sistem->>Basis Data: Ubah status = lunas
+        Sistem-->>Penghuni: Pembayaran berhasil
+    else sudah dibayar
+        Sistem-->>Penghuni: Sudah lunas
+    end

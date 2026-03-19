@@ -1,0 +1,20 @@
+sequenceDiagram
+    autonumber
+    actor Staff
+    participant Sistem
+    participant Basis Data
+
+    Staff->>Sistem: Minta daftar komplain
+    Sistem->>Sistem: Verifikasi akun
+
+    alt valid
+        Sistem->>Basis Data: Ambil data komplain
+        Basis Data-->>Sistem: Data komplain
+        Sistem-->>Staff: Tampilkan daftar komplain
+        Staff->>Sistem: Ubah status komplain
+        Sistem->>Basis Data: Ubah status di Basis Data
+        Basis Data-->>Sistem: Oke
+        Sistem-->>Staff: Notifikasi sukses
+    else tidak valid
+        Sistem-->>Staff: Kesalahan buka halaman
+    end

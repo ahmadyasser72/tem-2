@@ -1,0 +1,40 @@
+@startuml
+|Penjadwal|
+start
+:Pemicu harian;
+
+|Sistem|
+:Ambil data tagihan jatuh tempo;
+
+if (Ada data?) then (ya)
+
+  repeat
+    :Ambil 1 tagihan;
+
+    if (Sudah pernah dikirim hari ini?) then (ya)
+      :Lewati;
+    else (tidak)
+      :Simpan riwayat notifikasi;
+
+      if (Penyimpanan berhasil?) then (ya)
+        :Kirim pesan chatbot;
+
+        if (Berhasil kirim?) then (ya)
+          :Ubah status = terkirim;
+        else (gagal)
+          :Ubah status = gagal;
+        endif
+
+      else (gagal)
+        :Lewati;
+      endif
+    endif
+
+  repeat while (Masih ada tagihan)
+
+else (tidak)
+  :Tidak ada yang jatuh tempo;
+endif
+
+stop
+@enduml

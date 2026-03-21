@@ -1,5 +1,5 @@
 @startuml
-|Staff|
+|Staff / Owner|
 start
 :Buka menu komplain;
 
@@ -10,13 +10,16 @@ if (Valid?) then (ya)
   :Ambil data komplain;
   :Tampilkan daftar komplain;
   
-  |Staff|
+  |Staff / Owner|
   :Lihat detail komplain;
-  :Ubah status (diproses/selesai);
-  
-  |Sistem|
-  :Ubah status di Basis Data;
-  :Tampilkan notifikasi sukses;
+  if (Role Staff?) then (ya)
+    :Ubah status (diproses/selesai);
+    
+    |Sistem|
+    :Ubah status di Basis Data;
+    :Tampilkan notifikasi sukses;
+  else (tidak)
+  endif
 else (tidak)
   :Tolak akses;
 endif

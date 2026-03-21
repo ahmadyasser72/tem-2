@@ -1,16 +1,16 @@
 sequenceDiagram
     autonumber
-    actor Staff
+    actor Pengelola as Staff/Owner
     participant Sistem
     participant Basis Data
 
-    Staff->>Sistem: Minta laporan
+    Pengelola->>Sistem: Minta laporan
     Sistem->>Sistem: Verifikasi akun
 
     alt valid
         Sistem->>Basis Data: Ambil data tagihan
         Basis Data-->>Sistem: Data
-        Sistem-->>Staff: Laporan
+        Sistem-->>Pengelola: Laporan
     else tidak valid
-        Sistem-->>Staff: Kesalahan
+        Sistem-->>Pengelola: Kesalahan
     end

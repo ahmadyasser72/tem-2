@@ -8,11 +8,12 @@ Sistem ini dirancang dengan pendekatan yang mudah dipahami, berfokus pada keterb
 
 ## 1. Rancangan Model Sistem
 
-Sistem melibatkan 3 aktor utama:
+Sistem melibatkan 4 aktor utama:
 
-1. **Admin**: Bertanggung jawab secara independen untuk manajemen akun admin/staf dan kamar.
+1. **Admin**: Bertanggung jawab secara independen untuk manajemen akun admin/staf/owner dan kamar.
 2. **Staff**: Mengelola operasional harian kos (manajemen kamar, manajemen penghuni, pengaturan pengingat, dan melihat laporan transaksi) melalui antarmuka web.
-3. **Penghuni**: Berinteraksi dengan sistem sepenuhnya melalui fasilitas _chatbot_ (menerima pengingat tagihan, mengecek tagihan, melihat riwayat pembayaran, membayar tagihan, dan mengajukan komplain).
+3. **Owner**: Pemilik kos yang memiliki akses untuk melihat laporan transaksi dan melihat komplain.
+4. **Penghuni**: Berinteraksi dengan sistem sepenuhnya melalui fasilitas _chatbot_ (menerima pengingat tagihan, mengecek tagihan, melihat riwayat pembayaran, membayar tagihan, dan mengajukan komplain).
 
 ### 1.1 Diagram Konteks
 
@@ -20,7 +21,7 @@ Menggambarkan interaksi tingkat tinggi antara aktor dengan sistem e-kos.
 
 ![Diagram Konteks](diagrams/context.mmd.png)
 
-_Penjelasan: Diagram ini memberikan gambaran umum mengenai pihak-pihak utama yang berinteraksi dengan sistem manajemen kos digital. Admin dan Staf berperan sebagai pengelola yang menangani operasional administratif, sementara Penghuni menggunakan aplikasi pesan singkat untuk berinteraksi dengan sistem secara praktis._
+_Penjelasan: Diagram ini memberikan gambaran umum mengenai pihak-pihak utama yang berinteraksi dengan sistem manajemen kos digital. Admin, Staf, dan Owner berperan sebagai pihak internal, di mana Admin dan Staf menangani manajerial operasional operasional, serta Owner dapat memantau laporan dan komplain, sementara Penghuni menggunakan aplikasi pesan singkat untuk berinteraksi dengan sistem secara praktis._
 
 ### 1.2 Use Case Diagram
 
@@ -28,11 +29,13 @@ Rancangan aktor dan pembagian interaksi dalam e-kos.
 
 ![Use Case Diagram](diagrams/use_case.png)
 
-_Penjelasan:
+\_Penjelasan:
 Diagram use case berikut menggambarkan interaksi logis antara penyewa, pemilik/pengelola kos, dan sistem pembayaran digital dalam mengelola pembayaran sewa kos. Sistem ini dirancang untuk mengotomatisasi pembayaran sewa, pengiriman notifikasi, dan pelacakan transaksi, sehingga mengurangi kesalahan manual maupun keterlambatan pembayaran. Aktor dalam sistem terbagi menjadi:
-- **Admin**: Pemegang kendali utama yang mendaftarkan aset kamar serta mengelola data manajemen staf.
+
+- **Admin**: Pemegang kendali utama yang mendaftarkan aset kamar serta mengelola data manajemen staf dan owner.
 - **Staff**: Pengelola asrama sehari-hari yang berperan memantau status pembayaran melalui _dashboard_ real-time serta menghasilkan luaran laporan keuangan.
-- **Penghuni**: Penyewa yang dapat melakukan pengecekan tagihan, memproses transaksi digital, menerima notifikasi pengingat secara otomatis, serta menyampaikan komplain kerusakan._
+- **Owner**: Pemilik kos yang hanya memiliki akses baca untuk meninjau laporan transaksi dan komplain masuk.
+- **Penghuni**: Penyewa yang dapat melakukan pengecekan tagihan, memproses transaksi digital, menerima notifikasi pengingat secara otomatis, serta menyampaikan komplain kerusakan.\_
 
 ### 1.3 Diagram Aktivitas (Activity Diagrams)
 
@@ -186,7 +189,7 @@ _Penjelasan: Progres aliran objek dalam proses penanganan kasus komplain oleh pi
 
 Struktur relasi data utama sistem.
 
-![Class Diagram](diagrams/class.mmd.png)
+![Class Diagram](diagrams/class.png)
 
 _Penjelasan: Mempresentasikan desain statis berorientasi objek basis data manajemen sewa. Entitas Penyewa, Kamar, dan Masa Sewa menciptakan rekam jejak Tagihan yang presisi beserta aliran Komplain yang terdokumentasi rapi demi mengurangi potensi sengketa arsip riwayat._
 
@@ -200,25 +203,25 @@ Dirancang mengikuti skema referensi pada `packages/database/src/schema.ts`.
 
 Data autentikasi admin/staff
 
-| Nama Kolom      | Tipe Data        | Keterangan                        |
-| --------------- | ---------------- | --------------------------------- |
-| `id`            | INTEGER (PK, AI) | ID pengguna.                      |
-| `username`      | TEXT (Unique)    | Nama pengguna untuk masuk sistem. |
-| `password_hash` | TEXT             | Kata sandi akun.                  |
-| `role`          | TEXT             | Role akun (admin/staff).          |
-| `last_accessed` | TIMESTAMP        | Kapan terakhir kali akun diakses. |
+| Nama Kolom      | Tipe Data        | Keterangan                          |
+| --------------- | ---------------- | ----------------------------------- |
+| `id`            | INTEGER (PK, AI) | ID pengguna.                        |
+| `username`      | TEXT (Unique)    | Nama pengguna untuk masuk sistem.   |
+| `password_hash` | TEXT             | Kata sandi akun.                    |
+| `role`          | TEXT             | Role akun (admin/staff/owner/cron). |
+| `last_accessed` | TIMESTAMP        | Kapan terakhir kali akun diakses.   |
 
 ### `tenants`
 
 Pusat data penghuni kos
 
-| Nama Kolom      | Tipe Data        | Keterangan                             |
-| --------------- | ---------------- | -------------------------------------- |
-| `id`            | INTEGER (PK, AI) | ID penghuni.                           |
-| `full_name`     | TEXT             | Nama lengkap penghuni.                 |
-| `phone_number`  | TEXT (Unique)    | Nomor kontak untuk obrolan bot.        |
-| `origin_region` | TEXT NULL        | Daerah kediaman asal penghuni.         |
-| `created_at`    | TIMESTAMP        | Waktu pertama kali didata sistem.      |
+| Nama Kolom      | Tipe Data        | Keterangan                        |
+| --------------- | ---------------- | --------------------------------- |
+| `id`            | INTEGER (PK, AI) | ID penghuni.                      |
+| `full_name`     | TEXT             | Nama lengkap penghuni.            |
+| `phone_number`  | TEXT (Unique)    | Nomor kontak untuk obrolan bot.   |
+| `origin_region` | TEXT NULL        | Daerah kediaman asal penghuni.    |
+| `created_at`    | TIMESTAMP        | Waktu pertama kali didata sistem. |
 
 ### `rooms`
 
@@ -301,10 +304,11 @@ Laporan setiap aksi rekam jejak sistem
 
 Data laporan dan keluhan dari penghuni
 
-| Nama Kolom    | Tipe Data        | Keterangan                    |
-| ------------- | ---------------- | ----------------------------- |
-| `id`          | INTEGER (PK, AI) | ID surat pengaduan.           |
-| `tenant_id`   | INTEGER (FK)     | Penghuni pelapor.             |
-| `description` | TEXT             | Isi detail dari kerusakannya. |
-| `status`      | TEXT             | Status keluhan ini.           |
-| `created_at`  | TIMESTAMP        | Waktu keluhan dibuat.         |
+| Nama Kolom    | Tipe Data         | Keterangan                    |
+| ------------- | ----------------- | ----------------------------- |
+| `id`          | INTEGER (PK, AI)  | ID surat pengaduan.           |
+| `tenant_id`   | INTEGER (FK)      | Penghuni pelapor.             |
+| `description` | TEXT              | Isi detail dari kerusakannya. |
+| `status`      | TEXT              | Status keluhan ini.           |
+| `resolved_by` | INTEGER NULL (FK) | Pengguna yang menyelesaikan.  |
+| `created_at`  | TIMESTAMP         | Waktu keluhan dibuat.         |

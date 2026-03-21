@@ -6,7 +6,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-export const USER_ROLES = ["admin", "staff"] as const;
+export const USER_ROLES = ["admin", "staff", "owner", "cron"] as const;
 export const INVOICE_STATUS = ["unpaid", "paid", "overdue"] as const;
 export const CHATBOT_DIRECTIONS = ["incoming", "outgoing"] as const;
 export const NOTIFICATION_TYPES = [
@@ -123,6 +123,7 @@ export const complaints = sqliteTable("complaints", {
     .references(() => tenants.id),
   description: text("description").notNull(),
   status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
+  resolvedBy: integer("resolved_by").references(() => users.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`(unixepoch())`)
     .notNull(),

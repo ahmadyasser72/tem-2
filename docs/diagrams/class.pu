@@ -1,0 +1,81 @@
+@startuml
+
+class User {
+    int id
+    string username
+    string passwordHash
+    string role
+    timestamp lastAccessed
+}
+
+class Tenant {
+    int id
+    string fullName
+    string phoneNumber
+    string originRegion
+    timestamp createdAt
+}
+
+class Room {
+    int id
+    string roomNumber
+    string roomType
+    int monthlyPrice
+    boolean isActive
+}
+
+class Lease {
+    int id
+    int tenantId
+    int roomId
+    timestamp startDate
+    timestamp endDate
+    boolean isActive
+}
+
+class Invoice {
+    int id
+    int leaseId
+    int amount
+    timestamp dueDate
+    string duitkuReference
+    string callbackPayload
+    string status
+}
+
+class ChatbotMessage {
+    int id
+    int tenantId
+    string direction
+    string message
+    timestamp sentAt
+}
+
+class Notification {
+    int id
+    int tenantId
+    int invoiceId
+    int chatbotMessageId
+    string type
+    string status
+}
+
+class Complaint {
+    int id
+    int tenantId
+    string description
+    string status
+    int resolvedBy
+    timestamp createdAt
+}
+
+Tenant "1" -- "*" Complaint : mengajukan
+User "1" -- "*" Complaint : memproses
+Tenant "1" -- "*" Lease : memiliki
+Room "1" -- "*" Lease : dikaitkan dengan
+Lease "1" -- "*" Invoice : menghasilkan
+Tenant "1" -- "*" ChatbotMessage : mengirim
+Tenant "1" -- "*" Notification : menerima
+Invoice "1" -- "*" Notification : memicu
+
+@enduml

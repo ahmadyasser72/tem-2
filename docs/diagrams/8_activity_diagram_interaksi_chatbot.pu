@@ -1,0 +1,14 @@
+@startuml
+|Penghuni|
+start
+:Interaksi via chatbot;
+|Sistem|
+:Cek verifikasi nomor;
+|Basis Data|
+:Simpan log pesan;
+|Sistem|
+:Respon sesuai perintah;
+|Penghuni|
+:Terima balasan;
+stop
+@enduml

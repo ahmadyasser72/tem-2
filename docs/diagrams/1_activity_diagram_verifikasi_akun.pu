@@ -1,0 +1,19 @@
+@startuml
+|Pengguna|
+start
+:Input username & password;
+|Sistem|
+:Validasi login;
+|Basis Data|
+:Cek kredensial;
+|Sistem|
+if (Valid?) then (ya)
+  :Akses diberikan;
+|Pengguna|
+  :Masuk dashboard;
+else (tidak)
+|Sistem|
+  :Pesan kesalahan;
+endif
+stop
+@enduml

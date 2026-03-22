@@ -1,0 +1,16 @@
+sequenceDiagram
+    autonumber
+    actor Admin
+    participant Sistem
+    participant Basis Data
+
+    Admin->>Sistem: Akses manajemen akun
+    Sistem->>Basis Data: Ambil daftar akun
+    Basis Data-->>Sistem: Daftar akun
+    Sistem-->>Admin: Tabel pengguna
+    
+    Admin->>Sistem: Simpan perubahan (Tambah/Hapus)
+    Sistem->>Sistem: Validasi input data
+    Sistem->>Basis Data: Simpan/Hapus profil pengguna
+    Basis Data-->>Sistem: Berhasil
+    Sistem-->>Admin: Notifikasi sukses

@@ -1,0 +1,11 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+
+    Penghuni->>Sistem: Minta riwayat pembayaran
+    Sistem->>Basis Data: Query invoices (status = paid)
+    Basis Data-->>Sistem: Data riwayat
+    Sistem->>Sistem: Format daftar riwayat
+    Sistem-->>Penghuni: Kirim daftar riwayat pembayaran

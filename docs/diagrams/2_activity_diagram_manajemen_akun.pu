@@ -1,0 +1,15 @@
+@startuml
+|Admin|
+start
+:Pilih menu manajemen akun;
+:Tambah/Ubah/Hapus akun;
+|Sistem|
+:Verifikasi otorisasi;
+|Basis Data|
+:Proses data pengguna;
+|Sistem|
+:Konfirmasi berhasil;
+|Admin|
+:Tampilkan notifikasi;
+stop
+@enduml

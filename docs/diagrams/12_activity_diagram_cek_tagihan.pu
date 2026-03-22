@@ -1,0 +1,14 @@
+@startuml
+|Penghuni|
+start
+:Kirim perintah 'Cek Tagihan';
+|Sistem|
+:Cek tagihan aktif;
+|Basis Data|
+:Tarik data invoice UNPAID;
+|Sistem|
+:Rangkum detail tagihan;
+|Penghuni|
+:Terima info tagihan terkini;
+stop
+@enduml

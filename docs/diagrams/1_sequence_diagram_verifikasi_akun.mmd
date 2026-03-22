@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor Pengguna
+    participant Sistem
+    participant Basis Data
+
+    Pengguna->>Sistem: Masukkan username & password
+    Sistem->>Basis Data: Validasi kredensial
+    Basis Data-->>Sistem: Data pengguna
+    Sistem->>Sistem: Verifikasi password
+    
+    alt Jika cocok
+        Sistem->>Basis Data: Update log login
+        Sistem-->>Pengguna: Dashboard utama
+    else Jika salah
+        Sistem-->>Pengguna: Pesan kesalahan
+    end

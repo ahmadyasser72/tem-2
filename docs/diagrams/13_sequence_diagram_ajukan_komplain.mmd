@@ -1,0 +1,11 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+
+    Penghuni->>Sistem: Kirim laporan komplain
+    Sistem->>Sistem: Validasi kelengkapan teks
+    Sistem->>Basis Data: Insert data ke tabel complaints
+    Basis Data-->>Sistem: Sukses (id komplain)
+    Sistem-->>Penghuni: Konfirmasi laporan diterima

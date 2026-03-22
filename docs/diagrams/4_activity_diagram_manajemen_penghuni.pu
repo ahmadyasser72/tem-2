@@ -1,0 +1,14 @@
+@startuml
+|Staf|
+start
+:Input data penghuni & kontrak;
+|Sistem|
+:Validasi relasi kamar;
+|Basis Data|
+:Simpan data penghuni & sewa;
+|Sistem|
+:Konfirmasi pendaftaran;
+|Staf|
+:Data baru muncul di daftar;
+stop
+@enduml

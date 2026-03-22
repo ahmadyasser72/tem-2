@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor Pengelola as Staf/Owner
+    participant Sistem
+    participant Basis Data
+
+    Pengelola->>Sistem: Buka modul komplain
+    Sistem->>Basis Data: Ambil daftar complaints
+    Basis Data-->>Sistem: Row komplain
+    Sistem-->>Pengelola: List status kerusakan
+    
+    opt Jika Staf (Resolusi)
+        Pengelola->>Sistem: Update status selesai
+        Sistem->>Basis Data: Simpan penangan & PIC
+        Basis Data-->>Sistem: Terupdate
+        Sistem-->>Pengelola: Berhasil
+    end

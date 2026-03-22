@@ -8,200 +8,268 @@ Sistem ini dirancang dengan pendekatan yang mudah dipahami, berfokus pada keterb
 
 ## 1. Rancangan Model Sistem
 
-Sistem melibatkan 4 aktor utama:
-
-1. **Admin**: Bertanggung jawab secara independen untuk manajemen akun admin/staf/owner dan kamar.
-2. **Staff**: Mengelola operasional harian kos (manajemen kamar, manajemen penghuni, pengaturan pengingat, dan melihat laporan transaksi) melalui antarmuka web.
-3. **Owner**: Pemilik kos yang memiliki akses untuk melihat laporan transaksi dan melihat komplain.
-4. **Penghuni**: Berinteraksi dengan sistem sepenuhnya melalui fasilitas _chatbot_ (menerima pengingat tagihan, mengecek tagihan, melihat riwayat pembayaran, membayar tagihan, dan mengajukan komplain).
-
 ### 1.1 Diagram Konteks
 
-Menggambarkan interaksi tingkat tinggi antara aktor dengan sistem e-kos.
+Context diagram merupakan diagram tingkat tinggi (high-level) yang digunakan untuk menggambarkan sistem sebagai satu kesatuan proses tunggal yang berinteraksi dengan entitas eksternal. Diagram ini biasanya merupakan bagian dari Data Flow Diagram (DFD) level 0 dan berfungsi untuk menunjukkan aliran data masuk dan keluar dari sistem. Pada sistem manajemen kos, context diagram menunjukkan bagaimana admin, staff, owner, dan penghuni berinteraksi dengan sistem, serta jenis data apa saja yang dipertukarkan, termasuk penggunaan chatbot sebagai media komunikasi utama bagi penghuni.
 
-![Diagram Konteks](diagrams/context.mmd.png)
+![Diagram Konteks](diagrams/0_context_diagram.png)
 
-_Penjelasan: Diagram ini memberikan gambaran umum mengenai pihak-pihak utama yang berinteraksi dengan sistem manajemen kos digital. Admin, Staf, dan Owner berperan sebagai pihak internal, di mana Admin dan Staf menangani manajerial operasional operasional, serta Owner dapat memantau laporan dan komplain, sementara Penghuni menggunakan aplikasi pesan singkat untuk berinteraksi dengan sistem secara praktis._
+Context diagram menggambarkan sistem sebagai satu kesatuan yang berinteraksi dengan entitas eksternal tanpa menampilkan detail proses internal. Dalam diagram ini, sistem manajemen kos dengan chatbot diposisikan sebagai pusat yang menerima input dan menghasilkan output kepada empat entitas utama, yaitu admin, staff, owner, dan penghuni.
+
+Admin berinteraksi dengan sistem dalam konteks pengelolaan akun, di mana data yang diberikan berupa instruksi pengelolaan pengguna dan sistem mengembalikan informasi akun sebagai hasilnya. Staff berinteraksi dengan sistem dalam lingkup operasional, seperti pengelolaan kamar dan penghuni, serta menerima data operasional sebagai keluaran. Owner menggunakan sistem untuk memperoleh informasi strategis berupa laporan transaksi dan data komplain, tanpa melakukan manipulasi data secara langsung. Sementara itu, penghuni berinteraksi melalui chatbot dengan mengirimkan perintah tertentu dan menerima respons otomatis dari sistem.
 
 ### 1.2 Use Case Diagram
 
-Rancangan aktor dan pembagian interaksi dalam e-kos.
+Use case diagram merupakan salah satu jenis diagram dalam UML (Unified Modeling Language) yang digunakan untuk menggambarkan interaksi antara aktor dengan sistem. Diagram ini berfokus pada apa saja fungsi atau layanan yang disediakan oleh sistem dari sudut pandang pengguna, tanpa menjelaskan bagaimana proses tersebut dijalankan secara teknis. Dalam konteks sistem manajemen kos, diagram ini berperan penting untuk memperjelas pembagian peran antara admin, staff, owner, dan penghuni, serta bagaimana mereka berinteraksi dengan sistem, terutama melalui chatbot.
 
-![Use Case Diagram](diagrams/use_case.png)
+![Use Case Diagram](diagrams/0_use_case_diagram.png)
 
-\_Penjelasan:
-Diagram use case berikut menggambarkan interaksi logis antara penyewa, pemilik/pengelola kos, dan sistem pembayaran digital dalam mengelola pembayaran sewa kos. Sistem ini dirancang untuk mengotomatisasi pembayaran sewa, pengiriman notifikasi, dan pelacakan transaksi, sehingga mengurangi kesalahan manual maupun keterlambatan pembayaran. Aktor dalam sistem terbagi menjadi:
+Use case diagram pada sistem ini menggambarkan interaksi antara aktor eksternal dengan sistem manajemen kos yang terintegrasi dengan layanan chatbot. Diagram ini menunjukkan bagaimana setiap aktor memanfaatkan fitur sistem sesuai dengan peran dan kebutuhan masing-masing. Secara umum, sistem menyediakan dua jalur interaksi utama, yaitu melalui antarmuka internal (untuk admin, staff, dan owner) serta melalui chatbot (untuk penghuni). Aktor yang terlibat dalam sistem terdiri dari empat peran utama, yaitu:
 
-- **Admin**: Pemegang kendali utama yang mendaftarkan aset kamar serta mengelola data manajemen staf dan owner.
-- **Staff**: Pengelola asrama sehari-hari yang berperan memantau status pembayaran melalui _dashboard_ real-time serta menghasilkan luaran laporan keuangan.
-- **Owner**: Pemilik kos yang hanya memiliki akses baca untuk meninjau laporan transaksi dan komplain masuk.
-- **Penghuni**: Penyewa yang dapat melakukan pengecekan tagihan, memproses transaksi digital, menerima notifikasi pengingat secara otomatis, serta menyampaikan komplain kerusakan.\_
+- **Admin**: Bertanggung jawab terhadap pengelolaan akun pengguna dalam sistem.
+- **Staff**: Menangani operasional harian seperti pengelolaan kamar, penghuni, pengingat, dan komplain.
+- **Owner**: Berfokus pada pemantauan melalui laporan transaksi dan komplain tanpa terlibat langsung dalam operasional.
+- **Penghuni**: berinteraksi dengan sistem melalui chatbot untuk mengakses layanan seperti cek tagihan, pembayaran, riwayat transaksi, dan pengajuan komplain.
 
-### 1.3 Diagram Aktivitas (Activity Diagrams)
+Setiap aktivitas utama dalam sistem, khususnya yang dilakukan oleh admin, staff, dan owner, memiliki keterkaitan (include) dengan proses verifikasi akun, yang berarti sebelum mengakses fitur tersebut pengguna diharuskan melalui proses autentikasi terlebih dahulu. Di sisi lain, aktivitas penghuni seperti mengajukan komplain, mengecek tagihan, melihat riwayat pembayaran, menerima pengingat, dan melakukan pembayaran merupakan perluasan (extends) dari use case utama interaksi dengan chatbot. Dengan demikian, chatbot berperan sebagai pusat layanan bagi penghuni, sementara sistem menangani logika dan pengolahan data.
 
-<details><summary><b>Aktivitas Verifikasi (Login)</b></summary><br>
+### 1.3 Activity Diagrams
 
-![Aktivitas Verifikasi](diagrams/act_verify.png)
+Activity diagram merupakan diagram UML yang digunakan untuk menggambarkan alur aktivitas atau proses bisnis dalam suatu sistem. Diagram ini menunjukkan urutan langkah-langkah yang dilakukan dari awal hingga akhir, termasuk percabangan keputusan, proses paralel, serta interaksi antar aktor atau komponen sistem. Dalam sistem manajemen kos, activity diagram digunakan untuk menggambarkan proses seperti verifikasi akun, pengelolaan data, pembayaran, hingga pengiriman notifikasi, sehingga alur operasional sistem dapat dipahami secara menyeluruh.
 
-_Penjelasan: Menggambarkan proses awal saat pengelola melakukan autentikasi sistem. Setelah proses input kredensial, validasi di basis data sistem berjalan untuk membatasi izin akses keamanan._
+<details><summary><b>Activity Diagram Verifikasi Akun</b></summary><br>
 
-</details>
+![Activity Diagram Verifikasi Akun](diagrams/1_activity_diagram_verifikasi_akun.png)
 
-<details><summary><b>Aktivitas Manajemen Akun User</b></summary><br>
-
-![Aktivitas Manajemen Akun User](diagrams/act_manage_user.png)
-
-_Penjelasan: Alur pendataan pengguna internal oleh Admin. Ini memastikan hanya sumber daya manusia berwenang yang dapat mengakses log transaksi kos._
+Proses dimulai ketika pengguna memasukkan username dan password ke dalam sistem. Setelah itu, sistem melakukan validasi awal terhadap input yang diberikan. Selanjutnya, data kredensial tersebut diperiksa ke basis data untuk memastikan kecocokan. Jika hasil validasi menunjukkan bahwa data benar, maka sistem memberikan akses kepada pengguna dan pengguna diarahkan masuk ke dashboard. Sebaliknya, apabila data tidak valid, sistem akan menampilkan pesan kesalahan kepada pengguna dan proses berakhir.
 
 </details>
 
-<details><summary><b>Aktivitas Manajemen Kamar</b></summary><br>
+<details><summary><b>Activity Diagram Manajemen Akun</b></summary><br>
 
-![Aktivitas Manajemen Kamar](diagrams/act_manage_room.png)
+![Activity Diagram Manajemen Akun](diagrams/2_activity_diagram_manajemen_akun.png)
 
-_Penjelasan: Proses ini mempresentasikan pencatatan nomor unit, harga bulanan, dan ketersediaan, mendigitalisasikan manajemen hunian yang menekan error catatan manual._
-
-</details>
-
-<details><summary><b>Aktivitas Manajemen Penghuni</b></summary><br>
-
-![Aktivitas Manajemen Penghuni](diagrams/act_manage_tenant.png)
-
-_Penjelasan: Activity Diagram pendaftaran kontrak penyewaan. Mengaitkan profil biodata individu dengan entitas unit kamar untuk pengarsipan riwayat penyewaan berbasis sistem._
+Proses diawali oleh admin dengan memilih menu manajemen akun. Admin kemudian dapat melakukan operasi seperti menambah, mengubah, atau menghapus akun. Setelah itu, sistem melakukan verifikasi terhadap hak akses admin. Jika otorisasi valid, sistem akan meneruskan proses ke basis data untuk memproses perubahan data pengguna. Setelah berhasil, sistem memberikan konfirmasi keberhasilan, dan admin menerima notifikasi sebagai hasil akhir dari proses.
 
 </details>
 
-<details><summary><b>Aktivitas Lihat Laporan Transaksi</b></summary><br>
+<details><summary><b>Activity Diagram Manajemen Kamar</b></summary><br>
 
-![Aktivitas Lihat Laporan Transaksi](diagrams/act_report.png)
+![Activity Diagram Manajemen Kamar](diagrams/3_activity_diagram_manajemen_kamar.png)
 
-_Penjelasan: Menjelaskan proses yang dilakukan pengelola untuk mengekstrak data transaksi dan menghasilkan laporan keuangan berkala format utuh guna mendukung dokumentasi secara formal._
-
-</details>
-
-<details><summary><b>Aktivitas Chatbot Penghuni</b></summary><br>
-
-![Aktivitas Chatbot Penghuni](diagrams/act_chatbot.png)
-
-_Penjelasan: Menggambarkan alur eksekusi pesan pintar antara penyewa dengan asisten bot dalam mencari info maupun pendaftaran log komplain fasilitas kos._
+Proses dimulai ketika staf melakukan pengelolaan data kamar. Data yang dimasukkan kemudian divalidasi oleh sistem untuk memastikan kelengkapan dan kebenaran. Setelah valid, sistem mengirimkan data ke basis data untuk memperbarui informasi atau status kamar. Sistem kemudian menampilkan hasil pembaruan, dan staf dapat melihat daftar kamar yang telah diperbarui.
 
 </details>
 
-<details><summary><b>Aktivitas Pembayaran (Payment Gateway)</b></summary><br>
+<details><summary><b>Activity Diagram Manajemen Penghuni</b></summary><br>
 
-![Aktivitas Pembayaran](diagrams/act_payment.png)
+![Activity Diagram Manajemen Penghuni](diagrams/4_activity_diagram_manajemen_penghuni.png)
 
-_Penjelasan: Menggambarkan proses pembayaran sewa oleh peyewa ke sistem. Sistem akan mengirim permintaan ke payment gateway untuk memproses dan memverifikasi interaksi perbankan digital. Proses ini penting untuk integritas validasi otomatis._
-
-</details>
-
-<details><summary><b>Aktivitas Scheduler Pengingat</b></summary><br>
-
-![Aktivitas Scheduler Pengingat](diagrams/act_scheduler.png)
-
-_Penjelasan: Proses otomatis mesin (cron) yang mengonfigurasi pengiriman pengingat berjenjang kepada penyewa yang menunggak secara proaktif berdasarkan data tanggal jatuh tempo._
+Proses dimulai dengan staf memasukkan data penghuni beserta informasi kontrak sewa. Sistem kemudian memvalidasi keterkaitan antara penghuni dan kamar yang dipilih. Jika valid, data disimpan ke dalam basis data, mencakup informasi penghuni dan detail sewa. Sistem selanjutnya memberikan konfirmasi bahwa pendaftaran berhasil, dan staf dapat melihat data penghuni baru yang telah ditambahkan ke dalam daftar.
 
 </details>
 
-<details><summary><b>Aktivitas Lihat Komplain</b></summary><br>
+<details><summary><b>Activity Diagram Lihat Laporan Transaksi</b></summary><br>
 
-![Aktivitas Lihat Komplain](diagrams/act_view_complaint.png)
+![Activity Diagram Lihat Laporan Transaksi](diagrams/5_activity_diagram_lihat_laporan_transaksi.png)
 
-_Penjelasan: Alur pembaharuan aduan. Ini berfungsi mengonversi keluhan lisan penyewa via bot menjadi tumpukan laporan insiden berbasis form data yang aman ditindak lanjuti._
-
-</details>
-
-### 1.4 Diagram Urutan (Sequence Diagrams)
-
-<details><summary><b>Urutan Verifikasi</b></summary><br>
-
-![Urutan Verifikasi](diagrams/seq_verify.mmd.png)
-
-_Penjelasan: Rangkaian komunikasi logis antar lapisan program saat pengecekan basis data username atau sandi staf di eksekusi._
+Proses dimulai ketika staf atau pemilik memilih rentang waktu laporan yang diinginkan. Sistem kemudian memfilter data transaksi berdasarkan rentang tersebut. Selanjutnya, sistem mengambil data tagihan dari basis data. Data tersebut kemudian diolah untuk menghitung total dan menghasilkan laporan. Hasil laporan kemudian ditampilkan kepada staf atau pemilik.
 
 </details>
 
-<details><summary><b>Urutan Kelola User</b></summary><br>
+<details><summary><b>Activity Diagram Manajemen Pengingat</b></summary><br>
 
-![Urutan Kelola User](diagrams/seq_manage_user.mmd.png)
+![Activity Diagram Manajemen Pengingat](diagrams/6_activity_diagram_manajemen_pengingat.png)
 
-_Penjelasan: Relasi operasional pesan sistem mengenai pembentukan maupun modifikasi rekaman administrator kos._
-
-</details>
-
-<details><summary><b>Urutan Kelola Kamar</b></summary><br>
-
-![Urutan Kelola Kamar](diagrams/seq_manage_room.mmd.png)
-
-_Penjelasan: Pola lintas perintah terstruktur ketika harga dan unit ruangan dikonfigurasikan di sistem database._
+Proses dimulai secara otomatis oleh sistem penjadwalan (cron) yang memicu pengingat harian. Sistem kemudian memeriksa tagihan yang telah jatuh tempo. Data penghuni yang memiliki tunggakan diambil dari basis data. Setelah itu, sistem memproses pembuatan notifikasi dan mengirimkannya melalui chatbot. Penghuni kemudian menerima pesan pengingat tersebut.
 
 </details>
 
-<details><summary><b>Urutan Kelola Penghuni</b></summary><br>
+<details><summary><b>Activity Diagram Lihat Komplain</b></summary><br>
 
-![Urutan Kelola Penghuni](diagrams/seq_manage_tenant.mmd.png)
+![Activity Diagram Lihat Komplain](diagrams/7_activity_diagram_lihat_komplain.png)
 
-_Penjelasan: Transformasi langkah saat menyinkronisasi data penghuni dengan tanggal sewa persilangan kamar._
-
-</details>
-
-<details><summary><b>Urutan Laporan Transaksi</b></summary><br>
-
-![Urutan Laporan Transaksi](diagrams/seq_report.mmd.png)
-
-_Penjelasan: Menyajikan komunikasi sistem untuk melakukan penyaringan tanggal pada riwayat transaksi demi laporan mutasi._
+Proses dimulai ketika staf atau pemilik melihat daftar komplain yang tersedia. Sistem menampilkan laporan kerusakan yang telah diajukan oleh penghuni. Staf kemudian melakukan pembaruan status penanganan terhadap komplain tersebut. Sistem selanjutnya mengirimkan pemberitahuan kepada penghuni terkait perkembangan penanganan. Terakhir, basis data diperbarui, khususnya pada field yang menunjukkan pihak yang menyelesaikan komplain.
 
 </details>
 
-<details><summary><b>Urutan Chatbot</b></summary><br>
+<details><summary><b>Activity Diagram Interaksi Chatbot</b></summary><br>
 
-![Urutan Chatbot](diagrams/seq_chatbot.mmd.png)
+![Activity Diagram Interaksi Chatbot](diagrams/8_activity_diagram_interaksi_chatbot.png)
 
-_Penjelasan: Sekuens perantara server otomatis ketika pesan masuk penghuni dicocokkan dengan kueri tabel yang relevan._
-
-</details>
-
-<details><summary><b>Urutan Pembayaran</b></summary><br>
-
-![Urutan Pembayaran](diagrams/seq_payment.mmd.png)
-
-_Penjelasan: Tahapan sistem mengirimkan tagihan pada webhook perbankan luar (Midtrans) beserta interupsi kembali ketika dana masuk diproses._
+Proses dimulai saat penghuni berinteraksi dengan chatbot. Sistem terlebih dahulu memverifikasi nomor pengguna untuk memastikan keabsahan identitas. Setelah itu, pesan yang dikirim disimpan ke dalam basis data sebagai log. Sistem kemudian memberikan respons sesuai dengan perintah atau pesan yang diterima. Penghuni akhirnya menerima balasan dari sistem.
 
 </details>
 
-<details><summary><b>Urutan Penjadwal (Scheduler)</b></summary><br>
+<details><summary><b>Activity Diagram Pembayaran</b></summary><br>
 
-![Urutan Penjadwal (Scheduler)](diagrams/seq_scheduler.mmd.png)
+![Activity Diagram Pembayaran](diagrams/9_activity_diagram_pembayaran.png)
 
-_Penjelasan: Rutinitas sinkron jadwal pemicu lonceng pengingat yang menyaring piutang jatuh tempo via penyedia pesan gateway._
+Proses dimulai ketika penghuni melakukan pembayaran melalui tautan pembayaran yang tersedia. Payment gateway kemudian memproses transaksi tersebut. Setelah transaksi berhasil, sistem menerima notifikasi callback sebagai tanda keberhasilan. Selanjutnya, sistem memperbarui status invoice di basis data menjadi “PAID”. Penghuni kemudian menerima bukti pembayaran atau kuitansi sebagai konfirmasi pelunasan.
 
 </details>
 
-<details><summary><b>Urutan Lihat Komplain</b></summary><br>
+<details><summary><b>Activity Diagram Terima Pengingat Tagihan</b></summary><br>
 
-![Urutan Lihat Komplain](diagrams/seq_view_complaint.mmd.png)
+![Activity Diagram Terima Pengingat Tagihan](diagrams/10_activity_diagram_terima_pengingat_tagihan.png)
 
-_Penjelasan: Progres aliran objek dalam proses penanganan kasus komplain oleh pihak manajerial berbasis resolusi tiket perbaikan._
+Proses dimulai oleh cron yang secara otomatis memicu pengingat harian. Sistem kemudian memeriksa invoice yang telah jatuh tempo. Data tagihan dan informasi penghuni diambil dari basis data. Sistem kemudian mengirimkan notifikasi berupa pesan pengingat kepada penghuni. Penghuni akhirnya menerima pesan tersebut sebagai pengingat pembayaran.
+
+</details>
+
+<details><summary><b>Activity Diagram Lihat Riwayat Pembayaran</b></summary><br>
+
+![Activity Diagram Lihat Riwayat Pembayaran](diagrams/11_activity_diagram_lihat_riwayat_pembayaran.png)
+
+Proses dimulai ketika penghuni mengirimkan perintah untuk melihat riwayat pembayaran. Sistem kemudian memeriksa data riwayat pembayaran yang tersedia. Basis data mengembalikan data invoice dengan status “PAID”. Sistem menyusun daftar riwayat pembayaran secara terstruktur, dan hasilnya dikirimkan kepada penghuni untuk ditampilkan.
+
+</details>
+
+<details><summary><b>Activity Diagram Cek Tagihan</b></summary><br>
+
+![Activity Diagram Cek Tagihan](diagrams/12_activity_diagram_cek_tagihan.png)
+
+Proses dimulai saat penghuni mengirimkan perintah untuk mengecek tagihan. Sistem kemudian memeriksa tagihan yang masih aktif. Data invoice dengan status “UNPAID” diambil dari basis data. Sistem kemudian merangkum informasi tagihan tersebut, dan hasilnya dikirimkan kepada penghuni sebagai informasi tagihan terkini.
+
+</details>
+
+<details><summary><b>Activity Diagram Ajukan Komplain</b></summary><br>
+
+![Activity Diagram Ajukan Komplain](diagrams/13_activity_diagram_ajukan_komplain.png)
+
+Proses dimulai ketika penghuni mengirimkan perintah untuk mengajukan komplain, kemudian dilanjutkan dengan memasukkan detail kerusakan. Sistem melakukan validasi terhadap data yang diberikan. Jika valid, data komplain disimpan sebagai record baru di basis data. Sistem kemudian memberikan umpan balik bahwa komplain telah diterima, dan penghuni menerima nomor laporan atau ID komplain sebagai referensi.
+
+</details>
+
+### 1.4 Sequence Diagrams
+
+Sequence diagram merupakan diagram UML yang digunakan untuk menggambarkan interaksi antar objek dalam sistem berdasarkan urutan waktu. Diagram ini menampilkan bagaimana pesan atau komunikasi dikirimkan dari satu objek ke objek lain secara berurutan untuk menjalankan suatu fungsi tertentu. Pada sistem manajemen kos, sequence diagram digunakan untuk menggambarkan interaksi antara pengguna, sistem, basis data, dan layanan eksternal seperti payment gateway atau chatbot, sehingga alur komunikasi data dapat divisualisasikan dengan lebih rinci dan sistematis.
+
+<details><summary><b>Sequence Diagram Verifikasi Akun</b></summary><br>
+
+![Sequence Diagram Verifikasi Akun](diagrams/1_sequence_diagram_verifikasi_akun.png)
+
+Proses dimulai ketika pengguna memasukkan username dan password ke dalam sistem. Sistem kemudian mengirimkan permintaan ke basis data untuk melakukan validasi kredensial. Basis data mengembalikan data pengguna yang sesuai. Setelah itu, sistem melakukan verifikasi password secara internal. Jika password cocok, sistem memperbarui log login ke basis data dan mengarahkan pengguna ke dashboard utama. Namun, jika password tidak sesuai, sistem langsung mengirimkan pesan kesalahan kepada pengguna.
+
+</details>
+
+<details><summary><b>Sequence Diagram Manajemen Akun</b></summary><br>
+
+![Sequence Diagram Manajemen Akun](diagrams/2_sequence_diagram_manajemen_akun.png)
+
+Proses dimulai saat admin mengakses fitur manajemen akun. Sistem kemudian meminta daftar akun ke basis data, dan basis data mengembalikan data tersebut untuk ditampilkan kepada admin. Setelah itu, admin melakukan perubahan seperti menambah atau menghapus akun. Sistem melakukan validasi terhadap input yang diberikan, kemudian mengirimkan perintah ke basis data untuk menyimpan atau menghapus data pengguna. Setelah proses berhasil, sistem memberikan notifikasi sukses kepada admin.
+
+</details>
+
+<details><summary><b>Sequence Diagram Manajemen Kamar</b></summary><br>
+
+![Sequence Diagram Manajemen Kamar](diagrams/3_sequence_diagram_manajemen_kamar.png)
+
+Proses diawali oleh staf yang mengakses data kamar melalui sistem. Sistem kemudian melakukan query ke basis data untuk mengambil daftar kamar, dan hasilnya dikirim kembali ke sistem untuk ditampilkan kepada staf. Selanjutnya, staf melakukan pembaruan terhadap informasi atau status kamar. Sistem menyimpan perubahan tersebut ke basis data, dan setelah berhasil, sistem memberikan notifikasi kepada staf bahwa proses telah selesai.
+
+</details>
+
+<details><summary><b>Sequence Diagram Manajemen Penghuni</b></summary><br>
+
+![Sequence Diagram Manajemen Penghuni](diagrams/4_sequence_diagram_manajemen_penghuni.png)
+
+Proses dimulai ketika staf melakukan registrasi penghuni baru. Sistem terlebih dahulu memeriksa ketersediaan kamar dengan mengirimkan permintaan ke basis data. Basis data mengembalikan informasi apakah kamar tersedia atau tidak. Jika kamar tersedia, sistem menyimpan data penghuni dan kontrak sewa ke basis data, lalu memberikan konfirmasi keberhasilan kepada staf. Jika kamar penuh, sistem memberikan peringatan kepada staf bahwa kamar tidak tersedia.
+
+</details>
+
+<details><summary><b>Sequence Diagram Lihat Laporan Transaksi</b></summary><br>
+
+![Sequence Diagram Lihat Laporan Transaksi](diagrams/5_sequence_diagram_lihat_laporan_transaksi.png)
+
+Proses dimulai saat pengelola (staf atau pemilik) meminta laporan keuangan. Sistem kemudian mengambil data transaksi dari basis data yang mencakup invoice dan data sewa. Setelah data diterima, sistem melakukan perhitungan total pemasukan secara internal. Hasil perhitungan tersebut kemudian disajikan dalam bentuk tabel atau grafik kepada pengelola.
+
+</details>
+
+<details><summary><b>Sequence Diagram Manajemen Pengingat</b></summary><br>
+
+![Sequence Diagram Manajemen Pengingat](diagrams/6_sequence_diagram_manajemen_pengingat.png)
+
+Proses berjalan secara otomatis melalui mesin penjadwal (cron) yang memicu sistem setiap hari. Sistem kemudian meminta daftar tagihan yang telah jatuh tempo ke basis data. Setelah menerima daftar tersebut, sistem memproses setiap tagihan dalam sebuah perulangan. Untuk setiap tagihan, sistem mencatat log notifikasi ke basis data dan mengirimkan pesan melalui chatbot. Chatbot kemudian memberikan respons bahwa pesan telah berhasil dikirim.
+
+</details>
+
+<details><summary><b>Sequence Diagram Lihat Komplain</b></summary><br>
+
+![Sequence Diagram Lihat Komplain](diagrams/7_sequence_diagram_lihat_komplain.png)
+
+Proses dimulai ketika pengelola membuka modul komplain. Sistem mengambil daftar komplain dari basis data dan menampilkannya kepada pengelola. Jika pengelola bertindak sebagai staf yang menangani komplain, maka staf dapat memperbarui status komplain menjadi selesai. Sistem kemudian menyimpan informasi penanganan dan penanggung jawab ke basis data. Setelah berhasil, sistem memberikan konfirmasi kepada pengelola.
+
+</details>
+
+<details><summary><b>Sequence Diagram Interaksi Chatbot</b></summary><br>
+
+![Sequence Diagram Interaksi Chatbot](diagrams/8_sequence_diagram_interaksi_chatbot.png)
+
+Proses dimulai saat penghuni mengirimkan pesan melalui chatbot. Sistem melakukan verifikasi nomor telepon ke basis data untuk memastikan identitas pengguna. Jika nomor valid, sistem menyimpan log interaksi dan mengidentifikasi kategori perintah yang diberikan. Setelah itu, sistem mengirimkan respons yang sesuai kepada penghuni. Jika nomor tidak dikenali, sistem langsung mengirimkan pesan penolakan.
+
+</details>
+
+<details><summary><b>Sequence Diagram Pembayaran</b></summary><br>
+
+![Sequence Diagram Pembayaran](diagrams/9_sequence_diagram_pembayaran.png)
+
+Proses dimulai ketika penghuni memilih untuk membayar tagihan. Sistem mengirimkan permintaan ke payment gateway untuk membuat invoice virtual account. Gateway kemudian mengembalikan kode atau tautan pembayaran yang ditampilkan kepada penghuni. Setelah penghuni melakukan pembayaran, gateway mengirimkan notifikasi (callback) ke sistem. Sistem kemudian memperbarui status invoice menjadi “PAID” di basis data dan mengirimkan notifikasi pelunasan kepada penghuni.
+
+</details>
+
+<details><summary><b>Sequence Diagram Terima Pengingat Tagihan</b></summary><br>
+
+![Sequence Diagram Terima Pengingat Tagihan](diagrams/10_sequence_diagram_terima_pengingat_tagihan.png)
+
+Proses dimulai oleh mesin penjadwal yang memicu sistem secara harian. Sistem kemudian meminta data tagihan yang mendekati jatuh tempo ke basis data. Setelah data diterima, sistem menyusun pesan pengingat secara otomatis. Pesan tersebut kemudian dikirimkan kepada penghuni melalui media komunikasi WhatsApp.
+
+</details>
+
+<details><summary><b>Sequence Diagram Lihat Riwayat Pembayaran</b></summary><br>
+
+![Sequence Diagram Lihat Riwayat Pembayaran](diagrams/11_sequence_diagram_lihat_riwayat_pembayaran.png)
+
+Proses dimulai ketika penghuni meminta riwayat pembayaran. Sistem mengirimkan permintaan ke basis data untuk mengambil data invoice dengan status sudah dibayar. Setelah data diterima, sistem memformat daftar riwayat pembayaran agar mudah dibaca. Hasilnya kemudian dikirimkan kembali kepada penghuni.
+
+</details>
+
+<details><summary><b>Sequence Diagram Cek Tagihan</b></summary><br>
+
+![Sequence Diagram Cek Tagihan](diagrams/12_sequence_diagram_cek_tagihan.png)
+
+Proses dimulai saat penghuni meminta informasi tagihan aktif. Sistem mengambil data invoice dengan status belum dibayar dari basis data. Setelah data diterima, sistem menghitung total tagihan secara keseluruhan. Informasi tersebut kemudian dikirimkan kepada penghuni dalam bentuk rincian tagihan beserta batas waktu pembayaran.
+
+</details>
+
+<details><summary><b>Sequence Diagram Ajukan Komplain</b></summary><br>
+
+![Sequence Diagram Ajukan Komplain](diagrams/13_sequence_diagram_ajukan_komplain.png)
+
+Proses dimulai ketika penghuni mengirimkan laporan komplain ke sistem. Sistem terlebih dahulu melakukan validasi terhadap kelengkapan isi laporan. Setelah valid, sistem menyimpan data komplain ke dalam basis data. Basis data mengembalikan status sukses beserta ID komplain. Sistem kemudian mengirimkan konfirmasi kepada penghuni bahwa laporan telah diterima.
 
 </details>
 
 ### 1.5 Class Diagram
 
-Struktur relasi data utama sistem.
+Class diagram merupakan diagram UML yang digunakan untuk menggambarkan struktur statis dari sistem, termasuk kelas-kelas yang ada, atribut yang dimiliki, serta hubungan antar kelas. Diagram ini berfokus pada bagaimana data dan objek dalam sistem diorganisasikan. Dalam sistem manajemen kos, class diagram berfungsi untuk memodelkan entitas seperti pengguna, penghuni, kamar, sewa, tagihan, notifikasi, dan komplain, sehingga seluruh proses bisnis dapat direpresentasikan secara terstruktur dan saling terhubung.
 
-![Class Diagram](diagrams/class.png)
+![Class Diagram](diagrams/0_class_diagram.png)
 
-_Penjelasan: Mempresentasikan desain statis berorientasi objek basis data manajemen sewa. Entitas Penyewa, Kamar, dan Masa Sewa menciptakan rekam jejak Tagihan yang presisi beserta aliran Komplain yang terdokumentasi rapi demi mengurangi potensi sengketa arsip riwayat._
+Class diagram pada sistem ini menggambarkan struktur data serta hubungan antar entitas yang membentuk keseluruhan sistem manajemen kos. Setiap kelas merepresentasikan objek nyata dalam sistem, seperti pengguna, penghuni, kamar, transaksi, hingga komunikasi melalui chatbot. Diagram ini juga menunjukkan bagaimana data saling terhubung untuk mendukung proses bisnis yang ada.
+
+Relasi antar kelas menunjukkan keterkaitan yang erat dalam sistem, seperti tenant yang dapat memiliki banyak lease dan komplain, lease yang menghasilkan invoice, serta invoice yang memicu notifikasi. Struktur ini dirancang untuk memastikan integritas data dan mendukung alur proses bisnis secara menyeluruh, mulai dari penyewaan kamar hingga penyelesaian komplain dan pembayaran.
 
 ---
 
 ## 2. Rancangan Basis Data
 
-Dirancang mengikuti skema referensi pada `packages/database/src/schema.ts`.
+Rancangan basis data merupakan tahap perancangan yang bertujuan untuk mendefinisikan struktur penyimpanan data yang akan digunakan oleh sistem. Pada sistem manajemen kos ini, rancangan basis data disusun untuk mendukung seluruh proses bisnis yang telah dianalisis sebelumnya, mulai dari pengelolaan pengguna, operasional kos, transaksi pembayaran, hingga interaksi melalui chatbot.
+
+Rancangan basis data pada sistem manajemen kos ini disusun berdasarkan hasil analisis dan perancangan yang telah dilakukan pada diagram sebelumnya, yaitu use case diagram, context diagram, activity diagram, sequence diagram, dan class diagram. Setiap tabel yang dibentuk merupakan representasi langsung dari entitas dan relasi yang telah diidentifikasi pada class diagram, serta mendukung alur proses bisnis yang tergambar dalam activity dan sequence diagram.
 
 ### `users`
 
-Data autentikasi admin/staff
+Tabel users digunakan untuk menyimpan data autentikasi pengguna sistem, yang mencakup admin, staff, owner, serta sistem otomatis seperti cron. Keberadaan tabel ini berkaitan langsung dengan proses verifikasi akun pada activity dan sequence diagram, di mana sistem melakukan validasi kredensial sebelum memberikan akses ke fitur tertentu.
 
 | Nama Kolom      | Tipe Data        | Keterangan                          |
 | --------------- | ---------------- | ----------------------------------- |
@@ -211,9 +279,11 @@ Data autentikasi admin/staff
 | `role`          | TEXT             | Role akun (admin/staff/owner/cron). |
 | `last_accessed` | TIMESTAMP        | Kapan terakhir kali akun diakses.   |
 
+Atribut seperti username, password_hash, dan role memungkinkan sistem untuk mengatur hak akses sesuai dengan peran pengguna, sebagaimana dijelaskan pada use case diagram. Kolom last_accessed digunakan untuk mencatat aktivitas terakhir pengguna sebagai bagian dari monitoring sistem.
+
 ### `tenants`
 
-Pusat data penghuni kos
+Tabel tenants berfungsi sebagai pusat penyimpanan data penghuni kos. Data ini menjadi dasar bagi berbagai proses dalam sistem, seperti penyewaan kamar, pengiriman notifikasi, serta interaksi melalui chatbot.
 
 | Nama Kolom      | Tipe Data        | Keterangan                        |
 | --------------- | ---------------- | --------------------------------- |
@@ -223,9 +293,11 @@ Pusat data penghuni kos
 | `origin_region` | TEXT NULL        | Daerah kediaman asal penghuni.    |
 | `created_at`    | TIMESTAMP        | Waktu pertama kali didata sistem. |
 
+Kolom phone_number memiliki peran penting karena digunakan sebagai identitas dalam komunikasi chatbot, sesuai dengan proses pada sequence diagram interaksi chatbot. Tabel ini juga terhubung dengan banyak tabel lain, seperti leases, chatbot_messages, notifications, dan complaints, sehingga menjadi salah satu entitas inti dalam sistem.
+
 ### `rooms`
 
-Pusat data inventaris spesifik kamar
+Tabel rooms menyimpan informasi terkait kamar yang tersedia dalam sistem. Data ini digunakan dalam proses manajemen kamar oleh staff, sebagaimana terlihat pada activity dan sequence diagram.
 
 | Nama Kolom      | Tipe Data        | Keterangan                                |
 | --------------- | ---------------- | ----------------------------------------- |
@@ -235,9 +307,11 @@ Pusat data inventaris spesifik kamar
 | `monthly_price` | INTEGER          | Harga sewa setiap bulannya.               |
 | `is_active`     | BOOLEAN          | Penentu apakah kamar tersedia atau tidak. |
 
+Kolom is_active berfungsi untuk menunjukkan ketersediaan kamar, yang kemudian digunakan dalam proses validasi saat melakukan penyewaan (lease). Tabel ini berelasi dengan tabel leases, yang menghubungkan kamar dengan penghuni.
+
 ### `leases`
 
-Manajemen status persewaan
+Tabel leases merupakan penghubung antara penghuni (tenants) dan kamar (rooms). Tabel ini merepresentasikan proses penyewaan yang menjadi inti dari sistem manajemen kos.
 
 | Nama Kolom   | Tipe Data        | Keterangan                                        |
 | ------------ | ---------------- | ------------------------------------------------- |
@@ -248,9 +322,11 @@ Manajemen status persewaan
 | `end_date`   | TIMESTAMP        | Tanggal berakhirnya masa penyewaan.               |
 | `is_active`  | BOOLEAN          | Penanda apakah penyewa ini masih tinggal di sana. |
 
+Atribut seperti start_date, end_date, dan is_active memungkinkan sistem untuk melacak masa sewa secara akurat. Keberadaan tabel ini sangat berkaitan dengan proses pada activity diagram manajemen penghuni serta sequence diagram registrasi penghuni, di mana sistem harus memastikan ketersediaan kamar sebelum menyimpan data sewa.
+
 ### `invoices`
 
-Pencatatan tagihan per masa sewa
+Tabel invoices digunakan untuk mencatat seluruh tagihan yang dihasilkan dari proses penyewaan. Setiap data invoice terhubung dengan satu data lease, sesuai dengan relasi pada class diagram.
 
 | Nama Kolom         | Tipe Data        | Keterangan                                    |
 | ------------------ | ---------------- | --------------------------------------------- |
@@ -262,9 +338,11 @@ Pencatatan tagihan per masa sewa
 | `callback_payload` | TEXT NULL        | Payload raw hasil callback payment gateway.   |
 | `status`           | TEXT             | Status pelunasan.                             |
 
+Kolom seperti due_date, status, dan duitku_reference mendukung proses pembayaran yang tergambar pada sequence diagram pembayaran. Selain itu, kolom callback_payload digunakan untuk menyimpan data hasil callback dari payment gateway, yang menunjukkan bahwa sistem terintegrasi dengan layanan eksternal.
+
 ### `chatbot_messages`
 
-Riwayat aliran komunikasi bot
+Tabel chatbot_messages menyimpan riwayat komunikasi antara penghuni dan sistem melalui chatbot. Data ini digunakan untuk mencatat seluruh interaksi yang terjadi, baik pesan masuk maupun keluar.
 
 | Nama Kolom  | Tipe Data        | Keterangan                            |
 | ----------- | ---------------- | ------------------------------------- |
@@ -274,9 +352,11 @@ Riwayat aliran komunikasi bot
 | `message`   | TEXT             | Isi tulisan pesannya.                 |
 | `sent_at`   | TIMESTAMP        | Waktu kapan pesan dikirim.            |
 
+Tabel ini berkaitan langsung dengan activity dan sequence diagram interaksi chatbot, di mana setiap pesan yang dikirim akan disimpan sebagai log. Informasi ini dapat digunakan untuk analisis maupun pelacakan aktivitas pengguna.
+
 ### `notifications`
 
-Catatan historis pengingat/sistem
+Tabel notifications digunakan untuk mencatat seluruh notifikasi yang dikirimkan kepada penghuni, terutama yang berkaitan dengan tagihan.
 
 | Nama Kolom           | Tipe Data            | Keterangan                         |
 | -------------------- | -------------------- | ---------------------------------- |
@@ -287,9 +367,11 @@ Catatan historis pengingat/sistem
 | `type`               | TEXT                 | Konteks pengingat.                 |
 | `status`             | TEXT                 | Status pengiriman notifikasi.      |
 
+Relasi antara notifications, invoices, dan chatbot_messages menunjukkan alur proses pengingat tagihan yang tergambar pada activity dan sequence diagram manajemen pengingat. Kolom type dan status memungkinkan sistem untuk mengelola jenis dan keberhasilan pengiriman notifikasi.
+
 ### `audit_logs`
 
-Laporan setiap aksi rekam jejak sistem
+Tabel audit_logs berfungsi untuk mencatat setiap aktivitas perubahan data dalam sistem. Tabel ini penting untuk menjaga keamanan dan transparansi, terutama dalam sistem yang melibatkan banyak peran pengguna.
 
 | Nama Kolom   | Tipe Data        | Keterangan                            |
 | ------------ | ---------------- | ------------------------------------- |
@@ -300,9 +382,11 @@ Laporan setiap aksi rekam jejak sistem
 | `record_id`  | INTEGER          | ID dari record yang dirubah.          |
 | `created_at` | TIMESTAMP        | Waktu tindakan mengubah hal tersebut. |
 
+Setiap perubahan yang dilakukan oleh user akan direkam, termasuk jenis aksi, tabel yang terlibat, serta waktu kejadian. Meskipun tidak secara eksplisit ditampilkan dalam diagram, tabel ini mendukung kebutuhan non-fungsional seperti auditing dan logging.
+
 ### `complaints`
 
-Data laporan dan keluhan dari penghuni
+Tabel complaints digunakan untuk menyimpan data komplain yang diajukan oleh penghuni. Tabel ini berkaitan langsung dengan use case dan diagram proses pengajuan serta penanganan komplain.
 
 | Nama Kolom    | Tipe Data         | Keterangan                    |
 | ------------- | ----------------- | ----------------------------- |
@@ -312,3 +396,5 @@ Data laporan dan keluhan dari penghuni
 | `status`      | TEXT              | Status keluhan ini.           |
 | `resolved_by` | INTEGER NULL (FK) | Pengguna yang menyelesaikan.  |
 | `created_at`  | TIMESTAMP         | Waktu keluhan dibuat.         |
+
+Kolom tenant_id menunjukkan siapa yang mengajukan komplain, sedangkan resolved_by menunjukkan pengguna (staff) yang menangani komplain tersebut. Kolom status digunakan untuk melacak progres penyelesaian, sesuai dengan alur pada activity dan sequence diagram komplain.

@@ -1,0 +1,11 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+
+    Penghuni->>Sistem: Minta info tagihan aktif
+    Sistem->>Basis Data: Query invoices (status = unpaid)
+    Basis Data-->>Sistem: Detail tagihan
+    Sistem->>Sistem: Hitung total tagihan
+    Sistem-->>Penghuni: Kirim rincian tagihan & batas waktu

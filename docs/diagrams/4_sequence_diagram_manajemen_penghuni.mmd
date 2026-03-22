@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor Staf
+    participant Sistem
+    participant Basis Data
+
+    Staf->>Sistem: Registrasi penghuni baru
+    Sistem->>Basis Data: Cek kesediaan kamar
+    Basis Data-->>Sistem: Kamar tersedia?
+    
+    alt Tersedia
+        Sistem->>Basis Data: Simpan data tenant & leases
+        Basis Data-->>Sistem: Sukses
+        Sistem-->>Staf: Konfirmasi berhasil
+    else Penuh
+        Sistem-->>Staf: Peringatan kamar penuh
+    end

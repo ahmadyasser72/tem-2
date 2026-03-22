@@ -1,0 +1,14 @@
+@startuml
+|Cron|
+start
+:Trigger pemicu pengingat harian;
+|Sistem|
+:Cek invoice jatuh tempo;
+|Basis Data|
+:Query data tagihan & tenant;
+|Sistem|
+:Kirim notifikasi pesan;
+|Penghuni|
+:Terima pesan pengingat tagihan;
+stop
+@enduml

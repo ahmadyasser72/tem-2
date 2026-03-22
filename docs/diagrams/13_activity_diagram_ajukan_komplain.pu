@@ -1,0 +1,15 @@
+@startuml
+|Penghuni|
+start
+:Kirim perintah 'Komplain';
+:Input detail kerusakan;
+|Sistem|
+:Validasi input;
+|Basis Data|
+:Simpan record komplain baru;
+|Sistem|
+:Beri feedback diterima;
+|Penghuni|
+:Terima nomor laporan/ID komplain;
+stop
+@enduml

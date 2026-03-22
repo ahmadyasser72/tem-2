@@ -1,0 +1,14 @@
+@startuml
+|Staf|
+start
+:Kelola data kamar;
+|Sistem|
+:Validasi input data;
+|Basis Data|
+:Update status/info kamar;
+|Sistem|
+:Tampilkan hasil;
+|Staf|
+:Daftar kamar terupdate;
+stop
+@enduml

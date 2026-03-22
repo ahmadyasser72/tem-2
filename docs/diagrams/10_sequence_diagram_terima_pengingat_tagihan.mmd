@@ -1,0 +1,11 @@
+sequenceDiagram
+    autonumber
+    participant Cron as Mesin Penjadwal
+    participant Sistem
+    participant Basis Data
+
+    Cron->>Sistem: Trigger pemicu harian
+    Sistem->>Basis Data: Cari tagihan mendekati jatuh tempo
+    Basis Data-->>Sistem: List tenant & nominal
+    Sistem->>Sistem: Generate pesan pengingat
+    Sistem-->>Penghuni: Kirim pesan WhatsApp otomatis

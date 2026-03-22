@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    actor Staf
+    participant Sistem
+    participant Basis Data
+
+    Staf->>Sistem: Akses data kamar
+    Sistem->>Basis Data: Query tabel kamar
+    Basis Data-->>Sistem: List kamar
+    Sistem-->>Staf: Daftar kamar
+    
+    Staf->>Sistem: Update info/status kamar
+    Sistem->>Basis Data: Simpan perubahan
+    Basis Data-->>Sistem: Sukses
+    Sistem-->>Staf: Notifikasi berhasil

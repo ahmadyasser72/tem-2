@@ -1,0 +1,14 @@
+@startuml
+|Penghuni|
+start
+:Bayar via payment link;
+|Payment Gateway|
+:Proses transaksi;
+|Sistem|
+:Terima callback sukses;
+|Basis Data|
+:Update status invoice PAID;
+|Penghuni|
+:Terima kuitansi lunas;
+stop
+@enduml

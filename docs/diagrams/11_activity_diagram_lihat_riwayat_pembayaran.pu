@@ -1,0 +1,14 @@
+@startuml
+|Penghuni|
+start
+:Kirim perintah 'Riwayat';
+|Sistem|
+:Cek history pembayaran;
+|Basis Data|
+:Tarik data invoice status PAID;
+|Sistem|
+:Susun daftar riwayat;
+|Penghuni|
+:Terima list riwayat pembayaran;
+stop
+@enduml

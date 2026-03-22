@@ -1,0 +1,16 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Gateway as Payment Gateway
+    participant Basis Data
+
+    Penghuni->>Sistem: Pilih bayar tagihan
+    Sistem->>Gateway: Request invoice VA
+    Gateway-->>Sistem: Link/Kode pembayaran
+    Sistem-->>Penghuni: Tampilkan instruksi bayar
+    
+    Penghuni->>Gateway: Eksekusi pembayaran
+    Gateway->>Sistem: Webhook Callback (Sukses)
+    Sistem->>Basis Data: Update status invoice = PAID
+    Sistem-->>Penghuni: Notifikasi pelunasan chatbot

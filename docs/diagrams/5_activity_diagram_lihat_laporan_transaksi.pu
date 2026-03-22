@@ -1,0 +1,14 @@
+@startuml
+|Staf/Owner|
+start
+:Pilih rentang laporan;
+|Sistem|
+:Filter data transaksi;
+|Basis Data|
+:Tarik data tagihan;
+|Sistem|
+:Kalkulasi total & generat laporan;
+|Staf/Owner|
+:Tampilkan laporan;
+stop
+@enduml

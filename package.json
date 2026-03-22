@@ -12,11 +12,15 @@
     "dev": "bun-workspaces run dev @e-kos/site",
     "build": "bun-workspaces run build @e-kos/site",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "diagrams:dump": "bun ./docs/diagrams/scripts/dump.ts",
+    "diagrams:export": "bun ./docs/diagrams/scripts/export.ts"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@mermaid-js/mermaid-cli": "^11.12.0",
+    "@types/bun": "^1.3.11",
+    "@types/node": "^25.5.0",
     "@xeonlink/prettier-plugin-organize-attributes": "^1.1.0",
     "bun-workspaces": "^1.0.0",
     "plantuml-cli": "^1.2026.1",

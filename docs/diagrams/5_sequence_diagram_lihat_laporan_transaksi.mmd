@@ -1,0 +1,11 @@
+sequenceDiagram
+    autonumber
+    actor Pengelola as Staf/Owner
+    participant Sistem
+    participant Basis Data
+
+    Pengelola->>Sistem: Minta laporan keuangan
+    Sistem->>Basis Data: Query invoices & leases
+    Basis Data-->>Sistem: Data transaksi
+    Sistem->>Sistem: Kalkulasi akumulasi pemasukan
+    Sistem-->>Pengelola: Tabel/Grafik laporan

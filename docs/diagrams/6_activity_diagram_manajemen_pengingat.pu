@@ -1,0 +1,14 @@
+@startuml
+|Cron|
+start
+:Picu pengingat harian;
+|Sistem|
+:Cek tagihan jatuh tempo;
+|Basis Data|
+:Ambil daftar nunggak;
+|Sistem|
+:Proses notifikasi & kirim;
+|Chatbot|
+:Pesan dikirim ke penghuni;
+stop
+@enduml

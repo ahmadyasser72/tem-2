@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor Penghuni
+    participant Sistem
+    participant Basis Data
+
+    Penghuni->>Sistem: Kirim pesan chatbot
+    Sistem->>Basis Data: Verifikasi nomor hp
+    Basis Data-->>Sistem: Data penghuni
+    
+    alt Valid
+        Sistem->>Basis Data: Simpan log interaksi
+        Sistem->>Sistem: Deteksi kategori perintah
+        Sistem-->>Penghuni: Respon chatbot
+    else Tidak Dikenal
+        Sistem-->>Penghuni: Pesan penolakan
+    end

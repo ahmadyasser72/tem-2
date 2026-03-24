@@ -3,12 +3,12 @@
 start
 :Lihat daftar komplain;
 |Sistem|
-:Tampilkan laporan kerusakan;
+:Tampilkan data komplain;
 |Staf|
 :Update status penanganan;
 |Sistem|
 :Beritahu penghuni;
 |Basis Data|
-:Update field resolved_by;
+:Update penangan;
 stop
 @enduml

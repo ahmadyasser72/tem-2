@@ -6,11 +6,22 @@ sequenceDiagram
     participant Basis Data
 
     Penghuni->>Sistem: Pilih bayar tagihan
+    activate Sistem
     Sistem->>Gateway: Request invoice VA
+    activate Gateway
     Gateway-->>Sistem: Link/Kode pembayaran
+    deactivate Gateway
     Sistem-->>Penghuni: Tampilkan instruksi bayar
+    deactivate Sistem
     
     Penghuni->>Gateway: Eksekusi pembayaran
+    activate Gateway
     Gateway->>Sistem: Webhook Callback (Sukses)
+    deactivate Gateway
+    activate Sistem
     Sistem->>Basis Data: Update status invoice = PAID
-    Sistem-->>Penghuni: Notifikasi pelunasan chatbot
+    activate Basis Data
+    Basis Data-->>Sistem: Berhasil
+    deactivate Basis Data
+    Sistem-->>Penghuni: Notifikasi pelunasan chatbot (faktur digital)
+    deactivate Sistem

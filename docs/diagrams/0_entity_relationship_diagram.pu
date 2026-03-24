@@ -1,0 +1,90 @@
+@startuml
+
+entity User {
+    + id : int <<PK>>
+    --
+    username : string
+    passwordHash : string
+    role : string
+    lastAccessed : timestamp
+}
+
+entity Tenant {
+    + id : int <<PK>>
+    --
+    fullName : string
+    phoneNumber : string
+    originRegion : string
+    createdAt : timestamp
+}
+
+entity Room {
+    + id : int <<PK>>
+    --
+    roomNumber : string
+    roomType : string
+    monthlyPrice : int
+    isActive : boolean
+}
+
+entity Lease {
+    + id : int <<PK>>
+    --
+    tenantId : int <<FK>>
+    roomId : int <<FK>>
+    startDate : timestamp
+    endDate : timestamp
+    isActive : boolean
+}
+
+entity Invoice {
+    + id : int <<PK>>
+    --
+    leaseId : int <<FK>>
+    amount : int
+    dueDate : timestamp
+    duitkuReference : string
+    callbackPayload : string
+    status : string
+}
+
+entity ChatbotMessage {
+    + id : int <<PK>>
+    --
+    tenantId : int <<FK>>
+    direction : string
+    message : string
+    sentAt : timestamp
+}
+
+entity Notification {
+    + id : int <<PK>>
+    --
+    tenantId : int <<FK>>
+    invoiceId : int <<FK>>
+    chatbotMessageId : int <<FK>>
+    type : string
+    status : string
+}
+
+entity Complaint {
+    + id : int <<PK>>
+    --
+    tenantId : int <<FK>>
+    resolvedBy : int <<FK>>
+    description : string
+    status : string
+    createdAt : timestamp
+}
+
+' RELATIONSHIPS
+Tenant ||--o{ Lease
+Room ||--o{ Lease
+Lease ||--o{ Invoice
+Tenant ||--o{ ChatbotMessage
+Tenant ||--o{ Notification
+Invoice ||--o{ Notification
+Tenant ||--o{ Complaint
+User ||--o{ Complaint
+
+@enduml

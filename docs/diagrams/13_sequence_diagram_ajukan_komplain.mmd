@@ -5,7 +5,11 @@ sequenceDiagram
     participant Basis Data
 
     Penghuni->>Sistem: Kirim laporan komplain
-    Sistem->>Sistem: Validasi kelengkapan teks
+    activate Sistem
+    Sistem->>Sistem: Validasi pelapor dan data komplain
     Sistem->>Basis Data: Insert data ke tabel complaints
-    Basis Data-->>Sistem: Sukses (id komplain)
-    Sistem-->>Penghuni: Konfirmasi laporan diterima
+    activate Basis Data
+    Basis Data-->>Sistem: Sukses
+    deactivate Basis Data
+    Sistem-->>Penghuni: Konfirmasi laporan diterima (nomor komplain)
+    deactivate Sistem

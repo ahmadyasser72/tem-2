@@ -3,7 +3,7 @@
 start
 :Interaksi via chatbot;
 |Sistem|
-:Cek verifikasi nomor;
+:Verifikasi nomor hp penghuni;
 |Basis Data|
 :Simpan log pesan;
 |Sistem|

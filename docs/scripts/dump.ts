@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { DIAGRAM_FOLDER, getDiagrams } from "./shared";
+import { DOCS_FOLDER, getDiagrams } from "./shared";
 
 const readDiagrams = async (pattern: string, type: string) =>
 	Promise.all(
@@ -19,8 +19,8 @@ const readDiagrams = async (pattern: string, type: string) =>
 console.time("read diagrams");
 console.time("read activity diagrams");
 const activityDiagrams = [
-	...(await readDiagrams("*_activity_diagram_*.pu", "plantuml")),
-	...(await readDiagrams("*_activity_diagram_*.mmd", "mermaid")),
+	...(await readDiagrams("**/*_activity_diagram_*.pu", "plantuml")),
+	...(await readDiagrams("**/*_activity_diagram_*.mmd", "mermaid")),
 ];
 console.timeEnd("read activity diagrams");
 
@@ -35,14 +35,14 @@ console.timeEnd("read diagrams");
 console.time("dump diagrams");
 console.time("dump activity diagrams");
 await Bun.write(
-	path.join(DIAGRAM_FOLDER, ".dump_activity_diagrams.md"),
+	path.join(DOCS_FOLDER, ".dump_activity_diagrams.md"),
 	activityDiagrams.join("\n\n"),
 );
 console.timeEnd("dump activity diagrams");
 
 console.time("dump sequence diagrams");
 await Bun.write(
-	path.join(DIAGRAM_FOLDER, ".dump_sequence_diagrams.md"),
+	path.join(DOCS_FOLDER, ".dump_sequence_diagrams.md"),
 	sequenceDiagrams.join("\n\n"),
 );
 console.timeEnd("dump sequence diagrams");

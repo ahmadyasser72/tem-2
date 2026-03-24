@@ -5,7 +5,11 @@ sequenceDiagram
     participant Basis Data
 
     Pengelola->>Sistem: Minta laporan keuangan
+    activate Sistem
     Sistem->>Basis Data: Query invoices & leases
+    activate Basis Data
     Basis Data-->>Sistem: Data transaksi
+    deactivate Basis Data
     Sistem->>Sistem: Kalkulasi akumulasi pemasukan
     Sistem-->>Pengelola: Tabel/Grafik laporan
+    deactivate Sistem

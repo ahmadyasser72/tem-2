@@ -5,13 +5,21 @@ sequenceDiagram
     participant Basis Data
 
     Pengelola->>Sistem: Buka modul komplain
-    Sistem->>Basis Data: Ambil daftar complaints
-    Basis Data-->>Sistem: Row komplain
-    Sistem-->>Pengelola: List status kerusakan
+    activate Sistem
+    Sistem->>Basis Data: Ambil daftar komplain
+    activate Basis Data
+    Basis Data-->>Sistem: Data komplain
+    deactivate Basis Data
+    Sistem-->>Pengelola: List daftar komplain
+    deactivate Sistem
     
     opt Jika Staf (Resolusi)
         Pengelola->>Sistem: Update status selesai
-        Sistem->>Basis Data: Simpan penangan & PIC
+        activate Sistem
+        Sistem->>Basis Data: Simpan penangan
+        activate Basis Data
         Basis Data-->>Sistem: Terupdate
+        deactivate Basis Data
         Sistem-->>Pengelola: Berhasil
+        deactivate Sistem
     end

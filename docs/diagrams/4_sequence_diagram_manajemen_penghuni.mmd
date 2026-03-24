@@ -5,13 +5,19 @@ sequenceDiagram
     participant Basis Data
 
     Staf->>Sistem: Registrasi penghuni baru
+    activate Sistem
     Sistem->>Basis Data: Cek kesediaan kamar
+    activate Basis Data
     Basis Data-->>Sistem: Kamar tersedia?
+    deactivate Basis Data
     
     alt Tersedia
         Sistem->>Basis Data: Simpan data tenant & leases
+        activate Basis Data
         Basis Data-->>Sistem: Sukses
+        deactivate Basis Data
         Sistem-->>Staf: Konfirmasi berhasil
     else Penuh
         Sistem-->>Staf: Peringatan kamar penuh
     end
+    deactivate Sistem

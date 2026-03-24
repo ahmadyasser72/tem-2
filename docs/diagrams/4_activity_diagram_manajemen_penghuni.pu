@@ -9,6 +9,6 @@ start
 |Sistem|
 :Konfirmasi pendaftaran;
 |Staf|
-:Data baru muncul di daftar;
+:Tampilkan data terbaru;
 stop
 @enduml

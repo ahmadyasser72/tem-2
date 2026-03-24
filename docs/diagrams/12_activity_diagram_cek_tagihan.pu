@@ -5,9 +5,9 @@ start
 |Sistem|
 :Cek tagihan aktif;
 |Basis Data|
-:Tarik data invoice UNPAID;
+:Data invoice UNPAID;
 |Sistem|
-:Rangkum detail tagihan;
+:Proses detail tagihan;
 |Penghuni|
 :Terima info tagihan terkini;
 stop

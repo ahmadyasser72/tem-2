@@ -5,12 +5,20 @@ sequenceDiagram
     participant Basis Data
 
     Admin->>Sistem: Akses manajemen akun
+    activate Sistem
     Sistem->>Basis Data: Ambil daftar akun
+    activate Basis Data
     Basis Data-->>Sistem: Daftar akun
+    deactivate Basis Data
     Sistem-->>Admin: Tabel pengguna
+    deactivate Sistem
     
     Admin->>Sistem: Simpan perubahan (Tambah/Hapus)
+    activate Sistem
     Sistem->>Sistem: Validasi input data
     Sistem->>Basis Data: Simpan/Hapus profil pengguna
+    activate Basis Data
     Basis Data-->>Sistem: Berhasil
+    deactivate Basis Data
     Sistem-->>Admin: Notifikasi sukses
+    deactivate Sistem

@@ -5,11 +5,19 @@ sequenceDiagram
     participant Basis Data
 
     Staf->>Sistem: Akses data kamar
+    activate Sistem
     Sistem->>Basis Data: Query tabel kamar
+    activate Basis Data
     Basis Data-->>Sistem: List kamar
+    deactivate Basis Data
     Sistem-->>Staf: Daftar kamar
+    deactivate Sistem
     
     Staf->>Sistem: Update info/status kamar
+    activate Sistem
     Sistem->>Basis Data: Simpan perubahan
+    activate Basis Data
     Basis Data-->>Sistem: Sukses
+    deactivate Basis Data
     Sistem-->>Staf: Notifikasi berhasil
+    deactivate Sistem

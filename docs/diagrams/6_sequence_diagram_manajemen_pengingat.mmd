@@ -1,16 +1,28 @@
 sequenceDiagram
     autonumber
-    participant Cron as Mesin Penjadwal
+    actor Staf
     participant Sistem
     participant Basis Data
     participant Chatbot
 
-    Cron->>Sistem: Trigger jadwal harian
-    Sistem->>Basis Data: Cari tagihan jatuh tempo
-    Basis Data-->>Sistem: List tagihan
+    Staf->>Sistem: Lihat riwayat pengingat
+    activate Sistem
+    Sistem->>Basis Data: Query log pengingat terkirim
+    activate Basis Data
+    Basis Data-->>Sistem: Data riwayat
+    deactivate Basis Data
+    Sistem-->>Staf: Daftar log pengingat
+    deactivate Sistem
     
-    loop Per Tagihan
-        Sistem->>Basis Data: Catat log notifikasi
-        Sistem->>Chatbot: Kirim pesan WA/Push
-        Chatbot-->>Sistem: Respons terkirim
-    end
+    Staf->>Sistem: Kirim pengingat manual
+    activate Sistem
+    Sistem->>Chatbot: Request kirim pesan WA
+    activate Chatbot
+    Chatbot-->>Sistem: Sukses
+    deactivate Chatbot
+    Sistem->>Basis Data: Simpan log pengiriman baru
+    activate Basis Data
+    Basis Data-->>Sistem: Terupdate
+    deactivate Basis Data
+    Sistem-->>Staf: Notifikasi berhasil terkirim
+    deactivate Sistem

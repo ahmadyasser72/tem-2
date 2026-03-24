@@ -1,0 +1,28 @@
+@startuml
+
+|Penghuni|
+start
+if (Memiliki komplain?) then (Ya)
+
+  if (Cara menyampaikan?) then (Pesan)
+    :Mengirim pesan komplain;
+
+    |Pengelola|
+    :Menerima pesan;
+
+  else (Langsung)
+    :Menyampaikan komplain langsung;
+
+    |Pengelola|
+    :Mendengarkan komplain;
+  endif
+
+  :Mencatat / mengingat komplain;
+  :Menindaklanjuti komplain;
+
+else (Tidak)
+endif
+
+stop
+
+@enduml

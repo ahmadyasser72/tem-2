@@ -5,7 +5,7 @@ start
 |Sistem|
 :Cek history pembayaran;
 |Basis Data|
-:Tarik data invoice status PAID;
+:Data invoice status PAID;
 |Sistem|
 :Susun daftar riwayat;
 |Penghuni|

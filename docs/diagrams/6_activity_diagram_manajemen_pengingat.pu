@@ -1,14 +1,24 @@
 @startuml
-|Cron|
+|Staf|
 start
-:Picu pengingat harian;
+:Lihat daftar notifikasi terkirim;
 |Sistem|
-:Cek tagihan jatuh tempo;
+:Ambil data log pengingat;
 |Basis Data|
-:Ambil daftar nunggak;
+:Daftar riwayat;
 |Sistem|
-:Proses notifikasi & kirim;
+:Tampilkan log riwayat pengingat;
+|Staf|
+:Klik 'Kirim Pengingat' (Manual);
+|Sistem|
+:Proses kirim pesan;
 |Chatbot|
-:Pesan dikirim ke penghuni;
+:Pesan WA dikirim;
+|Basis Data|
+:Simpan log baru;
+|Sistem|
+:Berhasil;
+|Staf|
+:Daftar diperbarui;
 stop
 @enduml

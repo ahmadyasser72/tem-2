@@ -1,81 +1,86 @@
 @startuml
 
 class User {
-    int id
-    string username
-    string passwordHash
-    string role
-    timestamp lastAccessed
+    + id: int
+    + username: string
+    + passwordHash: string
+    + role: string
+    + lastAccessed: timestamp
+
+    + processComplaint(c: Complaint): void
 }
 
 class Tenant {
-    int id
-    string fullName
-    string phoneNumber
-    string originRegion
-    timestamp createdAt
+    + id: int
+    + fullName: string
+    + phoneNumber: string
+    + originRegion: string
+    + createdAt: timestamp
+
+    + sendMessage(msg: string): void
+    + createComplaint(desc: string): Complaint
 }
 
 class Room {
-    int id
-    string roomNumber
-    string roomType
-    int monthlyPrice
-    boolean isActive
+    + id: int
+    + roomNumber: string
+    + roomType: string
+    + monthlyPrice: int
+    + isActive: boolean
 }
 
 class Lease {
-    int id
-    int tenantId
-    int roomId
-    timestamp startDate
-    timestamp endDate
-    boolean isActive
+    + id: int
+    + startDate: timestamp
+    + endDate: timestamp
+    + isActive: boolean
+
+    + generateInvoice(): Invoice
 }
 
 class Invoice {
-    int id
-    int leaseId
-    int amount
-    timestamp dueDate
-    string duitkuReference
-    string callbackPayload
-    string status
+    + id: int
+    + amount: int
+    + dueDate: timestamp
+    + duitkuReference: string
+    + callbackPayload: string
+    + status: string
+
+    + markAsPaid(): void
 }
 
 class ChatbotMessage {
-    int id
-    int tenantId
-    string direction
-    string message
-    timestamp sentAt
+    + id: int
+    + direction: string
+    + message: string
+    + sentAt: timestamp
 }
 
 class Notification {
-    int id
-    int tenantId
-    int invoiceId
-    int chatbotMessageId
-    string type
-    string status
+    + id: int
+    + type: string
+    + status: string
+
+    + send(): void
 }
 
 class Complaint {
-    int id
-    int tenantId
-    string description
-    string status
-    int resolvedBy
-    timestamp createdAt
+    + id: int
+    + description: string
+    + status: string
+    + createdAt: timestamp
+
+    + resolve(): void
 }
 
-Tenant "1" -- "*" Complaint : mengajukan
-User "1" -- "*" Complaint : memproses
-Tenant "1" -- "*" Lease : memiliki
-Room "1" -- "*" Lease : dikaitkan dengan
-Lease "1" -- "*" Invoice : menghasilkan
-Tenant "1" -- "*" ChatbotMessage : mengirim
-Tenant "1" -- "*" Notification : menerima
-Invoice "1" -- "*" Notification : memicu
+' RELATIONSHIPS (OBJECT-BASED)
+Tenant "1" -- "*" Lease
+Room "1" -- "*" Lease
+Lease "1" -- "*" Invoice
+Tenant "1" -- "*" ChatbotMessage
+Tenant "1" -- "*" Notification
+Tenant "1" -- "*" Complaint
+User "1" -- "*" Complaint : processes
+Invoice "1" -- "*" Notification
 
 @enduml

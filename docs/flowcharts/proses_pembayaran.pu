@@ -1,0 +1,26 @@
+@startuml
+
+|Penghuni|
+start
+:Menunggu jatuh tempo pembayaran;
+
+if (Melakukan pembayaran?) then (Ya)
+  :Transfer / bayar langsung;
+  :Mengirim konfirmasi pembayaran;
+
+  |Pengelola|
+  :Menerima konfirmasi;
+  :Memeriksa pembayaran;
+  :Mencatat transaksi di buku;
+
+else (Tidak)
+  |Pengelola|
+  :Mengingatkan secara langsung;
+
+  |Penghuni|
+  :Diingatkan;
+endif
+
+stop
+
+@enduml

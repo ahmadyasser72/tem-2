@@ -2,8 +2,8 @@ import path from "node:path";
 
 import { getDiagrams, naturalSort } from "./shared";
 
-const plantUmlDiagrams = getDiagrams("*.pu");
-const mermaidJsDiagrams = getDiagrams("*.mmd");
+const plantUmlDiagrams = getDiagrams("**/*.pu");
+const mermaidJsDiagrams = getDiagrams("**/*.mmd");
 
 const tasks = [
 	...plantUmlDiagrams.map((file) => ({

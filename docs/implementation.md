@@ -10,7 +10,7 @@ Sistem ini dirancang dengan pendekatan yang mudah dipahami, berfokus pada keterb
 
 ### 1.1 Diagram Konteks
 
-Context diagram merupakan diagram tingkat tinggi (high-level) yang digunakan untuk menggambarkan sistem sebagai satu kesatuan proses tunggal yang berinteraksi dengan entitas eksternal. Diagram ini biasanya merupakan bagian dari Data Flow Diagram (DFD) level 0 dan berfungsi untuk menunjukkan aliran data masuk dan keluar dari sistem. Pada sistem manajemen kos, context diagram menunjukkan bagaimana admin, staff, owner, dan penghuni berinteraksi dengan sistem, serta jenis data apa saja yang dipertukarkan, termasuk penggunaan chatbot sebagai media komunikasi utama bagi penghuni.
+Context diagram merupakan diagram tingkat tinggi (high-level) yang digunakan untuk menggambarkan sistem sebagai satu kesatuan proses tunggal yang berinteraksi dengan entitas eksternal, diagram ini berfungsi untuk menunjukkan aliran data masuk dan keluar dari sistem. Pada sistem manajemen kos, context diagram menunjukkan bagaimana admin, staff, owner, dan penghuni berinteraksi dengan sistem, serta jenis data apa saja yang dipertukarkan, termasuk penggunaan chatbot sebagai media komunikasi utama bagi penghuni.
 
 ![Diagram Konteks](diagrams/0_context_diagram.png)
 
@@ -81,7 +81,7 @@ Proses dimulai ketika staf atau pemilik memilih rentang waktu laporan yang diing
 
 ![Activity Diagram Manajemen Pengingat](diagrams/6_activity_diagram_manajemen_pengingat.png)
 
-Proses dimulai secara otomatis oleh sistem penjadwalan (cron) yang memicu pengingat harian. Sistem kemudian memeriksa tagihan yang telah jatuh tempo. Data penghuni yang memiliki tunggakan diambil dari basis data. Setelah itu, sistem memproses pembuatan notifikasi dan mengirimkannya melalui chatbot. Penghuni kemudian menerima pesan pengingat tersebut.
+Staf dapat melihat daftar pengingat yang pernah terkirim melalui sistem. Sistem akan mengambil informasi riwayat dari penyimpanan data dan memberikan tampilan daftar notifikasi kepada staf. Jika diinginkan, staf bisa menekan tombol pengiriman pengingat secara manual. Setelah itu, sistem akan segera mengirimkan pesan lewat chatbot dan mencatat riwayat pengiriman baru tersebut agar daftar riwayat selalu terbarui.
 
 </details>
 
@@ -189,7 +189,7 @@ Proses dimulai saat pengelola (staf atau pemilik) meminta laporan keuangan. Sist
 
 ![Sequence Diagram Manajemen Pengingat](diagrams/6_sequence_diagram_manajemen_pengingat.png)
 
-Proses berjalan secara otomatis melalui mesin penjadwal (cron) yang memicu sistem setiap hari. Sistem kemudian meminta daftar tagihan yang telah jatuh tempo ke basis data. Setelah menerima daftar tersebut, sistem memproses setiap tagihan dalam sebuah perulangan. Untuk setiap tagihan, sistem mencatat log notifikasi ke basis data dan mengirimkan pesan melalui chatbot. Chatbot kemudian memberikan respons bahwa pesan telah berhasil dikirim.
+Proses diawali saat staf meminta data riwayat pengingat kepada sistem. Sistem kemudian melakukan pencarian data di dalam sistem penyimpanan dan menampilkannya kembali kepada staf. Staf selanjutnya memberikan instruksi untuk melakukan pengiriman pengingat secara manual. Sistem akan meneruskan permintaan tersebut melalui chatbot dan mencatat bukti pengiriman baru di dalam sistem penyimpanan, lalu memberikan konfirmasi akhir kepada staf.
 
 </details>
 
@@ -266,6 +266,19 @@ Relasi antar kelas menunjukkan keterkaitan yang erat dalam sistem, seperti tenan
 Rancangan basis data merupakan tahap perancangan yang bertujuan untuk mendefinisikan struktur penyimpanan data yang akan digunakan oleh sistem. Pada sistem manajemen kos ini, rancangan basis data disusun untuk mendukung seluruh proses bisnis yang telah dianalisis sebelumnya, mulai dari pengelolaan pengguna, operasional kos, transaksi pembayaran, hingga interaksi melalui chatbot.
 
 Rancangan basis data pada sistem manajemen kos ini disusun berdasarkan hasil analisis dan perancangan yang telah dilakukan pada diagram sebelumnya, yaitu use case diagram, context diagram, activity diagram, sequence diagram, dan class diagram. Setiap tabel yang dibentuk merupakan representasi langsung dari entitas dan relasi yang telah diidentifikasi pada class diagram, serta mendukung alur proses bisnis yang tergambar dalam activity dan sequence diagram.
+
+### 2.1 Entity Relationship Diagram
+
+Entity relationship diagram (ERD) merupakan diagram yang digunakan untuk memodelkan struktur penyimpanan data dalam basis data dengan menunjukkan entitas, atribut, dan hubungan antarentitas tersebut. Berbeda dengan class diagram yang berfokus pada objek dalam kode program, ERD berfokus pada bagaimana data disimpan secara permanen di dalam tabel basis data. Dalam sistem manajemen kos ini, ERD memberikan panduan teknis yang jelas untuk memastikan bahwa seluruh informasi penting tersimpan dalam struktur yang efisien dan saling terintegrasi.
+
+![Entity Relationship Diagram](diagrams/0_entity_relationship_diagram.png)
+
+ERD pada sistem ini memberikan gambaran menyeluruh tentang bagaimana data diorganisasikan di dalam basis data untuk mendukung kelancaran operasional. Setiap kotak dalam diagram merepresentasikan sebuah tabel yang menyimpan informasi spesifik, seperti profil penghuni, rincian kamar, dokumen tagihan, atau log interaksi chatbot. Hubungan antar kotak tersebut menunjukkan bagaimana sistem menghubungkan satu informasi dengan informasi lainnya guna mendukung proses bisnis utama.
+
+Relasi di dalam ERD ini dirancang untuk menjaga keteraturan dan integritas data, seperti menghubungkan penghuni dengan kamar yang mereka tempati melalui kontrak sewa (lease), serta menghubungkan setiap pembayaran dengan dokumen tagihan yang sesuai. Dengan struktur yang terintegrasi ini, sistem dapat dengan mudah melacak riwayat penyewaan, mengelola data pembayaran secara akurat, serta memproses komplain dan notifikasi pengingat secara otomatis kepada penghuni yang bersangkutan.
+
+### 2.2 Rincian Tabel Basis Data
+
 
 ### `users`
 

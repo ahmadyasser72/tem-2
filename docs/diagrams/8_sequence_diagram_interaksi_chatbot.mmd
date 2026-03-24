@@ -5,13 +5,20 @@ sequenceDiagram
     participant Basis Data
 
     Penghuni->>Sistem: Kirim pesan chatbot
-    Sistem->>Basis Data: Verifikasi nomor hp
+    activate Sistem
+    Sistem->>Basis Data: Verifikasi nomor hp penghuni
+    activate Basis Data
     Basis Data-->>Sistem: Data penghuni
+    deactivate Basis Data
     
     alt Valid
         Sistem->>Basis Data: Simpan log interaksi
+        activate Basis Data
+        Basis Data-->>Sistem: Berhasil
+        deactivate Basis Data
         Sistem->>Sistem: Deteksi kategori perintah
         Sistem-->>Penghuni: Respon chatbot
     else Tidak Dikenal
         Sistem-->>Penghuni: Pesan penolakan
     end
+    deactivate Sistem

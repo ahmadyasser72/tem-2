@@ -13,8 +13,8 @@
 		"build": "bun-workspaces run build @e-kos/site",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",
-		"diagrams:dump": "bun ./docs/diagrams/scripts/dump.ts",
-		"diagrams:export": "bun ./docs/diagrams/scripts/export.ts",
+		"docs:dump-diagrams": "bun ./docs/scripts/dump.ts",
+		"docs:export-diagrams": "bun ./docs/scripts/export.ts",
 		"db:push": "bun-workspaces run db:push @e-kos/database"
 	},
 	"devDependencies": {

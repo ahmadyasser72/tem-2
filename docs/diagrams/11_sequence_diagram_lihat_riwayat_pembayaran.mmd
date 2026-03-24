@@ -5,7 +5,11 @@ sequenceDiagram
     participant Basis Data
 
     Penghuni->>Sistem: Minta riwayat pembayaran
+    activate Sistem
     Sistem->>Basis Data: Query invoices (status = paid)
+    activate Basis Data
     Basis Data-->>Sistem: Data riwayat
+    deactivate Basis Data
     Sistem->>Sistem: Format daftar riwayat
     Sistem-->>Penghuni: Kirim daftar riwayat pembayaran
+    deactivate Sistem

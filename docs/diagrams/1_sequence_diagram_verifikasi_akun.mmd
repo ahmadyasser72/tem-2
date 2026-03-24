@@ -5,13 +5,20 @@ sequenceDiagram
     participant Basis Data
 
     Pengguna->>Sistem: Masukkan username & password
+    activate Sistem
     Sistem->>Basis Data: Validasi kredensial
+    activate Basis Data
     Basis Data-->>Sistem: Data pengguna
+    deactivate Basis Data
     Sistem->>Sistem: Verifikasi password
     
     alt Jika cocok
         Sistem->>Basis Data: Update log login
+        activate Basis Data
+        Basis Data-->>Sistem: Berhasil
+        deactivate Basis Data
         Sistem-->>Pengguna: Dashboard utama
     else Jika salah
         Sistem-->>Pengguna: Pesan kesalahan
     end
+    deactivate Sistem

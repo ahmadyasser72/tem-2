@@ -1,0 +1,22 @@
+@startuml
+
+|Penghuni|
+start
+:Datang / mengajukan sewa kos;
+
+|Pengelola|
+:Mencatat data penghuni di buku;
+:Mengecek ketersediaan kamar;
+
+if (Kamar tersedia?) then (Ya)
+  :Menentukan kamar;
+  |Penghuni|
+  :Menempati kamar;
+else (Tidak)
+  |Penghuni|
+  :Mencari kos lain;
+endif
+
+stop
+
+@enduml

@@ -5,7 +5,11 @@ sequenceDiagram
     participant Basis Data
 
     Cron->>Sistem: Trigger pemicu harian
+    activate Sistem
     Sistem->>Basis Data: Cari tagihan mendekati jatuh tempo
+    activate Basis Data
     Basis Data-->>Sistem: List tenant & nominal
+    deactivate Basis Data
     Sistem->>Sistem: Generate pesan pengingat
     Sistem-->>Penghuni: Kirim pesan WhatsApp otomatis
+    deactivate Sistem

@@ -2,7 +2,7 @@
 |Penghuni|
 start
 :Kirim perintah 'Komplain';
-:Input detail kerusakan;
+:Input detail komplain;
 |Sistem|
 :Validasi input;
 |Basis Data|
@@ -10,6 +10,6 @@ start
 |Sistem|
 :Beri feedback diterima;
 |Penghuni|
-:Terima nomor laporan/ID komplain;
+:Terima nomor komplain;
 stop
 @enduml

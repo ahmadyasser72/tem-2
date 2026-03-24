@@ -9,6 +9,6 @@ start
 |Basis Data|
 :Update status invoice PAID;
 |Penghuni|
-:Terima kuitansi lunas;
+:Terima faktur digital;
 stop
 @enduml

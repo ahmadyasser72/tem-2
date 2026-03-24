@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Kos – Output Wireframe</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .wf-label { font-size:.65rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; opacity:.4; }
+      .page { display: none; }
+      .page.active { display: block; }
+      .paper {
+        background: white; max-width: 700px; margin: 0 auto; padding: 48px 56px;
+        box-shadow: 0 4px 32px rgba(0,0,0,.12); border-radius: 4px; min-height: 900px;
+        font-size: 0.875rem; line-height: 1.6;
+      }
+      .kop-border { border-bottom: 3px solid #1a1a2e; margin-bottom: 1.5rem; padding-bottom: 1rem; }
+      .kop-inner-border { border-bottom: 1px solid #1a1a2e; margin-top: 4px; padding-bottom: .25rem; }
+      .doc-title { text-align: center; margin-bottom: 1.25rem; }
+      .doc-title h2 { font-size: 1rem; font-weight: 700; text-transform: uppercase; text-decoration: underline; letter-spacing: .05em; }
+      .doc-title p { font-size: .8rem; opacity: .7; }
+      .ttd-area { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 3rem; text-align: center; font-size: .8rem; }
+      .ttd-name-line { border-top: 1px solid #666; padding-top: .25rem; margin-top: 4rem; }
+      .dash-sep { border: none; border-top: 1.5px dashed #ccc; margin: .6rem 0; }
+      .inv-row { display: flex; justify-content: space-between; font-size: .8rem; }
+      @media print { .no-print { display: none !important; } }
+    </style>
+  </head>
+  <body class="bg-base-200 min-h-screen">
+
+    <div class="fixed top-0 left-0 right-0 z-50 flex gap-1 flex-wrap bg-neutral text-neutral-content px-3 py-1.5 text-xs shadow-lg no-print">
+      <span class="wf-label text-neutral-content mr-2 self-center">Output:</span>
+      <button onclick="showPage('laporan')"         class="btn btn-xs btn-ghost" id="nav-laporan">1. Laporan Transaksi</button>
+      <button onclick="showPage('invoice')"         class="btn btn-xs btn-ghost" id="nav-invoice">2. Struk Invoice</button>
+      <button onclick="showPage('lap-keuangan')"    class="btn btn-xs btn-ghost" id="nav-lap-keuangan">3. Lap. Keuangan</button>
+      <button onclick="showPage('daftar-penghuni')" class="btn btn-xs btn-ghost" id="nav-daftar-penghuni">4. Daftar Penghuni</button>
+      <button onclick="showPage('rekap-kamar')"     class="btn btn-xs btn-ghost" id="nav-rekap-kamar">5. Rekap Kamar</button>
+      <button onclick="showPage('lap-komplain')"    class="btn btn-xs btn-ghost" id="nav-lap-komplain">6. Lap. Komplain</button>
+      <button onclick="showPage('lap-pengingat')"   class="btn btn-xs btn-ghost" id="nav-lap-pengingat">7. Lap. Pengingat</button>
+      <button onclick="showPage('rekap-tagihan')"   class="btn btn-xs btn-ghost" id="nav-rekap-tagihan">8. Rekap Tagihan</button>
+      <button onclick="showPage('notif')"           class="btn btn-xs btn-ghost" id="nav-notif">Template Notif</button>
+      <span class="ml-auto self-center opacity-40 text-xs">← <a href="in.html" class="underline">buka in.html</a></span>
+    </div>
+
+    <div class="pt-9">
+
+      <!-- 1. LAPORAN TRANSAKSI -->
+      <div id="page-laporan" class="page active">
+        <div class="max-w-5xl mx-auto p-6">
+          <div class="flex items-start justify-between flex-wrap gap-4 mb-6">
+            <div>
+              <h1 class="text-2xl font-bold">Laporan Transaksi Bulanan</h1>
+              <p class="text-sm opacity-50">E-Kos · Ringkasan pemasukan periode terpilih</p>
+            </div>
+            <div class="flex gap-2 no-print">
+              <input type="month" class="input input-sm" />
+              <button class="btn btn-sm btn-primary">Tampilkan</button>
+              <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="stat bg-base-100 rounded-box shadow-sm"><div class="stat-title text-xs">Total Pemasukan</div><div class="stat-value"><div class="skeleton h-8 w-32 rounded mt-1"></div></div><div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div></div>
+            <div class="stat bg-base-100 rounded-box shadow-sm"><div class="stat-title text-xs">Tagihan Lunas</div><div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div><div class="stat-desc"><div class="skeleton h-3 w-24 rounded mt-1"></div></div></div>
+            <div class="stat bg-base-100 rounded-box shadow-sm"><div class="stat-title text-xs">Belum Lunas</div><div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div><div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div></div>
+            <div class="stat bg-base-100 rounded-box shadow-sm"><div class="stat-title text-xs">Tingkat Lunas</div><div class="stat-value"><div class="skeleton h-8 w-16 rounded mt-1"></div></div><div class="stat-desc"><div class="skeleton h-3 w-16 rounded mt-1"></div></div></div>
+          </div>
+          <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-0">
+              <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                  <thead><tr><th>No. Invoice</th><th>Penghuni</th><th>Kamar</th><th>Nominal</th><th>Jatuh Tempo</th><th>Tgl Bayar</th><th>Status</th><th>Ref.</th></tr></thead>
+                  <tbody>
+                    <tr><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                    <tr><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                    <tr><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                    <tr><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                  </tbody>
+                  <tfoot><tr class="font-bold"><td colspan="3">Total</td><td><div class="skeleton h-4 w-28 rounded"></div></td><td colspan="4"></td></tr></tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. STRUK INVOICE DIGITAL -->
+      <div id="page-invoice" class="page">
+        <div class="max-w-xs mx-auto p-4">
+          <div class="flex gap-2 mb-4 no-print">
+            <button class="btn btn-sm btn-outline flex-1" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary flex-1">⬇ PDF</button>
+          </div>
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body p-5 gap-2">
+              <div class="text-center mb-2">
+                <div class="avatar avatar-placeholder mx-auto mb-2"><div class="bg-neutral text-neutral-content w-12 rounded-full"><span class="text-sm">EK</span></div></div>
+                <h2 class="text-base font-bold tracking-wide uppercase">Kos Melati</h2>
+                <p class="text-xs opacity-60">Jl. Mawar No. 12, Surabaya</p>
+              </div>
+              <hr class="dash-sep" />
+              <div class="flex flex-col gap-1">
+                <div class="inv-row"><span class="opacity-60">No. Invoice</span><div class="skeleton h-4 w-24 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Diterbitkan</span><div class="skeleton h-4 w-20 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Jatuh Tempo</span><div class="skeleton h-4 w-20 rounded"></div></div>
+              </div>
+              <hr class="dash-sep" />
+              <p class="text-xs font-semibold opacity-40 uppercase tracking-wider">Data Penghuni</p>
+              <div class="flex flex-col gap-1">
+                <div class="inv-row"><span class="opacity-60">Nama</span><div class="skeleton h-4 w-28 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Kamar</span><div class="skeleton h-4 w-16 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Masa Sewa</span><div class="skeleton h-4 w-20 rounded"></div></div>
+              </div>
+              <hr class="dash-sep" />
+              <div class="inv-row"><span class="opacity-70">Sewa kamar/bulan</span><div class="skeleton h-4 w-20 rounded"></div></div>
+              <hr class="dash-sep" />
+              <div class="flex justify-between font-bold text-base mt-1"><span>TOTAL</span><div class="skeleton h-6 w-24 rounded"></div></div>
+              <hr class="dash-sep" />
+              <p class="text-xs font-semibold opacity-40 uppercase tracking-wider">Pembayaran</p>
+              <div class="flex flex-col gap-1">
+                <div class="inv-row"><span class="opacity-60">Metode</span><div class="skeleton h-4 w-28 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Tanggal</span><div class="skeleton h-4 w-32 rounded"></div></div>
+                <div class="inv-row"><span class="opacity-60">Ref.</span><div class="skeleton h-4 w-28 rounded"></div></div>
+              </div>
+              <hr class="dash-sep" />
+              <div class="text-center my-2"><span class="badge badge-success badge-lg px-6 py-3 text-sm">✅ LUNAS</span></div>
+              <hr class="dash-sep" />
+              <div class="skeleton h-12 w-full rounded mt-1"></div>
+              <p class="text-xs opacity-30 text-center mt-1">Simpan struk ini sebagai bukti pembayaran</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. LAPORAN KEUANGAN BULANAN (PDF) -->
+      <div id="page-lap-keuangan" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Laporan Keuangan Bulanan</h2><p>Periode: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <p class="font-semibold mb-2">Ringkasan Keuangan:</p>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">Keterangan</th><th class="p-2 text-right">Jumlah</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2">Total tagihan diterbitkan</td><td class="p-2 text-right"><div class="skeleton h-4 w-24 rounded ml-auto"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">Tagihan terlunasi</td><td class="p-2 text-right"><div class="skeleton h-4 w-24 rounded ml-auto"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">Tagihan belum lunas</td><td class="p-2 text-right"><div class="skeleton h-4 w-24 rounded ml-auto"></div></td></tr>
+                <tr class="border-t-2 border-base-300 font-bold"><td class="p-2">Total Pemasukan</td><td class="p-2 text-right"><div class="skeleton h-5 w-28 rounded ml-auto"></div></td></tr>
+              </tbody>
+            </table>
+            <p class="font-semibold mb-2">Rincian Pembayaran Masuk:</p>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">No. Invoice</th><th class="p-2 text-left">Penghuni</th><th class="p-2 text-left">Kamar</th><th class="p-2 text-right">Nominal</th><th class="p-2 text-left">Tgl Bayar</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t-2 border-base-300 font-bold"><td colspan="3" class="p-2">Total</td><td class="p-2 text-right"><div class="skeleton h-5 w-24 rounded ml-auto"></div></td><td></td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff/Admin)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. DAFTAR PENGHUNI AKTIF (PDF) -->
+      <div id="page-daftar-penghuni" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Daftar Penghuni Aktif</h2><p>Per tanggal: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">No</th><th class="p-2 text-left">Nama Lengkap</th><th class="p-2 text-left">No. HP</th><th class="p-2 text-left">Kamar</th><th class="p-2 text-left">Mulai Sewa</th><th class="p-2 text-left">Selesai Sewa</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2">1</td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">2</td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">3</td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">4</td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">5</td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-300 font-bold"><td colspan="2" class="p-2">Total penghuni</td><td colspan="4" class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff/Admin)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. REKAP STATUS KAMAR (PDF) -->
+      <div id="page-rekap-kamar" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Rekap Status Kamar</h2><p>Per tanggal: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <div class="flex gap-4 mb-4 text-sm">
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Total Kamar</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Terisi</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Tersedia</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Nonaktif</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+            </div>
+            <p class="font-semibold mb-2">Rincian Status Setiap Kamar:</p>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">No. Kamar</th><th class="p-2 text-left">Jenis</th><th class="p-2 text-right">Harga/Bulan</th><th class="p-2 text-left">Status</th><th class="p-2 text-left">Penghuni</th><th class="p-2 text-left">Akhir Sewa</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td><td class="p-2 opacity-40 text-xs">—</td><td class="p-2 opacity-40 text-xs">—</td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td><td class="p-2 opacity-40 text-xs">—</td><td class="p-2 opacity-40 text-xs">—</td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff/Admin)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. LAPORAN KOMPLAIN (PDF) -->
+      <div id="page-lap-komplain" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Laporan Komplain Penghuni</h2><p>Periode: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <div class="flex gap-4 mb-4 text-sm">
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Total Masuk</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Selesai</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Dalam Proses</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Terbuka</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+            </div>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">No.</th><th class="p-2 text-left">Penghuni</th><th class="p-2 text-left">Kamar</th><th class="p-2 text-left">Deskripsi</th><th class="p-2 text-left">Tgl Masuk</th><th class="p-2 text-left">Status</th><th class="p-2 text-left">Ditangani</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2">1</td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-36 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">2</td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-36 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2">3</td><td class="p-2"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-8 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-36 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. LAPORAN RIWAYAT PENGINGAT (PDF) -->
+      <div id="page-lap-pengingat" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Laporan Riwayat Pengingat Tagihan</h2><p>Periode: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <div class="flex gap-4 mb-4 text-sm">
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Total Terkirim</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Otomatis</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Manual</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+              <div class="flex-1 border border-base-200 rounded p-3 text-center"><p class="opacity-60 text-xs">Gagal</p><div class="skeleton h-7 w-8 rounded mx-auto mt-1"></div></div>
+            </div>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">Waktu Kirim</th><th class="p-2 text-left">Penghuni</th><th class="p-2 text-left">No. Invoice</th><th class="p-2 text-left">Jenis</th><th class="p-2 text-left">Status</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-32 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-32 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-32 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-32 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="p-2"><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff/Admin)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. REKAP TAGIHAN PER PENGHUNI (PDF) -->
+      <div id="page-rekap-tagihan" class="page">
+        <div class="p-6">
+          <div class="flex justify-end gap-2 mb-4 no-print max-w-3xl mx-auto">
+            <button class="btn btn-sm btn-outline" onclick="window.print()">🖨 Cetak</button>
+            <button class="btn btn-sm btn-primary">⬇ PDF</button>
+          </div>
+          <div class="paper">
+            <div class="kop-border"><div class="flex items-center gap-4"><div class="avatar avatar-placeholder flex-shrink-0"><div class="bg-neutral text-neutral-content w-16 rounded-full"><span class="text-xl">EK</span></div></div><div class="flex-1 text-center"><div class="text-xl font-bold uppercase tracking-wider">Kos Melati</div><div class="kop-inner-border"></div><div class="text-xs opacity-70 mt-1">Jl. Mawar No. 12, Surabaya 60000 · Telp: (031) 1234-5678</div></div></div></div>
+            <div class="doc-title"><h2>Rekap Tagihan Per Penghuni</h2><p>Per tanggal: <span class="skeleton inline-block h-4 w-28 align-middle rounded"></span></p></div>
+            <p class="font-semibold mb-2">Data Penghuni:</p>
+            <table class="w-full text-sm mb-4 border border-base-200">
+              <tbody>
+                <tr class="border-b border-base-200"><td class="p-2 w-40 opacity-70">Nama</td><td class="p-2"><div class="skeleton h-4 w-36 rounded"></div></td></tr>
+                <tr class="border-b border-base-200"><td class="p-2 opacity-70">Kamar</td><td class="p-2"><div class="skeleton h-4 w-16 rounded"></div></td></tr>
+                <tr class="border-b border-base-200"><td class="p-2 opacity-70">Periode Tinggal</td><td class="p-2"><div class="skeleton h-4 w-40 rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <p class="font-semibold mb-2">Riwayat Tagihan:</p>
+            <table class="w-full text-sm mb-2 border border-base-200">
+              <thead class="bg-base-200"><tr><th class="p-2 text-left">No. Invoice</th><th class="p-2 text-left">Periode</th><th class="p-2 text-right">Nominal</th><th class="p-2 text-left">Jatuh Tempo</th><th class="p-2 text-left">Tgl Bayar</th><th class="p-2 text-left">Status</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                <tr class="border-t border-base-200"><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded ml-auto"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-2"><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                <tr class="border-t-2 border-base-300 font-bold"><td colspan="2" class="p-2">Total Tagihan</td><td class="p-2 text-right"><div class="skeleton h-5 w-24 rounded ml-auto"></div></td><td colspan="3"></td></tr>
+              </tbody>
+            </table>
+            <div class="ttd-area">
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Dibuat oleh</p><p class="text-xs opacity-60">(Staff/Admin)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+              <div><p>Surabaya, <span class="skeleton inline-block h-4 w-20 align-middle rounded"></span></p><p class="font-semibold mt-1">Diketahui oleh</p><p class="text-xs opacity-60">(Pemilik Kos)</p><div class="ttd-name-line"><div class="skeleton h-4 w-32 mx-auto rounded"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMPLATE NOTIFIKASI (bonus) -->
+      <div id="page-notif" class="page">
+        <div class="max-w-2xl mx-auto p-6">
+          <h2 class="text-xl font-bold mb-1">Template Pesan Notifikasi</h2>
+          <p class="text-sm opacity-50 mb-6">Contoh keluaran pesan yang dikirim sistem kepada penghuni via chatbot WhatsApp</p>
+          <div class="flex flex-col gap-6">
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body">
+                <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">🔔 Pengingat Tagihan (Auto — Cron)</h3><span class="badge badge-info badge-sm">auto</span></div>
+                <div class="mockup-code text-xs p-3"><pre><code>Halo, *[Nama Penghuni]*! 👋
+
+🔔 *Pengingat Tagihan Sewa*
+
+📋 No. Invoice  : [No. Invoice]
+🚪 Kamar        : [Nomor Kamar]
+💰 Nominal      : [Jumlah Tagihan]
+📅 Jatuh Tempo  : [Tanggal]
+
+Segera lakukan pembayaran sebelum
+tanggal jatuh tempo.
+
+Ketik *bayar tagihan* untuk membayar 🙏</code></pre></div>
+                <div class="text-xs opacity-40 mt-2">Dikirim otomatis pukul 07.00 setiap hari untuk tagihan belum lunas</div>
+              </div>
+            </div>
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body">
+                <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">✅ Konfirmasi Pembayaran (Gateway Callback)</h3><span class="badge badge-success badge-sm">real-time</span></div>
+                <div class="mockup-code text-xs p-3"><pre><code>Halo, *[Nama Penghuni]*! 🎉
+
+✅ *Pembayaran Berhasil!*
+
+📋 No. Invoice  : [No. Invoice]
+🚪 Kamar        : [Nomor Kamar]
+💰 Dibayar      : [Jumlah]
+📅 Tanggal      : [Waktu Bayar]
+🔖 Ref. Trx     : [Kode Referensi]
+
+Terima kasih sudah membayar tepat waktu! 🙏</code></pre></div>
+                <div class="text-xs opacity-40 mt-2">Dikirim segera setelah callback diterima dari payment gateway</div>
+              </div>
+            </div>
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body">
+                <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">🛠 Komplain Selesai Ditangani</h3><span class="badge badge-ghost badge-sm">system trigger</span></div>
+                <div class="mockup-code text-xs p-3"><pre><code>Halo, *[Nama Penghuni]*!
+
+🛠 *Komplain Anda Telah Ditangani!*
+
+🔖 No. Laporan  : [ID Komplain]
+📋 Masalah      : [Deskripsi]
+✅ Status       : Selesai
+👤 Ditangani    : [Nama Staff]
+📅 Selesai      : [Tanggal]
+
+Jika masih ada kendala, ajukan laporan baru. 🙏</code></pre></div>
+                <div class="text-xs opacity-40 mt-2">Dikirim saat staff menandai komplain sebagai selesai</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end pt-9 -->
+
+    <script>
+      const pages = ['laporan','invoice','lap-keuangan','daftar-penghuni','rekap-kamar','lap-komplain','lap-pengingat','rekap-tagihan','notif'];
+      function showPage(id) {
+        pages.forEach(p => {
+          const el = document.getElementById('page-' + p);
+          const nav = document.getElementById('nav-' + p);
+          if (el) el.classList.toggle('active', p === id);
+          if (nav) nav.classList.toggle('btn-primary', p === id);
+        });
+        window.scrollTo(0, 0);
+      }
+      showPage('laporan');
+    </script>
+  </body>
+</html>

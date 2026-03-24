@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Kos – Wireframe</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* ── Wireframe helpers ── */
+      .wf-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.4;
+      }
+      .page { display: none; }
+      .page.active { display: flex; }
+      .sidebar-link.active { background: oklch(var(--p)/.15); color: oklch(var(--p)); font-weight: 600; }
+    </style>
+  </head>
+  <body class="bg-base-200 min-h-screen">
+
+    <!-- ═══════════════════════════════════════
+         PAGE NAV (wireframe page switcher)
+    ═══════════════════════════════════════ -->
+    <div class="fixed top-0 left-0 right-0 z-50 flex gap-1 flex-wrap bg-neutral text-neutral-content px-3 py-1.5 text-xs shadow-lg">
+      <span class="wf-label text-neutral-content mr-2 self-center">Halaman:</span>
+      <button onclick="showPage('login')"       class="btn btn-xs btn-ghost" id="nav-login">Login</button>
+      <button onclick="showPage('dashboard')"   class="btn btn-xs btn-ghost" id="nav-dashboard">Dashboard</button>
+      <button onclick="showPage('akun')"        class="btn btn-xs btn-ghost" id="nav-akun">Manajemen Akun</button>
+      <button onclick="showPage('kamar')"       class="btn btn-xs btn-ghost" id="nav-kamar">Manajemen Kamar</button>
+      <button onclick="showPage('penghuni')"    class="btn btn-xs btn-ghost" id="nav-penghuni">Manajemen Penghuni</button>
+      <button onclick="showPage('transaksi')"   class="btn btn-xs btn-ghost" id="nav-transaksi">Laporan</button>
+      <button onclick="showPage('pengingat')"   class="btn btn-xs btn-ghost" id="nav-pengingat">Pengingat</button>
+      <button onclick="showPage('komplain')"    class="btn btn-xs btn-ghost" id="nav-komplain">Komplain</button>
+      <button onclick="showPage('chatbot')"     class="btn btn-xs btn-ghost" id="nav-chatbot">Chatbot Penghuni</button>
+    </div>
+
+    <div class="pt-9">
+
+      <!-- ══════════════════════════════════
+           1. LOGIN
+      ══════════════════════════════════ -->
+      <div id="page-login" class="page active min-h-screen items-center justify-center">
+        <div class="card bg-base-100 w-96 shadow-xl">
+          <div class="card-body gap-4">
+            <div class="text-center mb-2">
+              <h1 class="text-2xl font-bold">E-Kos</h1>
+              <p class="text-sm opacity-50">Sistem Manajemen Kos</p>
+            </div>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Nama Pengguna</legend>
+              <input type="text" class="input w-full" placeholder="Masukkan username" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Kata Sandi</legend>
+              <input type="password" class="input w-full" placeholder="Masukkan password" />
+            </fieldset>
+            <button class="btn btn-primary w-full mt-2" onclick="showPage('dashboard')">Masuk</button>
+            <div class="text-center">
+              <span class="badge badge-ghost badge-sm wf-label">Jika gagal → tampil pesan error</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           2. DASHBOARD (shared layout)
+      ══════════════════════════════════ -->
+      <div id="page-dashboard" class="page min-h-screen flex-col">
+        <!-- Navbar -->
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1">
+            <span class="font-bold text-lg">E-Kos</span>
+            <span class="badge badge-primary badge-sm ml-2">Admin</span>
+          </div>
+          <div class="flex-none gap-2">
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                <div class="avatar avatar-placeholder">
+                  <div class="bg-neutral text-neutral-content w-8 rounded-full">
+                    <span class="text-xs">AD</span>
+                  </div>
+                </div>
+              </div>
+              <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                <li><a>Profil</a></li>
+                <li><a onclick="showPage('login')">Keluar</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="flex flex-1">
+          <!-- Sidebar -->
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link active" id="sl-dashboard">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link" id="sl-akun">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link" id="sl-kamar">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link" id="sl-penghuni">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link" id="sl-transaksi">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link" id="sl-pengingat">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link" id="sl-komplain">📋 Komplain</a></li>
+            </ul>
+          </aside>
+
+          <!-- Content -->
+          <main class="flex-1 p-6 overflow-auto">
+            <h2 class="text-xl font-bold mb-1">Dashboard</h2>
+            <p class="text-sm opacity-50 mb-6">Ringkasan operasional kos</p>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Total Kamar</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Penghuni Aktif</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Tagihan Belum Bayar</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-24 rounded mt-1"></div></div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Komplain Terbuka</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="card bg-base-100 shadow-sm">
+                <div class="card-body pb-2">
+                  <h2 class="card-title text-sm">Tagihan Mendekati Jatuh Tempo</h2>
+                  <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr><th>Penghuni</th><th>Kamar</th><th>Jatuh Tempo</th><th>Status</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-14 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                        <tr><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-14 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                        <tr><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-14 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="card bg-base-100 shadow-sm">
+                <div class="card-body pb-2">
+                  <h2 class="card-title text-sm">Komplain Terbaru</h2>
+                  <div class="list">
+                    <div class="list-row items-center">
+                      <div class="skeleton h-5 w-12 rounded-full"></div>
+                      <div class="list-col-grow"><div class="skeleton h-4 w-40 rounded mb-1"></div><div class="skeleton h-3 w-28 rounded"></div></div>
+                    </div>
+                    <div class="list-row items-center">
+                      <div class="skeleton h-5 w-12 rounded-full"></div>
+                      <div class="list-col-grow"><div class="skeleton h-4 w-36 rounded mb-1"></div><div class="skeleton h-3 w-24 rounded"></div></div>
+                    </div>
+                    <div class="list-row items-center">
+                      <div class="skeleton h-5 w-14 rounded-full"></div>
+                      <div class="list-col-grow"><div class="skeleton h-4 w-32 rounded mb-1"></div><div class="skeleton h-3 w-28 rounded"></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           3. MANAJEMEN AKUN
+      ══════════════════════════════════ -->
+      <div id="page-akun" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-primary badge-sm ml-2">Admin</span></div>
+          <div class="flex-none"><div class="avatar avatar-placeholder"><div class="bg-neutral text-neutral-content w-8 rounded-full"><span class="text-xs">AD</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link active">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold">Manajemen Akun</h2>
+                <p class="text-sm opacity-50">Kelola akun pengguna sistem</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-tambah-akun').showModal()">+ Tambah Akun</button>
+            </div>
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                  <table class="table table-zebra">
+                    <thead>
+                      <tr><th>#</th><th>Username</th><th>Role</th><th>Terakhir Akses</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td><div class="skeleton h-4 w-4 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-36 rounded"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Edit</button><button class="btn btn-ghost btn-xs text-error">Hapus</button></td></tr>
+                      <tr><td><div class="skeleton h-4 w-4 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-36 rounded"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Edit</button><button class="btn btn-ghost btn-xs text-error">Hapus</button></td></tr>
+                      <tr><td><div class="skeleton h-4 w-4 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-36 rounded"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Edit</button><button class="btn btn-ghost btn-xs text-error">Hapus</button></td></tr>
+                      <tr><td><div class="skeleton h-4 w-4 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-36 rounded"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Edit</button><button class="btn btn-ghost btn-xs text-error" disabled>Hapus</button></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- Modal Tambah Akun -->
+      <dialog id="modal-tambah-akun" class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg mb-4">Tambah Akun Baru</h3>
+          <div class="flex flex-col gap-3">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Username</legend>
+              <input type="text" class="input w-full" placeholder="Nama pengguna unik" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Kata Sandi</legend>
+              <input type="password" class="input w-full" placeholder="Minimal 8 karakter" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Role</legend>
+              <select class="select w-full">
+                <option>admin</option>
+                <option>staff</option>
+                <option>owner</option>
+              </select>
+            </fieldset>
+          </div>
+          <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+            <button class="btn btn-primary">Simpan</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+      </dialog>
+
+      <!-- ══════════════════════════════════
+           4. MANAJEMEN KAMAR
+      ══════════════════════════════════ -->
+      <div id="page-kamar" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-primary badge-sm ml-2">Staff</span></div>
+          <div class="flex-none"><div class="btn btn-ghost btn-circle avatar placeholder"><div class="bg-neutral text-neutral-content rounded-full w-8"><span class="text-xs">SF</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link active">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold">Manajemen Kamar</h2>
+                <p class="text-sm opacity-50">Kelola data dan status kamar</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-tambah-kamar').showModal()">+ Tambah Kamar</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div class="card bg-base-100 shadow-sm border border-base-200" style="4">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="skeleton h-6 w-10 rounded"></div><div class="skeleton h-5 w-16 rounded-full"></div>
+                  </div>
+                  <div class="skeleton h-3 w-14 rounded mt-2"></div>
+                  <div class="skeleton h-4 w-24 rounded mt-1"></div>
+                  <div class="card-actions mt-2"><button class="btn btn-ghost btn-xs flex-1">Edit</button></div>
+                </div>
+              </div>
+              <div class="card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="skeleton h-6 w-10 rounded"></div><div class="skeleton h-5 w-16 rounded-full"></div>
+                  </div>
+                  <div class="skeleton h-3 w-14 rounded mt-2"></div>
+                  <div class="skeleton h-4 w-24 rounded mt-1"></div>
+                  <div class="card-actions mt-2"><button class="btn btn-ghost btn-xs flex-1">Edit</button></div>
+                </div>
+              </div>
+              <div class="card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="skeleton h-6 w-10 rounded"></div><div class="skeleton h-5 w-16 rounded-full"></div>
+                  </div>
+                  <div class="skeleton h-3 w-14 rounded mt-2"></div>
+                  <div class="skeleton h-4 w-24 rounded mt-1"></div>
+                  <div class="card-actions mt-2"><button class="btn btn-ghost btn-xs flex-1">Edit</button></div>
+                </div>
+              </div>
+              <div class="card bg-base-100 shadow-sm border border-base-200 opacity-50">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="skeleton h-6 w-10 rounded"></div><div class="skeleton h-5 w-16 rounded-full"></div>
+                  </div>
+                  <div class="skeleton h-3 w-14 rounded mt-2"></div>
+                  <div class="skeleton h-4 w-24 rounded mt-1"></div>
+                  <div class="card-actions mt-2"><button class="btn btn-ghost btn-xs flex-1">Edit</button></div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- Modal Tambah Kamar -->
+      <dialog id="modal-tambah-kamar" class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg mb-4">Tambah Kamar</h3>
+          <div class="flex flex-col gap-3">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Nomor Kamar</legend>
+              <input type="text" class="input w-full" placeholder="mis. C05" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Jenis Kamar</legend>
+              <input type="text" class="input w-full" placeholder="Standar / Premium" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Harga Sewa / Bulan (Rp)</legend>
+              <input type="number" class="input w-full" placeholder="800000" />
+            </fieldset>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" class="toggle toggle-success" checked />
+              <span class="text-sm">Kamar Aktif</span>
+            </div>
+          </div>
+          <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+            <button class="btn btn-primary">Simpan</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+      </dialog>
+
+      <!-- ══════════════════════════════════
+           5. MANAJEMEN PENGHUNI
+      ══════════════════════════════════ -->
+      <div id="page-penghuni" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-primary badge-sm ml-2">Staff</span></div>
+          <div class="flex-none"><div class="btn btn-ghost btn-circle avatar placeholder"><div class="bg-neutral text-neutral-content rounded-full w-8"><span class="text-xs">SF</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link active">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold">Manajemen Penghuni</h2>
+                <p class="text-sm opacity-50">Data penghuni dan kontrak sewa</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-tambah-penghuni').showModal()">+ Tambah Penghuni</button>
+            </div>
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                  <table class="table table-zebra">
+                    <thead>
+                      <tr><th>Nama</th><th>No. HP</th><th>Kamar</th><th>Awal Sewa</th><th>Akhir Sewa</th><th>Status</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-5 w-10 rounded-full"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Detail</button><button class="btn btn-ghost btn-xs text-error">Keluar</button></td></tr>
+                      <tr><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-5 w-10 rounded-full"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Detail</button><button class="btn btn-ghost btn-xs text-error">Keluar</button></td></tr>
+                      <tr><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td><td><div class="skeleton h-5 w-10 rounded-full"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td class="flex gap-1"><button class="btn btn-ghost btn-xs">Detail</button></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- Modal Tambah Penghuni -->
+      <dialog id="modal-tambah-penghuni" class="modal">
+        <div class="modal-box max-w-lg">
+          <h3 class="font-bold text-lg mb-4">Tambah Penghuni Baru</h3>
+          <div class="flex flex-col gap-3">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Nama Lengkap</legend>
+              <input type="text" class="input w-full" placeholder="Nama sesuai KTP" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Nomor HP (WhatsApp)</legend>
+              <input type="text" class="input w-full" placeholder="08xxxxxxxxxx" />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Daerah Asal</legend>
+              <input type="text" class="input w-full" placeholder="Opsional" />
+            </fieldset>
+            <div class="divider text-xs">Kontrak Sewa</div>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Pilih Kamar</legend>
+              <select class="select w-full">
+                <option>A01 – Standar (Tersedia)</option>
+              </select>
+              <p class="text-xs opacity-50 mt-1">Hanya menampilkan kamar tersedia</p>
+            </fieldset>
+            <div class="grid grid-cols-2 gap-3">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Tanggal Mulai</legend>
+                <input type="date" class="input w-full" />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Tanggal Selesai</legend>
+                <input type="date" class="input w-full" />
+              </fieldset>
+            </div>
+          </div>
+          <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+            <button class="btn btn-primary">Simpan</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+      </dialog>
+
+      <!-- ══════════════════════════════════
+           6. LAPORAN TRANSAKSI
+      ══════════════════════════════════ -->
+      <div id="page-transaksi" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-accent badge-sm ml-2">Owner</span></div>
+          <div class="flex-none"><div class="avatar avatar-placeholder"><div class="bg-neutral text-neutral-content w-8 rounded-full"><span class="text-xs">OW</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link active">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <div>
+                <h2 class="text-xl font-bold">Laporan Transaksi</h2>
+                <p class="text-sm opacity-50">Riwayat pembayaran sewa penghuni</p>
+              </div>
+              <!-- Filter -->
+              <div class="flex items-center gap-2">
+                <input type="month" class="input input-sm" value="2026-03" />
+                <button class="btn btn-primary btn-sm">Tampilkan</button>
+              </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Total Pemasukan</div>
+                <div class="stat-value"><div class="skeleton h-8 w-32 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Sudah Terbayar</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-24 rounded mt-1"></div></div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Belum Terbayar</div>
+                <div class="stat-value"><div class="skeleton h-8 w-12 rounded mt-1"></div></div>
+                <div class="stat-desc"><div class="skeleton h-3 w-20 rounded mt-1"></div></div>
+              </div>
+            </div>
+
+            <!-- Invoice Table -->
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                  <table class="table table-zebra table-sm">
+                    <thead>
+                      <tr><th>#</th><th>Penghuni</th><th>Kamar</th><th>Nominal</th><th>Jatuh Tempo</th><th>Status</th><th>Ref. Gateway</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                      <tr><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                      <tr><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-8 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-4 w-20 rounded"></div></td><td><div class="skeleton h-5 w-14 rounded-full"></div></td><td><div class="skeleton h-4 w-24 rounded"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           7. PENGINGAT
+      ══════════════════════════════════ -->
+      <div id="page-pengingat" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-primary badge-sm ml-2">Staff</span></div>
+          <div class="flex-none"><div class="btn btn-ghost btn-circle avatar placeholder"><div class="bg-neutral text-neutral-content rounded-full w-8"><span class="text-xs">SF</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link active">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold">Manajemen Pengingat</h2>
+                <p class="text-sm opacity-50">Riwayat dan pengiriman notifikasi tagihan via chatbot</p>
+              </div>
+              <button class="btn btn-primary btn-sm">🔔 Kirim Pengingat Manual</button>
+            </div>
+
+            <!-- Info banner cron -->
+            <div role="alert" class="alert alert-info mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-6 w-6 shrink-0 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span class="text-sm">Pengingat otomatis dikirim setiap hari pukul 07.00 oleh penjadwal cron untuk tagihan yang belum dibayar.</span>
+            </div>
+
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                  <table class="table table-zebra table-sm">
+                    <thead>
+                      <tr><th>Waktu Kirim</th><th>Penghuni</th><th>Invoice</th><th>Jenis</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td><div class="skeleton h-4 w-32 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                      <tr><td><div class="skeleton h-4 w-32 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                      <tr><td><div class="skeleton h-4 w-32 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-5 w-16 rounded-full"></div></td><td><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                      <tr><td><div class="skeleton h-4 w-32 rounded"></div></td><td><div class="skeleton h-4 w-28 rounded"></div></td><td><div class="skeleton h-4 w-16 rounded"></div></td><td><div class="skeleton h-5 w-12 rounded-full"></div></td><td><div class="skeleton h-5 w-16 rounded-full"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           8. KOMPLAIN
+      ══════════════════════════════════ -->
+      <div id="page-komplain" class="page min-h-screen flex-col">
+        <div class="navbar bg-base-100 shadow-sm px-4 sticky top-9 z-40">
+          <div class="flex-1"><span class="font-bold text-lg">E-Kos</span><span class="badge badge-primary badge-sm ml-2">Staff</span></div>
+          <div class="flex-none"><div class="btn btn-ghost btn-circle avatar placeholder"><div class="bg-neutral text-neutral-content rounded-full w-8"><span class="text-xs">SF</span></div></div></div>
+        </div>
+        <div class="flex flex-1">
+          <aside class="w-56 bg-base-100 border-r border-base-200 hidden md:flex flex-col p-3 gap-1 min-h-screen">
+            <ul class="menu w-full gap-0.5">
+              <li class="menu-title">Menu</li>
+              <li><a onclick="showPage('dashboard')"  class="sidebar-link">🏠 Dashboard</a></li>
+              <li><a onclick="showPage('akun')"       class="sidebar-link">👤 Manajemen Akun</a></li>
+              <li><a onclick="showPage('kamar')"      class="sidebar-link">🚪 Manajemen Kamar</a></li>
+              <li><a onclick="showPage('penghuni')"   class="sidebar-link">🏘 Manajemen Penghuni</a></li>
+              <li><a onclick="showPage('transaksi')"  class="sidebar-link">📊 Laporan Transaksi</a></li>
+              <li><a onclick="showPage('pengingat')"  class="sidebar-link">🔔 Pengingat</a></li>
+              <li><a onclick="showPage('komplain')"   class="sidebar-link active">📋 Komplain</a></li>
+            </ul>
+          </aside>
+          <main class="flex-1 p-6 overflow-auto">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold">Daftar Komplain</h2>
+                <p class="text-sm opacity-50">Pengaduan kerusakan dari penghuni melalui chatbot</p>
+              </div>
+              <!-- filter tabs -->
+              <div class="tabs tabs-box">
+                <input type="radio" name="filter-komplain" class="tab" aria-label="Semua" checked />
+                <input type="radio" name="filter-komplain" class="tab" aria-label="Terbuka" />
+                <input type="radio" name="filter-komplain" class="tab" aria-label="Selesai" />
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              <div class="card bg-base-100 shadow-sm border-l-4 border-error">
+                <div class="card-body py-3 px-4 flex-row items-center flex-wrap gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="skeleton h-5 w-14 rounded-full"></div>
+                      <div class="skeleton h-3 w-32 rounded"></div>
+                    </div>
+                    <div class="skeleton h-4 w-64 rounded mb-1"></div>
+                    <div class="skeleton h-3 w-36 rounded"></div>
+                  </div>
+                  <button class="btn btn-sm btn-outline btn-success" onclick="document.getElementById('modal-selesai-komplain').showModal()">Tandai Selesai</button>
+                </div>
+              </div>
+              <div class="card bg-base-100 shadow-sm border-l-4 border-warning">
+                <div class="card-body py-3 px-4 flex-row items-center flex-wrap gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="skeleton h-5 w-14 rounded-full"></div>
+                      <div class="skeleton h-3 w-32 rounded"></div>
+                    </div>
+                    <div class="skeleton h-4 w-56 rounded mb-1"></div>
+                    <div class="skeleton h-3 w-40 rounded"></div>
+                  </div>
+                  <button class="btn btn-sm btn-outline btn-success" onclick="document.getElementById('modal-selesai-komplain').showModal()">Tandai Selesai</button>
+                </div>
+              </div>
+
+              <!-- Komplain Card: Selesai -->
+              <div class="card bg-base-100 shadow-sm border-l-4 border-success opacity-60">
+                <div class="card-body py-3 px-4 flex-row items-center flex-wrap gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="badge badge-success badge-sm">Selesai</span>
+                      <span class="text-xs opacity-40">#CMP-003 · 15 Mar 2026</span>
+                    </div>
+                    <p class="font-medium text-sm">AC di kamar B01 tidak dingin, sudah dicek tapi tetap sama.</p>
+                    <p class="text-xs opacity-50 mt-0.5">Rian F. · Kamar B01 · Diselesaikan: staff_01</p>
+                  </div>
+                  <span class="text-xs opacity-40">Selesai 17 Mar</span>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- Modal Selesaikan Komplain -->
+      <dialog id="modal-selesai-komplain" class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg mb-2">Tandai Komplain Selesai</h3>
+          <p class="text-sm opacity-60 mb-4">Penghuni akan mendapat notifikasi bahwa keluhannya sudah ditangani.</p>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Catatan Penanganan (opsional)</legend>
+            <textarea class="textarea w-full" rows="3" placeholder="Deskripsi singkat tindakan yang diambil..."></textarea>
+          </fieldset>
+          <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+            <button class="btn btn-success">Konfirmasi Selesai</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+      </dialog>
+
+    </div><!-- end pt-9 -->
+
+      <!-- ══════════════════════════════════
+           9. CHATBOT PENGHUNI
+      ══════════════════════════════════ -->
+      <div id="page-chatbot" class="page min-h-screen items-start justify-center bg-base-200 py-8 px-4">
+        <div class="w-full max-w-sm flex flex-col gap-4">
+
+          <!-- Phone frame header -->
+          <div class="text-center">
+            <span class="badge badge-ghost badge-sm wf-label">Tampilan penghuni via WhatsApp</span>
+          </div>
+
+          <!-- WhatsApp-style phone mockup -->
+          <div class="card bg-base-100 shadow-xl" style="height:680px; display:flex; flex-direction:column;">
+
+            <!-- WA Header -->
+            <div class="flex items-center gap-3 px-4 py-3 bg-success text-success-content rounded-t-2xl">
+              <div class="avatar placeholder">
+                <div class="bg-success-content text-success rounded-full w-10">
+                  <span class="text-sm font-bold">EK</span>
+                </div>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold text-sm">E-Kos Bot</p>
+                <p class="text-xs opacity-70">online</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+            </div>
+
+            <!-- Chat messages -->
+            <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-2" style="background:#e5ddd5;" id="chat-messages">
+
+              <!-- Bot: greeting -->
+              <div class="flex justify-start">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm">Halo, Budi! 👋 Selamat datang di layanan E-Kos.</p>
+                  <p class="text-sm mt-1">Ketik salah satu perintah:</p>
+                  <div class="mt-2 flex flex-col gap-1">
+                    <span class="badge badge-ghost badge-sm text-left">1️⃣ cek tagihan</span>
+                    <span class="badge badge-ghost badge-sm text-left">2️⃣ riwayat bayar</span>
+                    <span class="badge badge-ghost badge-sm text-left">3️⃣ ajukan komplain</span>
+                    <span class="badge badge-ghost badge-sm text-left">4️⃣ bayar tagihan</span>
+                  </div>
+                  <p class="text-right text-xs opacity-40 mt-1">07.05</p>
+                </div>
+              </div>
+
+              <!-- User: cek tagihan -->
+              <div class="flex justify-end" id="msg-user-1" style="display:none!important">
+                <div class="bg-success text-success-content rounded-2xl rounded-tr-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-sm">cek tagihan</p>
+                  <p class="text-right text-xs opacity-60 mt-1">07.06 ✓✓</p>
+                </div>
+              </div>
+
+              <!-- Bot: tagihan aktif -->
+              <div class="flex justify-start" id="msg-bot-tagihan" style="display:none!important">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm font-medium">🧾 Tagihan Aktif Anda:</p>
+                  <div class="divider my-1"></div>
+                  <p class="text-xs">📋 <b>INV-001</b></p>
+                  <p class="text-xs">Kamar A02 · Maret 2026</p>
+                  <p class="text-xs font-bold text-error mt-1">Rp 800.000</p>
+                  <p class="text-xs opacity-60">Jatuh tempo: 25 Mar 2026</p>
+                  <p class="text-xs mt-2 opacity-70">Ketik <b>bayar tagihan</b> untuk membayar.</p>
+                  <p class="text-right text-xs opacity-40 mt-1">07.06</p>
+                </div>
+              </div>
+
+              <!-- User: riwayat bayar -->
+              <div class="flex justify-end" id="msg-user-2" style="display:none!important">
+                <div class="bg-success text-success-content rounded-2xl rounded-tr-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-sm">riwayat bayar</p>
+                  <p class="text-right text-xs opacity-60 mt-1">07.10 ✓✓</p>
+                </div>
+              </div>
+
+              <!-- Bot: riwayat -->
+              <div class="flex justify-start" id="msg-bot-riwayat" style="display:none!important">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm font-medium">📜 Riwayat Pembayaran:</p>
+                  <div class="divider my-1"></div>
+                  <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs">
+                      <span>Feb 2026</span><span class="text-success font-bold">✅ LUNAS</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                      <span>Jan 2026</span><span class="text-success font-bold">✅ LUNAS</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                      <span>Des 2025</span><span class="text-success font-bold">✅ LUNAS</span>
+                    </div>
+                  </div>
+                  <p class="text-right text-xs opacity-40 mt-1">07.10</p>
+                </div>
+              </div>
+
+              <!-- User: ajukan komplain -->
+              <div class="flex justify-end" id="msg-user-3" style="display:none!important">
+                <div class="bg-success text-success-content rounded-2xl rounded-tr-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-sm">ajukan komplain</p>
+                  <p class="text-right text-xs opacity-60 mt-1">07.15 ✓✓</p>
+                </div>
+              </div>
+
+              <!-- Bot: komplain prompt -->
+              <div class="flex justify-start" id="msg-bot-komplain" style="display:none!important">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm">📝 Silakan deskripsikan kerusakan atau masalah yang Anda alami.</p>
+                  <p class="text-xs opacity-60 mt-1">Contoh: <i>Keran mandi bocor tidak bisa berhenti</i></p>
+                  <p class="text-right text-xs opacity-40 mt-1">07.15</p>
+                </div>
+              </div>
+
+              <!-- User: isi komplain -->
+              <div class="flex justify-end" id="msg-user-4" style="display:none!important">
+                <div class="bg-success text-success-content rounded-2xl rounded-tr-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-sm">Keran kamar mandi bocor tidak bisa berhenti menetes</p>
+                  <p class="text-right text-xs opacity-60 mt-1">07.16 ✓✓</p>
+                </div>
+              </div>
+
+              <!-- Bot: komplain diterima -->
+              <div class="flex justify-start" id="msg-bot-komplain-ok" style="display:none!important">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm">✅ Komplain Anda telah diterima!</p>
+                  <p class="text-xs mt-1">🔖 Nomor laporan: <b>#CMP-004</b></p>
+                  <p class="text-xs opacity-60">Staff kami akan segera menindaklanjuti.</p>
+                  <p class="text-right text-xs opacity-40 mt-1">07.16</p>
+                </div>
+              </div>
+
+              <!-- Bot: pengingat otomatis -->
+              <div class="flex justify-start" id="msg-bot-reminder" style="display:none!important">
+                <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 max-w-xs shadow-sm">
+                  <p class="text-xs font-semibold text-success mb-1">E-Kos Bot</p>
+                  <p class="text-sm">🔔 <b>Pengingat Tagihan</b></p>
+                  <p class="text-xs mt-1">Halo Budi, tagihan sewa kamar A02 bulan Maret 2026 sebesar <b>Rp 800.000</b> akan jatuh tempo pada <b>25 Mar 2026</b>.</p>
+                  <p class="text-xs mt-1">Ketik <b>bayar tagihan</b> untuk melakukan pembayaran. 🙏</p>
+                  <p class="text-right text-xs opacity-40 mt-1">07.00 (auto)</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Quick command buttons -->
+            <div class="px-3 pt-2 pb-1 bg-base-100 border-t border-base-200">
+              <p class="text-xs opacity-40 mb-1 wf-label">Simulasi perintah:</p>
+              <div class="flex flex-wrap gap-1 mb-2">
+                <button class="btn btn-xs btn-outline" onclick="chatSend('cek tagihan')">cek tagihan</button>
+                <button class="btn btn-xs btn-outline" onclick="chatSend('riwayat bayar')">riwayat bayar</button>
+                <button class="btn btn-xs btn-outline" onclick="chatSend('ajukan komplain')">ajukan komplain</button>
+                <button class="btn btn-xs btn-warning btn-outline" onclick="chatSend('reminder')">🔔 auto-reminder</button>
+              </div>
+            </div>
+
+            <!-- Input bar -->
+            <div class="flex items-center gap-2 px-3 pb-3 bg-base-100 rounded-b-2xl">
+              <input id="chat-input" type="text" class="input input-sm flex-1" placeholder="Ketik perintah..." onkeydown="if(event.key==='Enter') chatSend(this.value)" />
+              <button class="btn btn-sm btn-success btn-circle" onclick="chatSend(document.getElementById('chat-input').value)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="text-center">
+            <span class="badge badge-ghost badge-sm wf-label">Tekan tombol simulasi untuk melihat alur percakapan</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end pt-9 -->
+
+    <script>
+      const pages = ['login','dashboard','akun','kamar','penghuni','transaksi','pengingat','komplain','chatbot'];
+
+      function showPage(id) {
+        pages.forEach(p => {
+          const el = document.getElementById('page-' + p);
+          const nav = document.getElementById('nav-' + p);
+          if (el) el.classList.toggle('active', p === id);
+          if (nav) nav.classList.toggle('btn-primary', p === id);
+        });
+        window.scrollTo(0, 0);
+      }
+
+      // Chatbot simulation
+      const chatFlows = {
+        'cek tagihan': ['msg-user-1', 'msg-bot-tagihan'],
+        'riwayat bayar': ['msg-user-2', 'msg-bot-riwayat'],
+        'ajukan komplain': ['msg-user-3', 'msg-bot-komplain', 'msg-user-4', 'msg-bot-komplain-ok'],
+        'reminder': ['msg-bot-reminder'],
+      };
+
+      function chatSend(val) {
+        const key = val.trim().toLowerCase();
+        const inp = document.getElementById('chat-input');
+        if (inp) inp.value = '';
+        const msgs = chatFlows[key];
+        if (!msgs) return;
+        let delay = 0;
+        msgs.forEach(id => {
+          setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) { el.style.display = 'flex'; el.style.removeProperty('display'); el.style.display = ''; }
+            const box = document.getElementById('chat-messages');
+            if (box) box.scrollTop = box.scrollHeight;
+          }, delay);
+          delay += 600;
+        });
+      }
+
+      // Init
+      showPage('login');
+    </script>
+  </body>
+</html>
+  </body>
+</html>

@@ -279,7 +279,6 @@ Relasi di dalam ERD ini dirancang untuk menjaga keteraturan dan integritas data,
 
 ### 2.2 Rincian Tabel Basis Data
 
-
 ### `users`
 
 Tabel users digunakan untuk menyimpan data autentikasi pengguna sistem, yang mencakup admin, staff, owner, serta sistem otomatis seperti cron. Keberadaan tabel ini berkaitan langsung dengan proses verifikasi akun pada activity dan sequence diagram, di mana sistem melakukan validasi kredensial sebelum memberikan akses ke fitur tertentu.

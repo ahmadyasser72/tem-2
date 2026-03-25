@@ -13,7 +13,7 @@
 		"build": "bun-workspaces run build @e-kos/site",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",
-		"docs:build-css": "tailwindcss -i ./docs/wireframes/tailwind.css -o ./docs/wireframes/style.css",
+		"docs:build-css": "tailwindcss --minify --input ./docs/wireframes/tailwind.css --output ./docs/wireframes/style.css",
 		"docs:dump-diagrams": "bun ./docs/scripts/dump.ts",
 		"docs:export-diagrams": "bun ./docs/scripts/export.ts",
 		"db:push": "bun-workspaces run db:push @e-kos/database"

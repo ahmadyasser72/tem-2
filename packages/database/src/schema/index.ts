@@ -14,7 +14,7 @@ export const NOTIFICATION_TYPES = [
 	"payment_success",
 	"custom",
 ] as const;
-export const NOTIFICATION_STATUS = ["sent", "failed"] as const;
+export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;
 export const COMPLAINT_STATUS = ["open", "in_progress", "resolved"] as const;
 
 export const users = sqliteTable("users", {
@@ -125,6 +125,9 @@ export const complaints = sqliteTable("complaints", {
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
 	resolvedBy: integer("resolved_by").references(() => users.id),
 	resolveNotes: text("resolve_notes"),
+	resolvedNotified: integer("resolved_notified", { mode: "boolean" })
+		.notNull()
+		.default(false),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),

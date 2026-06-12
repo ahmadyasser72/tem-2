@@ -1,0 +1,23 @@
+{
+	"name": "@e-kos/whatsapp-bot",
+	"type": "module",
+	"license": "AGPL-3.0",
+	"private": true,
+	"exports": {
+		".": "./src/index.js"
+	},
+	"scripts": {
+		"dev": "bun --watch src/index.ts",
+		"start": "bun src/index.ts",
+		"check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@e-kos/database": "workspace:*",
+		"baileys": "latest",
+		"qrcode-terminal": "latest"
+	},
+	"devDependencies": {
+		"@types/node": "25.4.0",
+		"typescript": "5.9.3"
+	}
+}

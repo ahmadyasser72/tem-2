@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import { db } from "@e-kos/database";
-import { users } from "@e-kos/database/schema";
+
+import { db } from "./index";
+import { users } from "./schema";
 
 const CRON_USERNAME = "cron";
 const CRON_PASSWORD = randomUUID();

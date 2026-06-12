@@ -13,6 +13,31 @@ import { tenantInfo } from "./commands/tenant-info";
 import { pollResolvedComplaints } from "./polls/complaints";
 import { pollNotifications } from "./polls/notifications";
 
+interface PendingMessage {
+	tenant: typeof tenants.$inferSelect;
+	text: string;
+}
+
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const pendingMessages = new Map<string, PendingMessage>();
+let lastSendTime = 0;
+
+async function sendWithRateLimit(
+	sock: ReturnType<typeof makeWASocket>,
+	jid: string,
+	content: { text: string },
+) {
+	const now = Date.now();
+	const elapsed = now - lastSendTime;
+
+	if (elapsed < 1_000) {
+		await new Promise((r) => setTimeout(r, 1_000 - elapsed));
+	}
+
+	await sock.sendMessage(jid, content);
+	lastSendTime = Date.now();
+}
+
 async function main() {
 	const { state, saveCreds } = await useMultiFileAuthState("auth_info");
 
@@ -36,46 +61,76 @@ async function main() {
 
 	// ─── Handle incoming WhatsApp messages ─────────────────────
 	sock.ev.on("messages.upsert", async ({ messages }) => {
-		try {
-			for (const message of messages) {
-				if (message.key.fromMe) continue;
+		for (const message of messages) {
+			if (message.key.fromMe) continue;
 
-				const jid = message.key.remoteJid;
-				if (!jid?.endsWith("@s.whatsapp.net")) continue;
+			const jid = message.key.remoteJid;
+			if (!jid?.endsWith("@s.whatsapp.net")) continue;
 
-				const phone = jid.replace("@s.whatsapp.net", "");
-				const text = message.message?.conversation?.trim() || "";
-				if (!text) continue;
+			const phone = jid.replace("@s.whatsapp.net", "");
+			const text = message.message?.conversation?.trim() || "";
+			if (!text) continue;
 
-				const tenant = await db.query.tenants.findFirst({
-					where: { phoneNumber: phone },
-				});
+			// Cari tenant berdasarkan nomor
+			const tenant = await db.query.tenants.findFirst({
+				where: { phoneNumber: phone },
+			});
 
-				if (!tenant) {
-					await sock.sendMessage(jid, {
-						text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
-					});
-					continue;
-				}
+			if (!tenant) {
+				// Nomor tidak dikenal — debounce 10 detik
+				const existing = debounceTimers.get(jid);
+				if (existing) clearTimeout(existing);
 
-				await db.insert(chatbotMessages).values({
-					tenantId: tenant.id,
-					direction: "incoming",
-					message: text,
-				});
+				debounceTimers.set(
+					jid,
+					setTimeout(async () => {
+						debounceTimers.delete(jid);
 
-				const responseText = await processCommand(tenant, text);
+						await sendWithRateLimit(sock, jid, {
+							text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
+						});
+					}, 10_000),
+				);
 
-				await db.insert(chatbotMessages).values({
-					tenantId: tenant.id,
-					direction: "outgoing",
-					message: responseText,
-				});
-
-				await sock.sendMessage(jid, { text: responseText });
+				continue;
 			}
-		} catch (err) {
-			console.error("[Bot] Message handling error:", err);
+
+			// Simpan pesan masuk segera
+			await db.insert(chatbotMessages).values({
+				tenantId: tenant.id,
+				direction: "incoming",
+				message: text,
+			});
+
+			// Tenant dikenal — debounce 5 detik, simpan pesan terbaru
+			pendingMessages.set(jid, { tenant, text });
+
+			const existing = debounceTimers.get(jid);
+			if (existing) clearTimeout(existing);
+
+			debounceTimers.set(
+				jid,
+				setTimeout(async () => {
+					debounceTimers.delete(jid);
+
+					const data = pendingMessages.get(jid);
+					pendingMessages.delete(jid);
+					if (!data) return;
+
+					// Proses perintah
+					const responseText = await processCommand(data.tenant, data.text);
+
+					// Simpan pesan keluar
+					await db.insert(chatbotMessages).values({
+						tenantId: data.tenant.id,
+						direction: "outgoing",
+						message: responseText,
+					});
+
+					// Kirim respons (rate limited: maks 1 pesan/detik)
+					await sendWithRateLimit(sock, jid, { text: responseText });
+				}, 5_000),
+			);
 		}
 	});
 

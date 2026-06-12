@@ -1,0 +1,231 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+import { z } from "astro/zod";
+import { pick } from "es-toolkit";
+
+import Alert from "~/components/alert.astro";
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { ROLES } from "~/lib/auth";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		query: z.string().catch(""),
+		role: z.enum(ROLES).optional().catch(undefined),
+	}),
+);
+
+const accounts = await db.query.users.findMany({
+	columns: {
+		id: true,
+		username: true,
+		displayName: true,
+		lastAccessed: true,
+		role: true,
+	},
+
+	where: {
+		...(params.query && {
+			OR: [
+				{ username: { like: `%${params.query}%` } },
+				{ displayName: { like: `%${params.query}%` } },
+			],
+		}),
+		...(params.role && { role: params.role }),
+	},
+});
+
+export const ROLE_BADGES = {
+	admin: "badge-primary",
+	staff: "badge-secondary",
+	owner: "badge-accent",
+	cron: "badge-error",
+};
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; title: string; description: string }
+	| void => {
+	const addResult = Astro.getActionResult(actions.manage.accounts.add);
+	if (addResult?.error)
+		return { success: false, message: addResult.error.message };
+	else if (addResult?.data) {
+		return {
+			success: true,
+			title: "Tambah akun",
+			description: `Berhasil menambah akun! (ID: ${addResult.data.id})`,
+		};
+	}
+
+	const editResult = Astro.getActionResult(actions.manage.accounts.edit);
+	if (editResult?.error)
+		return { success: false, message: editResult.error.message };
+	else if (editResult?.data) {
+		return {
+			success: true,
+			title: "Edit akun",
+			description: `Berhasil edit akun! (ID: ${editResult.data.id})`,
+		};
+	}
+
+	const deleteResult = Astro.getActionResult(actions.manage.accounts._delete);
+	if (deleteResult?.error)
+		return { success: false, message: deleteResult.error.message };
+	else if (deleteResult?.data) {
+		return {
+			success: true,
+			title: "Hapus akun",
+			description: `Berhasil menghapus akun! (ID: ${deleteResult.data.id})`,
+		};
+	}
+})();
+---
+
+{
+	formResult?.success === false && (
+		<Alert id="form_error" type="error" description={formResult.message} />
+	)
+}
+
+<DashboardLayout title="Manajemen Akun ">
+	<div class="flex flex-col gap-6">
+		{
+			formResult?.success ? (
+				<Alert
+					id="form_result"
+					type="info"
+					{...pick(formResult, ["title", "description"])}
+				/>
+			) : (
+				<p id="form_result" />
+			)
+		}
+
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Manajemen Akun</h1>
+				<p class="text-base-content/60 text-sm">
+					Kelola kredensial dan hak akses pengguna sistem
+				</p>
+			</div>
+
+			<button
+				hx-get="/dashboard/manage/accounts/modal/add"
+				class="btn btn-primary"
+			>
+				<Icon name="line-md:plus" size="size-5" />
+				Tambah Akun
+			</button>
+		</div>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-0">
+				<div
+					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
+					hx-include=".filter-accounts"
+					hx-select="tbody"
+					hx-swap="outerHTML transition:true"
+					hx-target="tbody"
+				>
+					<label class="input input-sm">
+						<Icon name="line-md:search" size="size-4" />
+						<input
+							hx-get
+							hx-trigger="input changed delay:300ms"
+							class="filter-accounts"
+							name="query"
+							type="search"
+							placeholder="Cari nama..."
+						/>
+					</label>
+					<select
+						hx-get
+						class="select select-sm filter-accounts sm:max-w-32"
+						name="role"
+					>
+						<option disabled selected>Filter Role</option>
+						<option value="all">Semua</option>
+						<option value="admin">Admin</option>
+						<option value="staff">Staff</option>
+						<option value="owner">Owner</option>
+					</select>
+				</div>
+
+				<div class="overflow-x-auto">
+					<table class="table-zebra table w-full">
+						<thead>
+							<tr class="border-base-300 border-b">
+								<th class="text-base-content/60 min-w-8 text-xs font-bold">#</th
+								>
+								<th class="text-base-content/60 min-w-64 text-xs font-bold"
+									>Username</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Role</th>
+								<th class="text-base-content/60 min-w-48 text-xs font-bold"
+									>Terakhir Akses</th
+								>
+								<th class="text-base-content/60 text-right text-xs font-bold"
+									>Aksi</th
+								>
+							</tr>
+						</thead>
+						<tbody id="rows">
+							{
+								accounts.map(
+									({ id, username, displayName, role, lastAccessed }) => (
+										<tr>
+											<td class="font-mono text-sm">{id}</td>
+											<td class="flex items-center gap-2 text-sm font-semibold">
+												<div class="avatar avatar-placeholder">
+													<div class="bg-neutral text-neutral-content w-8 rounded-full">
+														<span class="text-xs uppercase">
+															{username.slice(0, 2)}
+														</span>
+													</div>
+												</div>
+												@{username} ({displayName})
+											</td>
+											<td>
+												<span
+													class:list={[
+														"badge badge-sm font-bold uppercase",
+														ROLE_BADGES[role],
+													]}
+												>
+													{role}
+												</span>
+											</td>
+											<td class="text-base-content/70 text-xs">
+												{lastAccessed}
+											</td>
+											<td class="text-right">
+												<div class="flex justify-end gap-1.5">
+													<button
+														hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
+														class="btn btn-outline btn-info btn-xs"
+													>
+														<Icon name="line-md:edit-twotone" /> Edit
+													</button>
+													<button
+														hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
+														class="btn btn-outline btn-error btn-xs"
+													>
+														<Icon name="line-md:remove" /> Hapus
+													</button>
+												</div>
+											</td>
+										</tr>
+									),
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</DashboardLayout>

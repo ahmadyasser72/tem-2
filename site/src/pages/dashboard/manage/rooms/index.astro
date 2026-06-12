@@ -1,0 +1,384 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+import { z } from "astro/zod";
+import { pick } from "es-toolkit";
+
+import Alert from "~/components/alert.astro";
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		query: z.string().catch(""),
+		status: z
+			.enum(["occupied", "vacant", "inactive"])
+			.optional()
+			.catch(undefined),
+		type: z.enum(["Standar", "Premium"]).optional().catch(undefined),
+	}),
+);
+
+// 1. Fetch all rooms for stats calculation
+const allRoomsFromDb = await db.query.rooms.findMany({
+	with: {
+		leases: {
+			where: { isActive: true },
+			with: {
+				tenant: true,
+			},
+		},
+	},
+});
+
+const allRooms = allRoomsFromDb.map(
+	({ id, roomNumber, roomType, monthlyPrice, isActive, leases }) => {
+		const activeLease = leases[0];
+		return {
+			id,
+			roomNumber,
+			roomType: roomType ?? "Standar",
+			monthlyPrice,
+			isActive,
+			tenantName: activeLease?.tenant?.fullName ?? null,
+		};
+	},
+);
+
+const roomStats = [
+	{
+		title: "Total Kamar",
+		value: allRooms.length.toString(),
+		icon: "line-md:home-md",
+	},
+	{
+		title: "Kamar Terisi",
+		value: allRooms
+			.filter(({ isActive, tenantName }) => isActive && tenantName)
+			.length.toString(),
+		icon: "line-md:circle-to-confirm-circle-transition",
+	},
+	{
+		title: "Kamar Tersedia",
+		value: allRooms
+			.filter(({ isActive, tenantName }) => isActive && !tenantName)
+			.length.toString(),
+		icon: "line-md:alert-circle",
+	},
+	{
+		title: "Kamar Nonaktif",
+		value: allRooms.filter(({ isActive }) => !isActive).length.toString(),
+		icon: "line-md:close-circle",
+	},
+];
+
+// 2. Fetch filtered rooms using spread-based conditional where clause
+const filteredRoomsFromDb = await db.query.rooms.findMany({
+	where: {
+		...(params.query && {
+			OR: [
+				{ roomNumber: { like: `%${params.query}%` } },
+				{
+					leases: {
+						isActive: true,
+						tenant: {
+							fullName: { like: `%${params.query}%` },
+						},
+					},
+				},
+			],
+		}),
+		...(params.status && {
+			...(params.status === "inactive" && { isActive: false }),
+			...(params.status === "occupied" && {
+				isActive: true,
+				leases: { isActive: true },
+			}),
+			...(params.status === "vacant" && {
+				isActive: true,
+				NOT: { leases: { isActive: true } },
+			}),
+		}),
+		...(params.type && { roomType: params.type }),
+	},
+	with: {
+		leases: {
+			where: { isActive: true },
+			with: {
+				tenant: true,
+			},
+		},
+	},
+});
+
+const filteredRooms = filteredRoomsFromDb.map(
+	({ id, roomNumber, roomType, monthlyPrice, isActive, leases }) => {
+		const activeLease = leases[0];
+		return {
+			id,
+			roomNumber,
+			roomType: roomType ?? "Standar",
+			monthlyPrice,
+			isActive,
+			tenantName: activeLease?.tenant?.fullName ?? null,
+		};
+	},
+);
+
+const STAT_COLORS: Record<string, string> = {
+	"Total Kamar": "bg-primary/40 text-base-content",
+	"Kamar Terisi": "bg-success/40 text-base-content",
+	"Kamar Tersedia": "bg-warning/40 text-base-content",
+	"Kamar Nonaktif": "bg-neutral/40 text-base-content",
+};
+
+const STATUS_BADGES: Record<string, string> = {
+	Terisi: "badge-success",
+	Kosong: "badge-warning",
+	Nonaktif: "badge-neutral",
+};
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; title: string; description: string }
+	| void => {
+	const addResult = Astro.getActionResult(actions.manage.rooms.add);
+	if (addResult?.error)
+		return { success: false, message: addResult.error.message };
+	else if (addResult?.data) {
+		return {
+			success: true,
+			title: "Tambah kamar",
+			description: `Berhasil menambah kamar! (ID: ${addResult.data.id})`,
+		};
+	}
+
+	const editResult = Astro.getActionResult(actions.manage.rooms.edit);
+	if (editResult?.error)
+		return { success: false, message: editResult.error.message };
+	else if (editResult?.data) {
+		return {
+			success: true,
+			title: "Edit kamar",
+			description: `Berhasil edit kamar! (ID: ${editResult.data.id})`,
+		};
+	}
+})();
+---
+
+{
+	formResult?.success === false && (
+		<Alert id="form_error" type="error" description={formResult.message} />
+	)
+}
+
+<DashboardLayout title="Manajemen Kamar ">
+	<div class="flex flex-col gap-6">
+		{
+			formResult?.success ? (
+				<Alert
+					id="form_result"
+					type="info"
+					{...pick(formResult, ["title", "description"])}
+				/>
+			) : (
+				<p id="form_result" />
+			)
+		}
+
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Manajemen Kamar</h1>
+				<p class="text-base-content/60 text-sm">
+					Kelola inventaris, spesifikasi, dan status hunian kamar indekos
+				</p>
+			</div>
+			<button
+				hx-get="/dashboard/manage/rooms/modal/add"
+				class="btn btn-primary"
+			>
+				<Icon name="line-md:plus" size="size-5" />
+				Tambah Kamar
+			</button>
+		</div>
+
+		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+			{
+				roomStats.map(({ title, value, icon }) => (
+					<div class="card bg-base-100 border-base-300 border shadow-sm">
+						<div class="card-body flex-row items-center gap-3 p-4">
+							<div class:list={["flex rounded-lg p-2.5", STAT_COLORS[title]]}>
+								<Icon name={icon as any} size="size-6" />
+							</div>
+							<div class="flex flex-col">
+								<span class="text-base-content/60 text-xs font-semibold">
+									{title}
+								</span>
+								<span class="text-xl font-bold">{value}</span>
+							</div>
+						</div>
+					</div>
+				))
+			}
+		</div>
+
+		<div
+			class="bg-base-100 border-base-300 flex flex-col justify-between gap-3 rounded-xl border p-4 sm:flex-row sm:items-center"
+			hx-include=".filter-rooms"
+			hx-select="#rooms-grid"
+			hx-swap="outerHTML transition:true"
+			hx-target="#rooms-grid"
+		>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+				<label class="input input-sm">
+					<Icon name="line-md:search" size="size-4" />
+					<input
+						hx-get
+						hx-trigger="input changed delay:300ms"
+						class="filter-rooms"
+						name="query"
+						type="search"
+						value={params.query}
+						placeholder="Cari nomor/penghuni..."
+					/>
+				</label>
+				<div class="flex gap-2">
+					<input
+						class="filter-rooms"
+						id="status-filter"
+						name="status"
+						type="hidden"
+						value={params.status || "all"}
+					/>
+					<button
+						hx-get
+						hx-on:click="document.getElementById('status-filter').value = 'all'"
+						class:list={[
+							"btn btn-sm",
+							(params.status || "all") === "all"
+								? "btn-neutral"
+								: "btn-outline",
+						]}
+					>
+						Semua
+					</button>
+					<button
+						hx-get
+						hx-on:click="document.getElementById('status-filter').value = 'occupied'"
+						class:list={[
+							"btn btn-sm",
+							params.status === "occupied" ? "btn-neutral" : "btn-outline",
+						]}
+					>
+						Terisi
+					</button>
+					<button
+						hx-get
+						hx-on:click="document.getElementById('status-filter').value = 'vacant'"
+						class:list={[
+							"btn btn-sm",
+							params.status === "vacant" ? "btn-neutral" : "btn-outline",
+						]}
+					>
+						Kosong
+					</button>
+					<button
+						hx-get
+						hx-on:click="document.getElementById('status-filter').value = 'inactive'"
+						class:list={[
+							"btn btn-sm",
+							params.status === "inactive" ? "btn-neutral" : "btn-outline",
+						]}
+					>
+						Nonaktif
+					</button>
+				</div>
+			</div>
+			<div class="flex gap-2">
+				<select hx-get class="select select-sm filter-rooms w-36" name="type">
+					<option value="all" selected={!params.type}>
+						Tipe Kamar (Semua)
+					</option>
+					<option value="Standar" selected={params.type === "Standar"}>
+						Standar
+					</option>
+					<option value="Premium" selected={params.type === "Premium"}>
+						Premium
+					</option>
+				</select>
+			</div>
+		</div>
+
+		<div
+			class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+			id="rooms-grid"
+		>
+			{
+				filteredRooms.map(
+					({
+						id,
+						roomNumber,
+						roomType,
+						monthlyPrice,
+						isActive,
+						tenantName,
+					}) => {
+						const status = !isActive
+							? "Nonaktif"
+							: tenantName
+								? "Terisi"
+								: "Kosong";
+						const price = `Rp ${monthlyPrice.toLocaleString("id-ID")}`;
+						return (
+							<div class="card bg-base-100 border-base-300 border shadow-sm transition-all hover:shadow-md">
+								<div class="card-body gap-3 p-5">
+									<div class="flex items-start justify-between">
+										<div class="flex flex-col">
+											<span class="text-base-content/50 text-xs font-bold">
+												{roomType}
+											</span>
+											<span class="text-2xl font-bold">{roomNumber}</span>
+										</div>
+										<span
+											class:list={[
+												"badge badge-sm font-bold",
+												STATUS_BADGES[status],
+											]}
+										>
+											{status}
+										</span>
+									</div>
+
+									<div class="border-base-200 my-1 flex flex-col gap-1 border-t border-b py-3">
+										<div class="flex justify-between text-xs">
+											<span class="text-base-content/60">Harga Sewa:</span>
+											<span class="font-mono font-bold">{price}/Bln</span>
+										</div>
+										<div class="mt-1 flex justify-between text-xs">
+											<span class="text-base-content/60">Penghuni:</span>
+											<span class="text-base-content max-w-30 truncate font-semibold">
+												{tenantName || "-"}
+											</span>
+										</div>
+									</div>
+
+									<div class="card-actions justify-end">
+										<button
+											hx-get={`/dashboard/manage/rooms/modal/edit/${id}`}
+											class="btn btn-outline btn-primary btn-xs flex w-full items-center justify-center gap-1"
+										>
+											<Icon name="line-md:edit-twotone" /> Edit Kamar
+										</button>
+									</div>
+								</div>
+							</div>
+						);
+					},
+				)
+			}
+		</div>
+	</div>
+</DashboardLayout>

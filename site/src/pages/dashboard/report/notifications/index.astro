@@ -1,0 +1,367 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+import { z } from "astro/zod";
+import { pick } from "es-toolkit";
+
+import Alert from "~/components/alert.astro";
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		query: z.string().catch(""),
+		type: z
+			.enum(["all", "Pengingat", "Pembayaran", "Umum"])
+			.optional()
+			.catch(undefined),
+	}),
+);
+
+const tenantsFromDb = await db.query.tenants.findMany({
+	with: {
+		leases: {
+			where: { isActive: true },
+			with: {
+				room: true,
+			},
+		},
+	},
+});
+
+const activeTenants = tenantsFromDb.filter(({ leases }) => leases.length > 0);
+
+// Fetch filtered notifications using spread-based conditional where clause and chatbotMessage relation
+const notificationsFromDb = await db.query.notifications.findMany({
+	where: {
+		...(params.query && {
+			tenant: {
+				fullName: { like: `%${params.query}%` },
+			},
+		}),
+		...(params.type &&
+			params.type !== "all" && {
+				...(params.type === "Pembayaran" && {
+					invoiceId: { isNotNull: true },
+					chatbotMessage: {
+						OR: [
+							{ message: { like: "%lunas%" } },
+							{ message: { like: "%terima kasih%" } },
+						],
+					},
+				}),
+				...(params.type === "Pengingat" && {
+					invoiceId: { isNotNull: true },
+					NOT: {
+						chatbotMessage: {
+							OR: [
+								{ message: { like: "%lunas%" } },
+								{ message: { like: "%terima kasih%" } },
+							],
+						},
+					},
+				}),
+				...(params.type === "Umum" && {
+					invoiceId: { isNull: true },
+				}),
+			}),
+	},
+	with: {
+		tenant: {
+			with: {
+				leases: {
+					where: { isActive: true },
+					with: {
+						room: true,
+					},
+				},
+			},
+		},
+		invoice: true,
+		chatbotMessage: true,
+	},
+	orderBy: (notifications, { desc }) => [desc(notifications.id)],
+});
+
+const filteredNotifications = notificationsFromDb.map((n) => {
+	const activeLease = n.tenant?.leases?.[0];
+	const msg = n.chatbotMessage?.message ?? "";
+	const type = n.invoiceId
+		? msg.toLowerCase().includes("lunas") ||
+			msg.toLowerCase().includes("terima kasih")
+			? "Pembayaran"
+			: "Pengingat"
+		: "Umum";
+	return {
+		id: n.id,
+		time: n.chatbotMessage?.sentAt ?? null,
+		tenantName: n.tenant?.fullName ?? "-",
+		roomNumber: activeLease?.room?.roomNumber ?? "-",
+		invoiceNumber: n.invoiceId
+			? `INV-${n.invoiceId.toString().padStart(6, "0")}`
+			: "-",
+		type,
+		status: n.status === "sent" ? "Terkirim" : "Gagal",
+	};
+});
+
+const TYPE_BADGES: Record<string, string> = {
+	Pengingat: "badge-warning",
+	Pembayaran: "badge-success",
+	Umum: "badge-info",
+};
+
+const STATUS_BADGES: Record<string, string> = {
+	Terkirim: "badge-success",
+	Gagal: "badge-error",
+};
+
+
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; title: string; description: string }
+	| void => {
+	const sendResult = Astro.getActionResult(actions.manage.notifications.send);
+	if (sendResult?.error)
+		return { success: false, message: sendResult.error.message };
+	else if (sendResult?.data) {
+		return {
+			success: true,
+			title: "Kirim Notifikasi",
+			description: "Notifikasi berhasil dikirimkan via WhatsApp!",
+		};
+	}
+})();
+---
+
+{
+	formResult?.success === false && (
+		<Alert id="form_error" type="error" description={formResult.message} />
+	)
+}
+
+<DashboardLayout title="Manajemen Notifikasi ">
+	<div class="flex flex-col gap-6">
+		{
+			formResult?.success ? (
+				<Alert
+					id="form_result"
+					type="info"
+					{...pick(formResult, ["title", "description"])}
+				/>
+			) : (
+				<p id="form_result" />
+			)
+		}
+
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Manajemen Notifikasi</h1>
+				<p class="text-base-content/60 text-sm">
+					Riwayat dan pengiriman notifikasi (tagihan, pengingat, komplain) via
+					WhatsApp Chatbot
+				</p>
+			</div>
+			<button
+				class="btn btn-primary"
+				onclick="const modal = document.getElementById('modal-kirim-notifikasi'); if(modal instanceof HTMLDialogElement) modal.showModal();"
+			>
+				<Icon name="line-md:plus" size="size-5" />
+				Kirim Notifikasi
+			</button>
+		</div>
+
+		<Alert
+			type="info"
+			title="Sistem Otomatisasi Aktif"
+			description="Sistem mengirimkan pesan pengingat tagihan (WhatsApp) otomatis setiap hari pukul 07.00 WIB untuk penyewa yang memiliki tagihan belum lunas mendekati H-3 jatuh tempo."
+		/>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-0">
+				<div
+					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
+					hx-include=".filter-notifications"
+					hx-select="#notifications-table-body"
+					hx-swap="outerHTML transition:true"
+					hx-target="#notifications-table-body"
+				>
+					<label class="input input-sm max-w-xs flex-1">
+						<Icon name="line-md:search" size="size-4" />
+						<input
+							hx-get
+							hx-trigger="input changed delay:300ms"
+							class="filter-notifications"
+							name="query"
+							type="search"
+							value={params.query}
+							placeholder="Cari nama penghuni..."
+						/>
+					</label>
+					<div class="flex gap-2">
+						<select
+							hx-get
+							class="select select-sm filter-notifications w-36"
+							name="type"
+						>
+							<option
+								value="all"
+								selected={params.type === "all" || !params.type}
+							>
+								Tipe Notifikasi (Semua)
+							</option>
+							<option value="Pengingat" selected={params.type === "Pengingat"}>
+								Pengingat
+							</option>
+							<option
+								value="Pembayaran"
+								selected={params.type === "Pembayaran"}
+							>
+								Pembayaran
+							</option>
+							<option value="Umum" selected={params.type === "Umum"}>
+								Umum
+							</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="overflow-x-auto">
+					<table class="table w-full">
+						<thead>
+							<tr class="border-base-300 border-b">
+								<th class="text-base-content/60 text-xs font-bold"
+									>Waktu Kirim</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Penghuni</th>
+								<th class="text-base-content/60 text-xs font-bold">Invoice</th>
+								<th class="text-base-content/60 text-xs font-bold">Tipe</th>
+								<th class="text-base-content/60 text-xs font-bold">Status</th>
+							</tr>
+						</thead>
+						<tbody id="notifications-table-body">
+							{
+								filteredNotifications.map(
+									({
+										time,
+										tenantName,
+										roomNumber,
+										invoiceNumber,
+										type,
+										status,
+									}) => (
+										<tr class="border-base-200 hover:bg-base-200/40 border-b transition-colors">
+											<td class="text-base-content/70 font-mono text-xs">
+												{formatDate(time, "DD MMM YYYY HH:mm")}
+											</td>
+											<td class="flex items-center gap-2 text-sm font-semibold">
+												{tenantName}
+												<span class="badge badge-neutral badge-xs font-mono font-semibold">
+													{roomNumber}
+												</span>
+											</td>
+											<td class="text-primary font-mono text-xs font-semibold">
+												{invoiceNumber}
+											</td>
+											<td>
+												<span
+													class:list={[
+														"badge badge-sm font-bold",
+														TYPE_BADGES[type],
+													]}
+												>
+													{type}
+												</span>
+											</td>
+											<td>
+												<span
+													class:list={[
+														"badge badge-sm font-bold",
+														STATUS_BADGES[status],
+													]}
+												>
+													{status}
+												</span>
+											</td>
+										</tr>
+									),
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<dialog class="modal" id="modal-kirim-notifikasi">
+			<div class="modal-box border-base-300 border">
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon
+						class="text-primary"
+						name="line-md:chat-twotone"
+						size="size-6"
+					/>
+					Kirim Notifikasi Baru
+				</h3>
+				<form
+					hx-post={actions.manage.notifications.send}
+					class="flex flex-col gap-4"
+					id="send_notification_form"
+					hx-on--after-request="event.detail.successful && document.getElementById('modal-kirim-notifikasi').close()"
+					hx-select-oob="#form_error, #form_result, #notifications-table-body"
+					hx-swap="none transition:true"
+					action={actions.manage.notifications.send}
+					method="post"
+				>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend text-sm font-semibold"
+							>Penerima (Penghuni)</legend
+						>
+						<select class="select w-full" name="tenant_id" required>
+							<option value="" disabled selected>Pilih penerima...</option>
+							{
+								activeTenants.map(({ id, fullName, leases }) => (
+									<option value={id}>
+										{fullName} ({leases[0]?.room?.roomNumber ?? "-"})
+									</option>
+								))
+							}
+						</select>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend text-sm font-semibold"
+							>Pesan Notifikasi</legend
+						>
+						<textarea
+							class="textarea w-full"
+							name="message"
+							placeholder="Tulis pesan lengkap yang ingin dikirimkan via WhatsApp..."
+							required
+							rows="4"></textarea>
+					</fieldset>
+					<p class="text-error text-sm" id="form_error"></p>
+				</form>
+				<div class="modal-action">
+					<form class="flex gap-2" method="dialog">
+						<button class="btn btn-outline btn-sm">Batal</button>
+						<button
+							class="btn btn-primary btn-sm"
+							type="submit"
+							form="send_notification_form"
+						>
+							Kirim Pesan
+						</button>
+					</form>
+				</div>
+			</div>
+			<form class="modal-backdrop" method="dialog">
+				<button>close</button>
+			</form>
+		</dialog>
+	</div>
+</DashboardLayout>

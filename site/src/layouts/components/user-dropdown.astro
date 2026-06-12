@@ -1,0 +1,67 @@
+---
+import { actions } from "astro:actions";
+
+import Icon from "~/components/icon.astro";
+
+export interface Props {
+	user: {
+		id: number;
+		name: string;
+		role: "admin" | "staff" | "owner";
+	};
+}
+
+const { user } = Astro.props;
+
+const ROLE_BADGE: Record<string, string> = {
+	admin: "badge-primary",
+	staff: "badge-secondary",
+	owner: "badge-accent",
+};
+
+const initial = user.name.charAt(0).toUpperCase();
+---
+
+<button
+	class="flex w-full items-center gap-3 p-2 text-left"
+	popovertarget="user-popover"
+	style="anchor-name:--user-anchor"
+>
+	<div class="avatar avatar-placeholder">
+		<div class="bg-neutral text-neutral-content w-9 rounded-full">
+			<span class="text-sm font-bold">{initial}</span>
+		</div>
+	</div>
+	<div class="flex-1">
+		<div class="text-sm font-medium">{user.name}</div>
+		<span
+			class:list={[
+				"badge badge-xs uppercase",
+				ROLE_BADGE[user.role] ?? "badge-ghost",
+			]}>{user.role}</span
+		>
+	</div>
+	<Icon name="line-md:chevron-small-double-up" size="size-5" />
+</button>
+
+<ul
+	class="dropdown dropdown-top menu rounded-box bg-base-100 w-56 p-2 shadow-sm"
+	id="user-popover"
+	popover="auto"
+	style="position-anchor:--user-anchor"
+>
+	<li>
+		<form
+			hx-post={actions.auth.logout}
+			class="contents"
+			action={actions.auth.logout}
+			enctype="multipart/form-data"
+			method="post"
+		>
+			<button class="btn btn-error" type="submit">
+				<Icon name="line-md:logout" size="size-5" />
+				Keluar
+			</button>
+		</form>
+	</li>
+</ul>

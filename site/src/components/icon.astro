@@ -1,0 +1,12 @@
+---
+export interface Props {
+	name: `line-md:${string}` | `svg-spinners:${string}`;
+	size?: `size-${number}`;
+	class?: string;
+}
+---
+
+<iconify-icon
+	class:list={[Astro.props.size ?? "size-4", Astro.props.class]}
+	icon={Astro.props.name}
+	width="none"></iconify-icon>

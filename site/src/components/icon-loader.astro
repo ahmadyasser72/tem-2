@@ -1,0 +1,11 @@
+---
+import type { Props as IconProps } from "./icon.astro";
+import Icon from "./icon.astro";
+
+type Props = Pick<IconProps, "size">;
+---
+
+<Icon
+	name="svg-spinners:90-ring-with-bg"
+	class:list={[Astro.props.size ?? "size-4", "htmx-indicator"]}
+/>

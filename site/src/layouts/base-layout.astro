@@ -1,0 +1,60 @@
+---
+import "~/styles/global.css";
+
+export interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link type="image/svg+xml" href="/favicon.svg" rel="icon" />
+		<link href="/favicon.ico" rel="icon" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+
+<script>
+	import "iconify-icon";
+
+	import htmx from "htmx.org";
+
+	htmx.config.responseHandling = [
+		{ code: "[23]..", swap: true },
+		{ code: "40[01]", swap: true, error: true },
+	];
+	htmx.onLoad((node) => {
+		if (node instanceof HTMLDialogElement) {
+			node.showModal();
+			node.addEventListener("close", () =>
+				setTimeout(() => node.remove(), 300),
+			);
+		}
+	});
+
+	htmx.on("htmx:beforeSwap", (e) => {
+		const event = e as Event & {
+			detail: {
+				serverResponse: string;
+				target: HTMLElement;
+				swapOverride: string;
+			};
+		};
+
+		if (
+			event.detail.serverResponse.startsWith("<dialog") &&
+			event.detail.target instanceof HTMLButtonElement
+		) {
+			event.detail.target = document.body;
+			event.detail.swapOverride = "beforeend";
+		}
+	});
+</script>

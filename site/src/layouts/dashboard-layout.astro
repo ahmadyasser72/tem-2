@@ -1,0 +1,60 @@
+---
+import { actions } from "astro:actions";
+
+import Icon from "~/components/icon.astro";
+import type { Props as BaseProps } from "./base-layout.astro";
+import BaseLayout from "./base-layout.astro";
+import NavbarMenu from "./components/navbar-menu.astro";
+import UserDropdown from "./components/user-dropdown.astro";
+
+type Props = BaseProps;
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect("/login");
+
+const logoutResult = Astro.getActionResult(actions.auth.logout);
+if (logoutResult && !logoutResult.error) {
+	if (!Astro.request.headers.get("hx-request")) return Astro.redirect("/login");
+
+	Astro.response.headers.set("hx-retarget", "body");
+	Astro.response.headers.set("hx-reswap", "outerHTML");
+	Astro.response.headers.set("hx-location", "/login");
+}
+---
+
+<BaseLayout {...Astro.props}>
+	<div class="drawer lg:drawer-open">
+		<input class="drawer-toggle" id="dashboard-drawer" type="checkbox" />
+		<div class="drawer-content">
+			<nav class="navbar bg-base-200 w-full">
+				<label
+					class="btn btn-square btn-ghost lg:hidden"
+					for="dashboard-drawer"
+					aria-label="open sidebar"
+				>
+					<Icon name="line-md:menu" />
+				</label>
+
+				<div class="px-4">Indekos Ungu</div>
+			</nav>
+			<div class="p-4"><slot /></div>
+		</div>
+
+		<div class="drawer-side">
+			<label
+				class="drawer-overlay"
+				for="dashboard-drawer"
+				aria-label="close sidebar"></label>
+
+			<div
+				class="bg-base-100 border-base-300/80 flex min-h-full w-64 flex-col border-r"
+			>
+				<NavbarMenu role={user.role} />
+
+				<div class="border-base-300 mt-auto border-t p-3">
+					<UserDropdown user={user} />
+				</div>
+			</div>
+		</div>
+	</div>
+</BaseLayout>

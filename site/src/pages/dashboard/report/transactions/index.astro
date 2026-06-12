@@ -1,0 +1,321 @@
+---
+import { db } from "@e-kos/database";
+
+import { z } from "astro/zod";
+
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { formatDate } from "~/lib/date";
+
+const currentMonthStr = (() => {
+	const now = new Date();
+	return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+})();
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		month: z.string().catch(currentMonthStr),
+		status: z
+			.enum(["all", "paid", "unpaid", "overdue"])
+			.optional()
+			.catch(undefined),
+	}),
+);
+
+// Parse start and end of the selected month
+const [yearStr, monthStr] = params.month.split("-");
+const year = parseInt(yearStr, 10);
+const month = parseInt(monthStr, 10);
+const startOfMonth = new Date(year, month - 1, 1);
+const endOfMonth = new Date(year, month, 1);
+
+// 1. Query all invoices for the selected month at database level
+const monthlyInvoicesFromDb = await db.query.invoices.findMany({
+	where: {
+		dueDate: {
+			gte: startOfMonth,
+			lt: endOfMonth,
+		},
+	},
+	with: {
+		lease: {
+			with: {
+				tenant: true,
+				room: true,
+			},
+		},
+	},
+});
+
+const monthlyInvoices = monthlyInvoicesFromDb.map((inv) => {
+	return {
+		id: inv.id,
+		invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
+		tenantName: inv.lease?.tenant?.fullName ?? "-",
+		roomNumber: inv.lease?.room?.roomNumber ?? "-",
+		amount: inv.amount,
+		dueDate: inv.dueDate,
+		status: inv.status,
+		gatewayRef: inv.duitkuReference ?? "-",
+	};
+});
+
+// Compute stats based on the monthly set
+const totalRevenue = monthlyInvoices
+	.filter(({ status }) => status === "paid")
+	.reduce((sum, { amount }) => sum + amount, 0);
+
+const paidCount = monthlyInvoices.filter(
+	({ status }) => status === "paid",
+).length;
+const unpaidCount = monthlyInvoices.filter(
+	({ status }) => status !== "paid",
+).length;
+const outstandingAmount = monthlyInvoices
+	.filter(({ status }) => status !== "paid")
+	.reduce((sum, { amount }) => sum + amount, 0);
+
+const totalCount = monthlyInvoices.length;
+const paidPercent =
+	totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
+
+const summaryStats = [
+	{
+		title: "Total Pemasukan",
+		value: `Rp ${totalRevenue.toLocaleString("id-ID")}`,
+		desc: `Periode ${params.month}`,
+		icon: "line-md:edit-filled",
+	},
+	{
+		title: "Sudah Terbayar",
+		value: `${paidCount} Invoice`,
+		desc: `${paidPercent}% dari total tagihan`,
+		icon: "line-md:circle-to-confirm-circle-transition",
+	},
+	{
+		title: "Belum Terbayar",
+		value: `${unpaidCount} Invoice`,
+		desc: `Rp ${outstandingAmount.toLocaleString("id-ID")} outstanding`,
+		icon: "line-md:close-circle",
+	},
+];
+
+// 2. Query filtered invoices using spread-based conditional where clause
+const filteredInvoicesFromDb = await db.query.invoices.findMany({
+	where: {
+		dueDate: {
+			gte: startOfMonth,
+			lt: endOfMonth,
+		},
+		...(params.status && params.status !== "all" && { status: params.status }),
+	},
+	with: {
+		lease: {
+			with: {
+				tenant: true,
+				room: true,
+			},
+		},
+	},
+});
+
+const filteredInvoices = filteredInvoicesFromDb.map((inv) => {
+	return {
+		id: inv.id,
+		invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
+		tenantName: inv.lease?.tenant?.fullName ?? "-",
+		roomNumber: inv.lease?.room?.roomNumber ?? "-",
+		amount: inv.amount,
+		dueDate: inv.dueDate,
+		status: inv.status,
+		gatewayRef: inv.duitkuReference ?? "-",
+	};
+});
+
+const STAT_COLORS: Record<string, string> = {
+	"Total Pemasukan": "bg-success/40 text-base-content",
+	"Sudah Terbayar": "bg-success/40 text-base-content",
+	"Belum Terbayar": "bg-error/40 text-base-content",
+};
+
+const STATUS_LABELS = {
+	paid: "Lunas",
+	unpaid: "Belum Bayar",
+	overdue: "Terlambat",
+};
+
+const STATUS_BADGES: Record<string, string> = {
+	paid: "badge-success",
+	unpaid: "badge-warning",
+	overdue: "badge-error",
+};
+
+---
+
+<DashboardLayout title="Laporan Transaksi ">
+	<div class="flex flex-col gap-6" id="transactions-content-wrapper">
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Laporan Transaksi</h1>
+				<p class="text-base-content/60 text-sm">
+					Rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni
+				</p>
+			</div>
+			<button class="btn btn-outline btn-sm flex items-center gap-1">
+				<Icon name="line-md:download" /> Export Excel
+			</button>
+		</div>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div
+				class="card-body flex flex-col items-center justify-between gap-3 p-4 sm:flex-row"
+				hx-include=".filter-transactions"
+				hx-select="#transactions-content-wrapper"
+				hx-swap="outerHTML transition:true"
+				hx-target="#transactions-content-wrapper"
+			>
+				<div class="flex w-full items-center gap-3 sm:w-auto">
+					<Icon
+						class="text-primary shrink-0"
+						name="line-md:calendar"
+						size="size-5"
+					/>
+					<span
+						class="text-base-content/75 hidden text-sm font-semibold md:inline"
+						>Pilih Periode:</span
+					>
+					<input
+						hx-get
+						hx-trigger="change"
+						class="input input-sm filter-transactions w-full sm:w-44"
+						name="month"
+						type="month"
+						value={params.month}
+					/>
+				</div>
+				<div class="flex w-full justify-end gap-2 sm:w-auto">
+					<select
+						hx-get
+						class="select select-sm filter-transactions w-32"
+						name="status"
+					>
+						<option
+							value="all"
+							selected={params.status === "all" || !params.status}
+						>
+							Semua Status
+						</option>
+						<option value="paid" selected={params.status === "paid"}>
+							Lunas
+						</option>
+						<option value="unpaid" selected={params.status === "unpaid"}>
+							Belum Bayar
+						</option>
+						<option value="overdue" selected={params.status === "overdue"}>
+							Terlambat
+						</option>
+					</select>
+				</div>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+			{
+				summaryStats.map(({ title, value, desc, icon }) => (
+					<div class="card bg-base-100 border-base-300 border shadow-sm">
+						<div class="card-body flex-row items-center gap-3 p-5">
+							<div class:list={["flex rounded-xl p-3", STAT_COLORS[title]]}>
+								<Icon name={icon as any} size="size-7" />
+							</div>
+							<div class="flex flex-col">
+								<span class="text-base-content/60 text-xs font-semibold">
+									{title}
+								</span>
+								<span class="text-2xl font-bold">{value}</span>
+								<span class="text-base-content/50 mt-0.5 text-xs">{desc}</span>
+							</div>
+						</div>
+					</div>
+				))
+			}
+		</div>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-0">
+				<div class="overflow-x-auto">
+					<table class="table-zebra table w-full">
+						<thead>
+							<tr class="border-base-300 border-b">
+								<th class="text-base-content/60 text-xs font-bold"
+									>No. Invoice</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Penghuni</th>
+								<th class="text-base-content/60 text-xs font-bold">Kamar</th>
+								<th class="text-base-content/60 text-xs font-bold">Nominal</th>
+								<th class="text-base-content/60 text-xs font-bold"
+									>Jatuh Tempo</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Status</th>
+								<th class="text-base-content/60 text-xs font-bold"
+									>Ref. Gateway</th
+								>
+							</tr>
+						</thead>
+						<tbody>
+							{
+								filteredInvoices.map(
+									({
+										id,
+										invoiceNumber,
+										tenantName,
+										roomNumber,
+										amount,
+										dueDate,
+										status,
+										gatewayRef,
+									}) => (
+										<tr
+											class="border-base-200 hover:bg-base-200/40 border-b transition-colors"
+											data-id={id}
+										>
+											<td class="text-primary font-mono text-xs font-bold">
+												{invoiceNumber}
+											</td>
+											<td class="text-sm font-semibold">{tenantName}</td>
+											<td>
+												<span class="badge badge-neutral font-mono font-semibold">
+													{roomNumber}
+												</span>
+											</td>
+											<td class="font-mono text-sm font-semibold">
+												Rp {amount.toLocaleString("id-ID")}
+											</td>
+											<td class="text-base-content/70 font-mono text-xs">
+												{formatDate(dueDate)}
+											</td>
+											<td>
+												<span
+													class:list={[
+														"badge badge-sm font-bold",
+														STATUS_BADGES[status],
+													]}
+												>
+													{STATUS_LABELS[status]}
+												</span>
+											</td>
+											<td class="text-base-content/60 font-mono text-xs">
+												{gatewayRef}
+											</td>
+										</tr>
+									),
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</DashboardLayout>

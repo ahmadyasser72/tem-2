@@ -1,0 +1,93 @@
+---
+import { actions } from "astro:actions";
+
+import Icon from "~/components/icon.astro";
+
+export const partial = true;
+---
+
+<dialog class="modal" id="add_account_modal">
+	<div class="modal-box">
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
+				>✕</button
+			>
+		</form>
+
+		<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+			<Icon class="text-primary" name="line-md:account" size="size-6" />
+			Tambah Akun Baru
+		</h3>
+
+		<form
+			hx-post={actions.manage.accounts.add}
+			class="flex flex-col gap-4"
+			id="add_account_form"
+			hx-on--after-request="event.detail.successful && add_account_modal.close()"
+			hx-select-oob="#form_error, #form_result, #rows"
+			hx-swap="none transition:true"
+			action={actions.manage.accounts.add}
+			method="post"
+		>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Username</legend>
+				<input
+					class="input w-full"
+					name="username"
+					type="text"
+					placeholder="Masukkan username..."
+					required
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Nama Tampilan</legend>
+				<input
+					class="input w-full"
+					name="display_name"
+					type="text"
+					placeholder="Masukkan nama..."
+					required
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Kata Sandi</legend>
+				<input
+					class="input w-full"
+					name="password"
+					type="password"
+					placeholder="Masukkan password..."
+					required
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Role Akses</legend>
+				<select class="select w-full" name="role" required>
+					<option value="" disabled selected>Pilih hak akses</option>
+					<option value="admin">Admin (Akses Penuh)</option>
+					<option value="staff">Staff (Operasional & Komplain)</option>
+					<option value="owner">Owner (Laporan Keuangan)</option>
+				</select>
+			</fieldset>
+
+			<p id="form_error"></p>
+		</form>
+		<div class="modal-action">
+			<form class="flex gap-2" method="dialog">
+				<button class="btn btn-outline btn-sm">Batal</button>
+				<button
+					class="btn btn-primary btn-sm"
+					type="submit"
+					form="add_account_form"
+				>
+					Simpan Akun
+				</button>
+			</form>
+		</div>
+	</div>
+	<form class="modal-backdrop" method="dialog">
+		<button>close</button>
+	</form>
+</dialog>

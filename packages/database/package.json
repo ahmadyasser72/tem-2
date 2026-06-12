@@ -4,14 +4,14 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.js",
+		"./schema": "./src/schema/index.js"
 	},
 	"scripts": {
 		"check": "tsc --noEmit",
 		"db:push": "drizzle-kit push"
 	},
 	"devDependencies": {
-		"@types/bun": "1.3.10",
 		"@types/node": "25.4.0",
 		"drizzle-kit": "^1.0.0-beta.18-7eb39f0",
 		"typescript": "5.9.3"

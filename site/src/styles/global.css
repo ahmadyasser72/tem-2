@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+	themes:
+		light --default,
+		dark --prefersdark;
+	exclude:
+		rootscrollgutter,
+		properties /* https://github.com/saadeghi/daisyui/issues/3882 */;
+}
+
+:not(.htmx-request) > .htmx-indicator:not(.htmx-request),
+.htmx-indicator-replace.htmx-request,
+.htmx-request > .htmx-indicator-replace {
+	@apply hidden;
+}
+
+@utility modal {
+	@apply max-sm:modal-bottom;
+}
+
+@utility modal-box {
+	@apply max-h-9/10;
+}

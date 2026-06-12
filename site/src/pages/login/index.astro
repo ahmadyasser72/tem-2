@@ -1,0 +1,82 @@
+---
+import { actions } from "astro:actions";
+
+import IconLoader from "~/components/icon-loader.astro";
+import Icon from "~/components/icon.astro";
+import BaseLayout from "~/layouts/base-layout.astro";
+
+const loginResult = Astro.getActionResult(actions.auth.login);
+if (loginResult && !loginResult.error) {
+	if (!Astro.request.headers.get("hx-request"))
+		return Astro.redirect("/dashboard");
+
+	Astro.response.headers.set("hx-retarget", "body");
+	Astro.response.headers.set("hx-reswap", "outerHTML");
+	Astro.response.headers.set("hx-location", "/dashboard");
+}
+---
+
+<BaseLayout title="Login">
+	<div class="grid min-h-screen place-items-center">
+		<div class="card bg-base-100 w-96 shadow-xl">
+			<div class="card-body">
+				<div class="text-center">
+					<Icon
+						class="text-purple-600"
+						name="line-md:home-md-twotone"
+						size="size-24"
+					/>
+					<h1 class="text-2xl font-bold">Indekos Ungu</h1>
+					<p class="text-sm opacity-50">Sistem Manajemen Indekos</p>
+				</div>
+
+				<form
+					hx-post={actions.auth.login}
+					class="contents"
+					hx-indicator="#login_form_button"
+					hx-select-oob="#login_form_error"
+					hx-swap="none transition:true"
+					action={actions.auth.login}
+					enctype="multipart/form-data"
+					method="post"
+				>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Nama Pengguna</legend>
+						<input
+							class="input w-full"
+							name="username"
+							type="text"
+							placeholder="Masukkan username"
+							required
+						/>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Kata Sandi</legend>
+						<input
+							class="input w-full"
+							name="password"
+							type="password"
+							placeholder="Masukkan password"
+							required
+						/>
+					</fieldset>
+
+					{
+						loginResult?.error ? (
+							<p class="alert alert-error" id="login_form_error">
+								{loginResult.error.message}
+							</p>
+						) : (
+							<p id="login_form_error" />
+						)
+					}
+
+					<button class="btn btn-primary mt-2 w-full" id="login_form_button">
+						<IconLoader />
+						Masuk
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</BaseLayout>

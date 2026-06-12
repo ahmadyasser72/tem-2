@@ -21,6 +21,7 @@ export const users = sqliteTable("users", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	username: text("username").notNull().unique(),
 	passwordHash: text("password_hash").notNull(),
+	displayName: text("display_name"),
 	role: text("role", { enum: USER_ROLES }).notNull(),
 	lastAccessed: integer("last_accessed", { mode: "timestamp" }),
 });
@@ -105,12 +106,11 @@ export const notifications = sqliteTable("notifications", {
 
 export const auditLogs = sqliteTable("audit_logs", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
-	userId: integer("user_id")
-		.notNull()
-		.references(() => users.id),
+	userId: integer("user_id").references(() => users.id),
 	action: text("action").notNull(),
 	tableName: text("table_name").notNull(),
 	recordId: integer("record_id"),
+	details: text("details"),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),
@@ -124,6 +124,7 @@ export const complaints = sqliteTable("complaints", {
 	description: text("description").notNull(),
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
 	resolvedBy: integer("resolved_by").references(() => users.id),
+	resolveNotes: text("resolve_notes"),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),

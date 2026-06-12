@@ -1,0 +1,101 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+
+import Icon from "~/components/icon.astro";
+import { ROLE_BADGES } from "../../index.astro";
+
+export const partial = true;
+
+const account = await db.query.users.findFirst({
+	columns: {
+		id: true,
+		username: true,
+		displayName: true,
+		lastAccessed: true,
+		role: true,
+	},
+	where: { id: Number(Astro.params.id) },
+});
+
+if (!account) Astro.response.status = 404;
+---
+
+<dialog class="modal" id="delete_account_modal">
+	{
+		account ? (
+			<div class="modal-box">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon class="text-primary" name="line-md:account" size="size-6" />
+					Hapus akun berikut?
+				</h3>
+
+				<div class="grid grid-cols-2 gap-2 text-sm">
+					<span class="font-bold">Username:</span>
+					<span>@{account.username}</span>
+					<span class="font-bold">Nama:</span>
+					<span>{account.displayName}</span>
+					<span class="font-bold">Role:</span>
+					<span class:list={["badge badge-sm", ROLE_BADGES[account.role]]}>
+						{account.role.toUpperCase()}
+					</span>
+					<span class="font-bold">Terakhir diakses:</span>
+					<span>{account.lastAccessed ?? "N/A"}</span>
+				</div>
+
+				<form
+					hx-post={actions.manage.accounts._delete}
+					class="hidden"
+					id="delete_account_form"
+					hx-on--after-request="event.detail.successful && delete_account_modal.close()"
+					hx-select-oob="#form_error, #form_result, #rows"
+					hx-swap="none transition:true"
+					action={actions.manage.accounts._delete}
+					method="post"
+				>
+					<input name="id" type="hidden" value={account.id} />
+				</form>
+
+				<p id="form_error" />
+
+				<div class="modal-action">
+					<form class="flex gap-2" method="dialog">
+						<button class="btn btn-outline btn-sm">Batal</button>
+						<button
+							class="btn btn-error btn-sm"
+							type="submit"
+							form="delete_account_form"
+						>
+							Hapus
+						</button>
+					</form>
+				</div>
+			</div>
+		) : (
+			<div class="modal-box">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon class="text-primary" name="line-md:account" size="size-6" />
+					Hapus Akun
+				</h3>
+
+				<p class="py-4">Akun dengan ID: {Astro.params.id} tidak ditemukan.</p>
+			</div>
+		)
+	}
+	<form class="modal-backdrop" method="dialog">
+		<button>close</button>
+	</form>
+</dialog>

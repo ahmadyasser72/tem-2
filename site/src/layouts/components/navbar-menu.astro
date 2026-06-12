@@ -1,0 +1,118 @@
+---
+import Icon from "~/components/icon.astro";
+
+interface MenuItem {
+	label: string;
+	icon: `line-md:${string}`;
+	href: `/dashboard${string}`;
+}
+
+export interface Props {
+	role?: "admin" | "staff" | "owner";
+}
+
+const { role = "staff" } = Astro.props;
+
+const ALL = {
+	dashboard: {
+		icon: "line-md:grid-3-filled",
+		label: "Dashboard",
+		href: "/dashboard",
+	},
+
+	manajemen: [
+		{
+			icon: "line-md:account",
+			label: "Manajemen Akun",
+			href: "/dashboard/manage/accounts",
+		},
+		{
+			icon: "line-md:briefcase",
+			label: "Manajemen Kamar",
+			href: "/dashboard/manage/rooms",
+		},
+		{
+			icon: "line-md:person",
+			label: "Manajemen Penghuni",
+			href: "/dashboard/manage/tenants",
+		},
+		{
+			icon: "line-md:text-box-multiple",
+			label: "Manajemen Komplain",
+			href: "/dashboard/manage/complaints",
+		},
+	],
+
+	laporan: [
+		{
+			icon: "line-md:calendar",
+			label: "Laporan Transaksi",
+			href: "/dashboard/report/transactions",
+		},
+		{
+			icon: "line-md:bell",
+			label: "Laporan Notifikasi",
+			href: "/dashboard/report/notifications",
+		},
+		{
+			icon: "line-md:chat",
+			label: "Log Chatbot",
+			href: "/dashboard/log/chatbot",
+		},
+		{
+			icon: "line-md:watch",
+			label: "Log Audit",
+			href: "/dashboard/log/audit",
+		},
+	],
+} satisfies Record<string, MenuItem | MenuItem[]>;
+
+const MENU = (() => {
+	switch (role) {
+		case "admin":
+			return {
+				manajemen: [
+					ALL.manajemen[0], // only Manajemen Akun
+				],
+			};
+		case "owner":
+			return {
+				laporan: ALL.laporan,
+			};
+		case "staff":
+		default:
+			return {
+				dashboard: ALL.dashboard,
+				manajemen: ALL.manajemen.slice(1), // exclude Manajemen Akun
+				laporan: ALL.laporan,
+			};
+	}
+})();
+---
+
+<ul class="menu flex-1 p-4">
+	{
+		Object.entries(MENU).map(([label, value]) =>
+			Array.isArray(value) ? (
+				<>
+					<li class="menu-title capitalize">{label}</li>
+					{value.map((item) => (
+						<li>
+							<a href={item.href}>
+								<Icon name={item.icon} size="size-5" />
+								{item.label}
+							</a>
+						</li>
+					))}
+				</>
+			) : (
+				<li>
+					<a href={value.href}>
+						<Icon name={value.icon} size="size-5" />
+						{value.label}
+					</a>
+				</li>
+			),
+		)
+	}
+</ul>

@@ -1,0 +1,241 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+import { z } from "astro/zod";
+import { pick } from "es-toolkit";
+
+import Alert from "~/components/alert.astro";
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		query: z.string().catch(""),
+		direction: z.enum(["incoming", "outgoing"]).optional().catch(undefined),
+	}),
+);
+
+// Fetch filtered chatbot messages using spread-based conditional where clause
+const logsFromDb = await db.query.chatbotMessages.findMany({
+	where: {
+		...(params.query && {
+			OR: [
+				{ message: { like: `%${params.query}%` } },
+				{
+					tenant: {
+						fullName: { like: `%${params.query}%` },
+					},
+				},
+			],
+		}),
+		...(params.direction && { direction: params.direction }),
+	},
+	with: {
+		tenant: {
+			with: {
+				leases: {
+					where: { isActive: true },
+					with: {
+						room: true,
+					},
+				},
+			},
+		},
+	},
+	orderBy: (chatbotMessages, { desc }) => [desc(chatbotMessages.sentAt)],
+});
+
+const chatbotLogs = logsFromDb.map((log) => {
+	const activeLease = log.tenant?.leases?.[0];
+	return {
+		id: log.id,
+		time: log.sentAt,
+		tenantName: log.tenant?.fullName ?? "-",
+		roomNumber: activeLease?.room?.roomNumber ?? "-",
+		direction: log.direction === "incoming" ? "Masuk" : "Keluar",
+		message: log.message,
+	};
+});
+
+const DIRECTION_BADGES: Record<string, string> = {
+	Masuk: "badge-info",
+	Keluar: "badge-success",
+};
+
+const DIRECTION_ICONS: Record<string, string> = {
+	Masuk: "line-md:arrow-align-left",
+	Keluar: "line-md:arrow-align-right",
+};
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; title: string; description: string }
+	| void => {
+	const removeResult = Astro.getActionResult(actions.manage.chatbot.remove);
+	if (removeResult?.error)
+		return { success: false, message: removeResult.error.message };
+	else if (removeResult?.data) {
+		return {
+			success: true,
+			title: "Hapus Log",
+			description: "Log percakapan chatbot berhasil dihapus dari database!",
+		};
+	}
+})();
+---
+
+{
+	formResult?.success === false && (
+		<Alert id="form_error" type="error" description={formResult.message} />
+	)
+}
+
+<DashboardLayout title="Log Chatbot ">
+	<div class="flex flex-col gap-6">
+		{
+			formResult?.success ? (
+				<Alert
+					id="form_result"
+					type="info"
+					{...pick(formResult, ["title", "description"])}
+				/>
+			) : (
+				<p id="form_result" />
+			)
+		}
+
+		<div class="flex flex-col gap-1">
+			<h1 class="text-3xl font-bold">Log Percakapan Chatbot</h1>
+			<p class="text-base-content/60 text-sm">
+				Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem Chatbot
+				Indekos Ungu
+			</p>
+		</div>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-0">
+				<div
+					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
+					hx-include=".filter-chatbot"
+					hx-select="#chatbot-table-body"
+					hx-swap="outerHTML transition:true"
+					hx-target="#chatbot-table-body"
+				>
+					<label class="input input-sm max-w-xs flex-1">
+						<Icon name="line-md:search" size="size-4" />
+						<input
+							hx-get
+							hx-trigger="input changed delay:300ms"
+							class="filter-chatbot"
+							name="query"
+							type="search"
+							value={params.query}
+							placeholder="Cari pesan atau penghuni..."
+						/>
+					</label>
+					<div class="flex items-center gap-2">
+						<select
+							hx-get
+							class="select select-sm filter-chatbot w-32"
+							name="direction"
+						>
+							<option value="all" selected={!params.direction}>
+								Arah (Semua)
+							</option>
+							<option
+								value="incoming"
+								selected={params.direction === "incoming"}
+							>
+								Masuk
+							</option>
+							<option
+								value="outgoing"
+								selected={params.direction === "outgoing"}
+							>
+								Keluar
+							</option>
+						</select>
+
+					</div>
+				</div>
+
+				<div class="overflow-x-auto">
+					<table class="table w-full">
+						<thead>
+							<tr class="border-base-300 border-b">
+								<th class="text-base-content/60 w-48 text-xs font-bold"
+									>Waktu</th
+								>
+								<th class="text-base-content/60 w-44 text-xs font-bold"
+									>Penghuni</th
+								>
+								<th class="text-base-content/60 w-32 text-xs font-bold">Arah</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Isi Pesan</th>
+								<th class="text-base-content/60 w-16 text-right text-xs font-bold"
+									>Aksi</th
+								>
+							</tr>
+						</thead>
+						<tbody id="chatbot-table-body">
+							{
+								chatbotLogs.map(
+									({
+										id,
+										time,
+										tenantName,
+										roomNumber,
+										direction,
+										message,
+									}) => (
+										<tr
+											class="border-base-200 hover:bg-base-200/40 border-b align-top transition-colors"
+											data-id={id}
+										>
+											<td class="text-base-content/70 pt-4 font-mono text-xs whitespace-nowrap">
+												{formatDate(time, "DD MMM YYYY HH:mm:ss")}
+											</td>
+											<td class="flex items-center gap-1.5 pt-4 text-sm font-semibold">
+												{tenantName}
+												<span class="badge badge-neutral badge-xs font-mono font-semibold">
+													{roomNumber}
+												</span>
+											</td>
+											<td class="pt-3.5">
+												<span
+													class:list={[
+														"badge badge-sm flex items-center gap-1 font-bold",
+														DIRECTION_BADGES[direction],
+													]}
+												>
+													<Icon
+														name={DIRECTION_ICONS[direction] as any}
+														size="size-3"
+													/>
+													{direction}
+												</span>
+											</td>
+											<td class="text-base-content/85 max-w-lg pt-4 text-sm leading-relaxed font-normal wrap-break-word">
+												{message}
+											</td>
+											<td class="text-right pt-2.5">
+												<button
+													hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
+													class="btn btn-square btn-ghost btn-xs text-error"
+												>
+													<Icon name="line-md:close" size="size-4" />
+												</button>
+											</td>
+										</tr>
+									),
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</DashboardLayout>

@@ -1,0 +1,310 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+import { z } from "astro/zod";
+import { pick } from "es-toolkit";
+
+import Alert from "~/components/alert.astro";
+import Icon from "~/components/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		query: z.string().catch(""),
+		status: z.enum(["all", "active", "completed"]).optional().catch(undefined),
+	}),
+);
+
+const tenantsFromDb = await db.query.tenants.findMany({
+	where: {
+		...(params.query && {
+			OR: [
+				{ fullName: { like: `%${params.query}%` } },
+				{ phoneNumber: { like: `%${params.query}%` } },
+			],
+		}),
+		...(params.status &&
+			params.status !== "all" && {
+				...(params.status === "active" && { leases: { isActive: true } }),
+				...(params.status === "completed" && {
+					NOT: { leases: { isActive: true } },
+				}),
+			}),
+	},
+	with: {
+		leases: {
+			with: {
+				room: true,
+			},
+		},
+	},
+});
+
+const filteredTenants = tenantsFromDb.map((tenant) => {
+	// Find active lease first
+	let currentLease = tenant.leases.find(({ isActive }) => isActive);
+	// If no active lease, find the latest lease (by startDate)
+	if (!currentLease && tenant.leases.length > 0) {
+		currentLease = tenant.leases.reduce(
+			(latest, current) =>
+				new Date(current.startDate) > new Date(latest.startDate)
+					? current
+					: latest,
+			tenant.leases[0],
+		);
+	}
+
+	return {
+		id: tenant.id,
+		fullName: tenant.fullName,
+		phoneNumber: tenant.phoneNumber,
+		originRegion: tenant.originRegion,
+		createdAt: tenant.createdAt,
+		roomNumber: currentLease?.room?.roomNumber ?? "-",
+		startDate: currentLease?.startDate ?? null,
+		endDate: currentLease?.endDate ?? null,
+		isActive: !!currentLease?.isActive,
+	};
+});
+
+
+const STATUS_BADGES: Record<string, string> = {
+	Aktif: "badge-success",
+	Selesai: "badge-neutral opacity-60",
+};
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; title: string; description: string }
+	| void => {
+	const addResult = Astro.getActionResult(actions.manage.tenants.add);
+	if (addResult?.error)
+		return { success: false, message: addResult.error.message };
+	else if (addResult?.data) {
+		const data = addResult.data as { id: number };
+		return {
+			success: true,
+			title: "Tambah kontrak sewa",
+			description: `Berhasil menambah kontrak sewa penghuni baru! (ID: ${data.id})`,
+		};
+	}
+
+	const terminateResult = Astro.getActionResult(
+		actions.manage.tenants.terminate,
+	);
+	if (terminateResult?.error)
+		return { success: false, message: terminateResult.error.message };
+	else if (terminateResult?.data) {
+		const data = terminateResult.data as { id: number };
+		return {
+			success: true,
+			title: "Akhiri sewa",
+			description: `Berhasil menghentikan sewa penghuni! (ID: ${data.id})`,
+		};
+	}
+})();
+---
+
+{
+	formResult?.success === false && (
+		<Alert id="form_error" type="error" description={formResult.message} />
+	)
+}
+
+<DashboardLayout title="Manajemen Penghuni ">
+	<div class="flex flex-col gap-6">
+		{
+			formResult?.success ? (
+				<Alert
+					id="form_result"
+					type="info"
+					{...pick(formResult, ["title", "description"])}
+				/>
+			) : (
+				<p id="form_result" />
+			)
+		}
+
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Manajemen Penghuni</h1>
+				<p class="text-base-content/60 text-sm">
+					Kelola data identitas, kontak, dan masa aktif sewa penghuni
+				</p>
+			</div>
+			<button
+				hx-get="/dashboard/manage/tenants/modal/add"
+				class="btn btn-primary"
+			>
+				<Icon name="line-md:plus" size="size-5" />
+				Tambah Penghuni
+			</button>
+		</div>
+
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-0">
+				<div
+					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
+					hx-include=".filter-tenants"
+					hx-select="#tenants-rows"
+					hx-swap="outerHTML transition:true"
+					hx-target="#tenants-rows"
+				>
+					<label class="input input-sm max-w-xs flex-1">
+						<Icon name="line-md:search" size="size-4" />
+						<input
+							hx-get
+							hx-trigger="input changed delay:300ms"
+							class="filter-tenants"
+							name="query"
+							type="search"
+							value={params.query}
+							placeholder="Cari nama penghuni..."
+						/>
+					</label>
+					<div class="flex gap-2">
+						<select
+							hx-get
+							class="select select-sm filter-tenants w-36"
+							name="status"
+						>
+							<option
+								value="all"
+								selected={params.status === "all" || !params.status}
+							>
+								Semua Status
+							</option>
+							<option value="active" selected={params.status === "active"}>
+								Aktif
+							</option>
+							<option
+								value="completed"
+								selected={params.status === "completed"}
+							>
+								Selesai
+							</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="overflow-x-auto">
+					<table class="table w-full">
+						<thead>
+							<tr class="border-base-300 border-b">
+								<th class="text-base-content/60 text-xs font-bold"
+									>Nama Penghuni</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">No. HP</th>
+								<th class="text-base-content/60 text-xs font-bold">Kamar</th>
+								<th class="text-base-content/60 text-xs font-bold">Awal Sewa</th
+								>
+								<th class="text-base-content/60 text-xs font-bold"
+									>Akhir Sewa</th
+								>
+								<th class="text-base-content/60 text-xs font-bold">Status</th>
+								<th class="text-base-content/60 text-right text-xs font-bold"
+									>Aksi</th
+								>
+							</tr>
+						</thead>
+						<tbody id="tenants-rows">
+							{
+								filteredTenants.map(
+									({
+										id,
+										fullName,
+										phoneNumber,
+										roomNumber,
+										startDate,
+										endDate,
+										isActive,
+									}) => {
+										const status = isActive ? "Aktif" : "Selesai";
+										return (
+											<tr class="border-base-200 hover:bg-base-200/40 border-b transition-colors">
+												<td class="text-sm font-semibold">
+													<div class="flex items-center gap-3">
+														<div class="avatar avatar-placeholder">
+															<div class="bg-neutral text-neutral-content w-9 rounded-full">
+																<span class="text-xs font-bold">
+																	{fullName.slice(0, 2)}
+																</span>
+															</div>
+														</div>
+														<div class="flex flex-col">
+															<span>{fullName}</span>
+															<span class="text-base-content/40 text-xs font-normal">
+																Penyewa Utama
+															</span>
+														</div>
+													</div>
+												</td>
+												<td class="font-mono text-sm">
+													<a
+														class="btn btn-outline btn-success btn-xs flex items-center gap-1"
+														href={`https://wa.me/${phoneNumber}`}
+														target="_blank"
+													>
+														<Icon
+															name="line-md:phone-call-twotone"
+															size="size-3.5"
+														/>
+														{phoneNumber}
+													</a>
+												</td>
+												<td>
+													<span class="badge badge-neutral font-mono font-semibold">
+														{roomNumber}
+													</span>
+												</td>
+												<td class="text-base-content/70 font-mono text-xs">
+													{formatDate(startDate)}
+												</td>
+												<td class="text-base-content/70 font-mono text-xs">
+													{formatDate(endDate)}
+												</td>
+												<td>
+													<span
+														class:list={[
+															"badge badge-sm font-bold",
+															STATUS_BADGES[status],
+														]}
+													>
+														{status}
+													</span>
+												</td>
+												<td class="text-right">
+													<div class="flex justify-end gap-1.5">
+														<button
+															hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+															class="btn btn-outline btn-info btn-xs flex items-center gap-1"
+														>
+															<Icon name="line-md:document-list-twotone" />{" "}
+															Detail
+														</button>
+														{isActive && (
+															<button
+																hx-get={`/dashboard/manage/tenants/modal/terminate/${id}`}
+																class="btn btn-outline btn-error btn-xs flex items-center gap-1"
+															>
+																<Icon name="line-md:close" /> Keluar
+															</button>
+														)}
+													</div>
+												</td>
+											</tr>
+										);
+									},
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</DashboardLayout>

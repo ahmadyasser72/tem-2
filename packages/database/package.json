@@ -4,8 +4,8 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"exports": {
-		".": "./src/index.js",
-		"./schema": "./src/schema/index.js"
+		".": "./src/index.ts",
+		"./schema": "./src/schema/index.ts"
 	},
 	"scripts": {
 		"check": "tsc --noEmit",

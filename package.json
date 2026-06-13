@@ -10,7 +10,9 @@
 	"scripts": {
 		"check": "bun-workspaces run check",
 		"dev": "bun-workspaces run dev @e-kos/site",
+		"prebuild": "bun check && bun db:push && bun db:seed",
 		"build": "bun-workspaces run build @e-kos/site",
+		"start": "bun bm2 start ecosystem.config.ts --no-daemon",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",
 		"docs:build-css": "tailwindcss --minify --input ./docs/wireframes/tailwind.css --output ./docs/wireframes/style.css",
@@ -26,6 +28,7 @@
 		"@types/bun": "^1.3.11",
 		"@types/node": "^25.5.0",
 		"@xeonlink/prettier-plugin-organize-attributes": "^1.1.0",
+		"bm2": "^1.0.39",
 		"bun-workspaces": "^1.0.0",
 		"daisyui": "^5.5.19",
 		"plantuml-cli": "^1.2026.1",

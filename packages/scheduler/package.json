@@ -3,9 +3,6 @@
 	"type": "module",
 	"license": "AGPL-3.0",
 	"private": true,
-	"exports": {
-		".": "./src/index.js"
-	},
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"start": "bun src/index.ts",
@@ -15,6 +12,7 @@
 		"@e-kos/database": "workspace:*"
 	},
 	"devDependencies": {
+		"@types/bun": "1.3.14",
 		"@types/node": "25.4.0",
 		"typescript": "5.9.3"
 	}

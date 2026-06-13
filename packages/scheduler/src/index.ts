@@ -1,5 +1,8 @@
 import { db } from "@e-kos/database";
 
+import { runOverdueCheck } from "./workers/overdue";
+import { runRentReminder } from "./workers/rent-reminder";
+
 const systemUser = await db.query.users.findFirst({
 	where: { username: "system" },
 });
@@ -11,10 +14,12 @@ if (!systemUser) {
 	process.exit(1);
 }
 
-// ─── Overdue otomatis tiap jam 00:00 ──────────────
-Bun.cron("./src/workers/overdue.ts", "0 0 * * *", "overdue-check");
+// ─── Overdue otomatis tiap jam 00:00 WITA ──────────
+// Callback-based Bun.cron pakai UTC, jadi 16:00 UTC = 00:00 WITA (+1 day)
+Bun.cron("0 16 * * *", () => runOverdueCheck(systemUser));
 
-// ─── Pengingat pembayaran tiap jam 8 pagi ─────────
-Bun.cron("./src/workers/rent-reminder.ts", "0 8 * * *", "rent-reminder");
+// ─── Pengingat pembayaran tiap jam 8 pagi WITA ─────
+// 00:00 UTC = 08:00 WITA
+Bun.cron("0 0 * * *", () => runRentReminder(systemUser));
 
 console.log("[Scheduler] Cron jobs registered");

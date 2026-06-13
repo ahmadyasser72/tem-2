@@ -1,8 +1,9 @@
 import { db } from "@e-kos/database";
 import { auditLogs, chatbotMessages, tenants } from "@e-kos/database/schema";
 
-import { DisconnectReason, makeWASocket, useMultiFileAuthState } from "baileys";
+import { DisconnectReason, makeWASocket } from "baileys";
 
+import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
 import { checkComplaint } from "./commands/check-complaint";
 import { help } from "./commands/help";
@@ -53,11 +54,18 @@ async function main() {
 
 	botUserId = botUser.id;
 
-	const { state, saveCreds } = await useMultiFileAuthState("auth_info");
+	const { state, saveCreds } = await useSqliteAuthState();
+
+	// Cek apakah sudah login WhatsApp
+	if (!state.creds.me) {
+		console.error(
+			"[Bot] WhatsApp belum login. Jalankan 'bun login' atau 'bun run login' dulu.",
+		);
+		process.exit(1);
+	}
 
 	const sock = makeWASocket({
 		auth: state,
-		printQRInTerminal: true,
 	});
 
 	sock.ev.on("creds.update", saveCreds);

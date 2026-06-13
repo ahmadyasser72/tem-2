@@ -132,3 +132,8 @@ export const complaints = sqliteTable("complaints", {
 		.default(sql`(unixepoch())`)
 		.notNull(),
 });
+
+export const botAuth = sqliteTable("bot_auth", {
+	key: text("key").primaryKey(),
+	value: text("value").notNull(),
+});

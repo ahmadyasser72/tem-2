@@ -21,6 +21,13 @@ export async function checkBills(
 	const unpaid = activeLease.invoices ?? [];
 	const total = unpaid.reduce((sum, inv) => sum + inv.amount, 0);
 
+	function getPaymentUrl(reference: string): string {
+		const baseUrl =
+			process.env.DUITKU_BASE_URL?.replace("api", "app") ??
+			"https://app-sandbox.duitku.com";
+		return `${baseUrl}/redirect_checkout?reference=${reference}`;
+	}
+
 	const lines: string[] = [];
 	lines.push("*💰 Info Tagihan*");
 	lines.push("");
@@ -39,15 +46,25 @@ export async function checkBills(
 		lines.push("━━━━━━━━━━━━━━━━━━━");
 
 		for (const inv of unpaid) {
+			const invWithRef = await db.query.invoices.findFirst({
+				where: { id: inv.id },
+			});
+
 			lines.push(`• Invoice #${inv.id}`);
 			lines.push(`  Jumlah: Rp ${inv.amount.toLocaleString()}`);
 			lines.push(`  Jatuh tempo: ${inv.dueDate.toLocaleDateString()}`);
+			if (invWithRef?.duitkuReference) {
+				lines.push(`  💳 Bayar: ${getPaymentUrl(invWithRef.duitkuReference)}`);
+			}
 			lines.push("");
 		}
 		lines.push("━━━━━━━━━━━━━━━━━━━");
 		lines.push(`💰 *Total: Rp ${total.toLocaleString()}*`);
 		lines.push("");
-		lines.push("Silakan hubungi admin untuk info pembayaran lebih lanjut.");
+
+		if (!unpaid.some((inv) => inv.duitkuReference)) {
+			lines.push("Silakan hubungi admin untuk mendapatkan link pembayaran.");
+		}
 	}
 
 	return lines.join("\n");

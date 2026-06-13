@@ -1,0 +1,280 @@
+---
+import { db } from "@e-kos/database";
+
+import BaseLayout from "~/layouts/base-layout.astro";
+
+const invoiceId = Number(Astro.params.id);
+const resultCode = Astro.url.searchParams.get("resultCode") ?? "";
+const reference = Astro.url.searchParams.get("reference") ?? "";
+const amountParam = Astro.url.searchParams.get("amount") ?? "";
+
+// Cari invoice dari database untuk data lengkap & status terkini
+const invoice = !Number.isNaN(invoiceId)
+	? await db.query.invoices.findFirst({
+			where: { id: invoiceId },
+			with: {
+				lease: {
+					with: {
+						tenant: true,
+						room: true,
+					},
+				},
+			},
+		})
+	: null;
+
+// Override resultCode berdasarkan status di database (hasil callback)
+const actualResultCode = invoice?.status === "paid" ? "00" : resultCode;
+
+interface ResultConfig {
+	statusBadge: string;
+	statusLabel: string;
+	icon: string;
+	title: string;
+	message: string;
+	amount: string;
+}
+
+const resultConfig: ResultConfig = (() => {
+	switch (actualResultCode) {
+		case "00":
+			return {
+				statusBadge: "badge-success",
+				statusLabel: "LUNAS",
+				icon: "✅",
+				title: "Pembayaran Berhasil",
+				message: "Pembayaran Anda telah berhasil diproses. Terima kasih!",
+				amount: amountParam || String(invoice?.amount ?? ""),
+			};
+		case "01":
+			return {
+				statusBadge: "badge-warning",
+				statusLabel: "MENUNGGU",
+				icon: "⏳",
+				title: "Pembayaran Diproses",
+				message:
+					"Pembayaran Anda masih dalam proses. Silakan tunggu konfirmasi.",
+				amount: amountParam || String(invoice?.amount ?? ""),
+			};
+		default:
+			return {
+				statusBadge: "badge-error",
+				statusLabel: "GAGAL",
+				icon: "❌",
+				title: "Pembayaran Dibatalkan / Gagal",
+				message:
+					"Pembayaran Anda dibatalkan atau gagal diproses. Silakan coba lagi.",
+				amount: "-",
+			};
+	}
+})();
+
+const merchantOrderId = invoice
+	? `INV-${invoice.id.toString().padStart(6, "0")}`
+	: `INV-${String(invoiceId).padStart(6, "0")}`;
+
+const tenantName = invoice?.lease?.tenant?.fullName ?? "-";
+const roomNumber = invoice?.lease?.room?.roomNumber ?? "-";
+const displayAmount =
+	resultConfig.amount && resultConfig.amount !== "-"
+		? Number(resultConfig.amount)
+		: (invoice?.amount ?? 0);
+
+const now = new Date();
+const dateStr = now.toLocaleDateString("id-ID", {
+	day: "numeric",
+	month: "long",
+	year: "numeric",
+});
+const timeStr = now.toLocaleTimeString("id-ID", {
+	hour: "2-digit",
+	minute: "2-digit",
+});
+
+// Cek login — untuk kontrol tampilan tombol navigasi
+const sessionUser = await Astro.session?.get("user");
+const isLoggedIn = !!sessionUser;
+
+// URL yang sama untuk polling HTMX
+const currentUrl = Astro.url.pathname + Astro.url.search;
+const isPending = actualResultCode === "01";
+---
+
+<BaseLayout title={resultConfig.title}>
+	<div class="flex min-h-dvh items-center justify-center p-4">
+		<div class="mx-auto w-full max-w-xs">
+			<!-- Tombol Aksi (no-print) -->
+			<div class="no-print mb-4 flex gap-2">
+				<button class="btn btn-outline btn-sm flex-1" onclick="window.print()">
+					🖨 Cetak
+				</button>
+				{
+					isLoggedIn && (
+						<a class="btn btn-primary btn-sm flex-1" href="/dashboard">
+							← Dashboard
+						</a>
+					)
+				}
+			</div>
+
+			<!-- Kartu Struk Invoice Digital -->
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body gap-2 p-5">
+					<!-- Kop / Logo -->
+					<div class="mb-2 text-center">
+						<div class="avatar avatar-placeholder mx-auto mb-2">
+							<div class="bg-neutral text-neutral-content w-14 rounded-full">
+								<span class="text-xl font-bold">KU</span>
+							</div>
+						</div>
+						<h2 class="text-base font-bold tracking-wide uppercase">
+							Indekos Ungu
+						</h2>
+						<p class="text-xs opacity-60">Struk Pembayaran Digital</p>
+					</div>
+
+					<hr class="dash-sep" />
+
+					<!-- Info Invoice -->
+					<div>
+						<div class="inv-row">
+							<span class="opacity-60">No. Invoice</span>
+							<span class="font-mono text-xs font-semibold"
+								>{merchantOrderId}</span
+							>
+						</div>
+						<div class="inv-row">
+							<span class="opacity-60">Tanggal</span>
+							<span class="font-mono text-xs">{dateStr}</span>
+						</div>
+						<div class="inv-row">
+							<span class="opacity-60">Waktu</span>
+							<span class="font-mono text-xs">{timeStr} WITA</span>
+						</div>
+					</div>
+
+					<hr class="dash-sep" />
+
+					<!-- Total -->
+					<div class="mt-1 flex justify-between text-base font-bold">
+						<span
+							>{
+								actualResultCode === "00" ? "Total Dibayar" : "Total Tagihan"
+							}</span
+						>
+						<span class="font-mono"
+							>Rp {displayAmount.toLocaleString("id-ID")}</span
+						>
+					</div>
+
+					<hr class="dash-sep" />
+
+					<!-- Data Penghuni -->
+					<div>
+						<p
+							class="mb-1 text-xs font-semibold tracking-wider uppercase opacity-40"
+						>
+							Data Penghuni
+						</p>
+						<div class="inv-row">
+							<span class="opacity-60">Nama</span>
+							<span class="font-mono text-xs">{tenantName}</span>
+						</div>
+						<div class="inv-row">
+							<span class="opacity-60">Kamar</span>
+							<span class="font-mono text-xs">{roomNumber}</span>
+						</div>
+					</div>
+
+					<hr class="dash-sep" />
+
+					<!-- Info Pembayaran + Badge Status + Pesan (polling) -->
+					<div
+						hx-get={currentUrl}
+						hx-trigger={isPending ? "every 5s" : "none"}
+						id="payment-status"
+						hx-select="#payment-status"
+						hx-swap="outerHTML"
+					>
+						<div>
+							<p
+								class="mb-1 text-xs font-semibold tracking-wider uppercase opacity-40"
+							>
+								Pembayaran
+							</p>
+							<div class="inv-row">
+								<span class="opacity-60">Status</span>
+								<span>{resultConfig.icon} {resultConfig.statusLabel}</span>
+							</div>
+							{
+								(invoice?.duitkuReference || reference) && (
+									<div class="inv-row">
+										<span class="opacity-60">Referensi</span>
+										<span class="font-mono text-xs">
+											{reference || invoice?.duitkuReference}
+										</span>
+									</div>
+								)
+							}
+						</div>
+
+						<hr class="dash-sep" />
+
+						<div class="my-2 text-center">
+							<span
+								class:list={[
+									"badge badge-lg px-6 py-3 text-sm font-bold tracking-wider",
+									resultConfig.statusBadge,
+								]}
+							>
+								{resultConfig.icon}
+								{resultConfig.statusLabel}
+							</span>
+						</div>
+
+						<hr class="dash-sep" />
+
+						<p
+							class:list={[
+								"text-center text-sm font-medium",
+								actualResultCode === "00"
+									? "text-success"
+									: actualResultCode === "01"
+										? "text-warning"
+										: "text-error",
+							]}
+						>
+							{resultConfig.message}
+						</p>
+
+						<p class="mt-1 text-center text-xs opacity-30">
+							Simpan struk ini sebagai bukti pembayaran
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</BaseLayout>
+
+<style>
+	@media print {
+		.no-print {
+			display: none !important;
+		}
+	}
+	body {
+		background: #f3f4f6;
+	}
+	hr.dash-sep {
+		border: none;
+		border-top: 2px dashed #d1d5db;
+		margin: 0.6rem 0;
+	}
+	.inv-row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.8rem;
+		padding: 0.15rem 0;
+	}
+</style>

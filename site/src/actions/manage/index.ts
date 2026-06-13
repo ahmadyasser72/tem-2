@@ -5,3 +5,4 @@ export * as complaints from "./complaints";
 export * as notifications from "./notifications";
 export * as chatbot from "./chatbot";
 export * as audit from "./audit";
+export * as invoices from "./invoices";

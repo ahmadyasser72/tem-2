@@ -1,11 +1,39 @@
 ---
 import { db } from "@e-kos/database";
 
+import { actions } from "astro:actions";
 import { z } from "astro/zod";
 
 import Icon from "~/components/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
+
+const formResult = (():
+	| { success: false; message: string }
+	| { success: true; message: string }
+	| void => {
+	const linkResult = Astro.getActionResult(
+		actions.manage.invoices.generatePaymentLink,
+	);
+	if (linkResult?.error)
+		return { success: false, message: linkResult.error.message };
+	else if (linkResult?.data) {
+		return {
+			success: true,
+			message: `Link pembayaran berhasil dibuat! <a href="${linkResult.data.paymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`,
+		};
+	}
+
+	const paidResult = Astro.getActionResult(actions.manage.invoices.markAsPaid);
+	if (paidResult?.error)
+		return { success: false, message: paidResult.error.message };
+	else if (paidResult?.data) {
+		return {
+			success: true,
+			message: "Invoice berhasil ditandai sebagai lunas.",
+		};
+	}
+})();
 
 const currentMonthStr = (() => {
 	const now = new Date();
@@ -21,6 +49,25 @@ const params = Astro.locals.parseQuery(
 			.catch(undefined),
 	}),
 );
+
+// Handle status messages from HTMX redirect
+const queryStatusMsg = Astro.url.searchParams.get("statusMsg");
+const queryStatusDetail = Astro.url.searchParams.get("statusDetail");
+const queryPaymentUrl = Astro.url.searchParams.get("paymentUrl");
+
+const redirectResult = ((): { success: boolean; message: string } | void => {
+	if (!queryStatusMsg) return;
+	if (queryStatusMsg === "success") {
+		const msg = queryPaymentUrl
+			? `Link pembayaran berhasil dibuat! <a href="${queryPaymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`
+			: queryStatusDetail;
+		return { success: true, message: msg ?? "Berhasil" };
+	}
+	return {
+		success: false,
+		message: queryStatusDetail ?? "Terjadi kesalahan",
+	};
+})();
 
 // Parse start and end of the selected month
 const [yearStr, monthStr] = params.month.split("-");
@@ -57,6 +104,7 @@ const monthlyInvoices = monthlyInvoicesFromDb.map((inv) => {
 		dueDate: inv.dueDate,
 		status: inv.status,
 		gatewayRef: inv.duitkuReference ?? "-",
+		duitkuReference: inv.duitkuReference,
 	};
 });
 
@@ -129,6 +177,7 @@ const filteredInvoices = filteredInvoicesFromDb.map((inv) => {
 		dueDate: inv.dueDate,
 		status: inv.status,
 		gatewayRef: inv.duitkuReference ?? "-",
+		duitkuReference: inv.duitkuReference,
 	};
 });
 
@@ -149,11 +198,26 @@ const STATUS_BADGES: Record<string, string> = {
 	unpaid: "badge-warning",
 	overdue: "badge-error",
 };
-
 ---
 
 <DashboardLayout title="Laporan Transaksi ">
 	<div class="flex flex-col gap-6" id="transactions-content-wrapper">
+		{
+			(formResult || redirectResult) && (
+				<div
+					id="form-result"
+					class:list={[
+						"alert",
+						(formResult ?? redirectResult)?.success
+							? "alert-success"
+							: "alert-error",
+					]}
+				>
+					<span set:html={(formResult ?? redirectResult)?.message ?? ""} />
+				</div>
+			)
+		}
+
 		<div
 			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
 		>
@@ -261,6 +325,7 @@ const STATUS_BADGES: Record<string, string> = {
 								<th class="text-base-content/60 text-xs font-bold"
 									>Ref. Gateway</th
 								>
+								<th class="text-base-content/60 text-xs font-bold">Aksi</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -275,6 +340,7 @@ const STATUS_BADGES: Record<string, string> = {
 										dueDate,
 										status,
 										gatewayRef,
+										duitkuReference,
 									}) => (
 										<tr
 											class="border-base-200 hover:bg-base-200/40 border-b transition-colors"
@@ -305,8 +371,57 @@ const STATUS_BADGES: Record<string, string> = {
 													{STATUS_LABELS[status]}
 												</span>
 											</td>
-											<td class="text-base-content/60 font-mono text-xs">
+											<td
+												class="text-base-content/60 max-w-32 truncate font-mono text-xs"
+												title={gatewayRef}
+											>
 												{gatewayRef}
+											</td>
+											<td>
+												{status === "paid" ? (
+													<span class="text-base-content/40 text-xs">-</span>
+												) : duitkuReference ? (
+													<div class="flex items-center gap-1">
+														<button
+															class="btn btn-ghost btn-xs"
+															title="Salin Link Bayar"
+															onclick={`navigator.clipboard.writeText("https://app-sandbox.duitku.com/redirect_checkout?reference=${duitkuReference}"); this.innerHTML = "<span class='text-xs'>Tersalin!</span>"; setTimeout(() => this.innerHTML = "<span class=\"iconify\" data-icon=\"line-md:content-copy\"></span>", 2000)`}
+														>
+															<span
+																class="iconify"
+																data-icon="line-md:content-copy"
+																data-width="14"
+															/>
+														</button>
+														<a
+															class="btn btn-ghost btn-xs"
+															href={`https://app-sandbox.duitku.com/redirect_checkout?reference=${duitkuReference}`}
+															title="Buka Pembayaran"
+															target="_blank"
+														>
+															<span
+																class="iconify"
+																data-icon="line-md:external-link"
+																data-width="14"
+															/>
+														</a>
+													</div>
+												) : (
+													<button
+														hx-post="/dashboard/manage/invoices/generate-link"
+														class="btn btn-primary btn-xs"
+														name="invoice_id"
+														value={id}
+														hx-select="#transactions-content-wrapper"
+														hx-swap="outerHTML transition:true"
+														hx-target="#transactions-content-wrapper"
+														hx-vals={JSON.stringify({
+															invoice_id: id,
+														})}
+													>
+														Generate Link
+													</button>
+												)}
 											</td>
 										</tr>
 									),

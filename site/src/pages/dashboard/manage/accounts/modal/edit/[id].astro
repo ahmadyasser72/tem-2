@@ -30,84 +30,90 @@ if (!account) Astro.response.status = 404;
 					Edit Akun (ID: {account.id})
 				</h3>
 
-				<form
-					hx-post={actions.manage.accounts.edit}
-					class="flex flex-col gap-4"
-					id="edit_account_form"
-					hx-on--after-request="event.detail.successful && add_account_modal.close()"
-					hx-select-oob="#form_error, #form_result, #rows"
-					hx-swap="none transition:true"
-					action={actions.manage.accounts.edit}
-					method="post"
-				>
-					<input name="id" type="hidden" value={account.id} />
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Username</legend>
-						<input
-							class="input w-full"
-							name="username"
-							type="text"
-							value={account.username}
-							placeholder="Masukkan username..."
-							required
-						/>
-					</fieldset>
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Nama Tampilan</legend>
-						<input
-							class="input w-full"
-							name="display_name"
-							type="text"
-							value={account.displayName}
-							placeholder="Masukkan nama..."
-							required
-						/>
-					</fieldset>
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Kata Sandi</legend>
-						<input
-							class="input w-full"
-							name="password"
-							type="password"
-							placeholder="Biarkan kosong untuk tidak mengganti"
-						/>
-					</fieldset>
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Role Akses</legend>
-						<select class="select w-full" name="role" required>
-							<option value="" disabled>
-								Pilih hak akses
-							</option>
-							<option value="admin" selected={account.role === "admin"}>
-								Admin (Akses Penuh)
-							</option>
-							<option value="staff" selected={account.role === "staff"}>
-								Staff (Operasional & Komplain)
-							</option>
-							<option value="owner" selected={account.role === "owner"}>
-								Owner (Laporan Keuangan)
-							</option>
-						</select>
-					</fieldset>
-
-					<p id="form_error" />
-				</form>
-				<div class="modal-action">
-					<form class="flex gap-2" method="dialog">
-						<button class="btn btn-outline btn-sm">Batal</button>
-						<button
-							class="btn btn-primary btn-sm"
-							type="submit"
-							form="edit_account_form"
+				{account.role === "admin" ? (
+					<div class="alert alert-error" role="alert">
+						<Icon name="line-md:alert" size="size-5" />
+						<span>Akun admin tidak dapat diedit.</span>
+					</div>
+				) : (
+					<>
+						<form
+							hx-post={actions.manage.accounts.edit}
+							class="flex flex-col gap-4"
+							id="edit_account_form"
+							hx-on--after-request="event.detail.successful && add_account_modal.close()"
+							hx-select-oob="#form_error, #form_result, #rows"
+							hx-swap="none transition:true"
+							action={actions.manage.accounts.edit}
+							method="post"
 						>
-							Simpan Akun
-						</button>
-					</form>
-				</div>
+							<input name="id" type="hidden" value={account.id} />
+
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Username</legend>
+								<input
+									class="input w-full"
+									name="username"
+									type="text"
+									value={account.username}
+									placeholder="Masukkan username..."
+									required
+								/>
+							</fieldset>
+
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Nama Tampilan</legend>
+								<input
+									class="input w-full"
+									name="display_name"
+									type="text"
+									value={account.displayName}
+									placeholder="Masukkan nama..."
+									required
+								/>
+							</fieldset>
+
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Kata Sandi</legend>
+								<input
+									class="input w-full"
+									name="password"
+									type="password"
+									placeholder="Biarkan kosong untuk tidak mengganti"
+								/>
+							</fieldset>
+
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Role Akses</legend>
+								<select class="select w-full" name="role" required>
+									<option value="" disabled>
+										Pilih hak akses
+									</option>
+									<option value="staff" selected={account.role === "staff"}>
+										Staff (Operasional & Komplain)
+									</option>
+									<option value="owner" selected={account.role === "owner"}>
+										Owner (Laporan Keuangan)
+									</option>
+								</select>
+							</fieldset>
+
+							<p id="form_error" />
+						</form>
+						<div class="modal-action">
+							<form class="flex gap-2" method="dialog">
+								<button class="btn btn-outline btn-sm">Batal</button>
+								<button
+									class="btn btn-primary btn-sm"
+									type="submit"
+									form="edit_account_form"
+								>
+									Simpan Akun
+								</button>
+							</form>
+						</div>
+					</>
+				)}
 			</div>
 		) : (
 			<div class="modal-box">

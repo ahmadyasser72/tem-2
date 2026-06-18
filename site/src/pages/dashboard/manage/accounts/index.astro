@@ -205,18 +205,22 @@ const formResult = (():
 											</td>
 											<td class="text-right">
 												<div class="flex justify-end gap-1.5">
-													<button
-														hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
-														class="btn btn-outline btn-info btn-xs"
-													>
-														<Icon name="line-md:edit-twotone" /> Edit
-													</button>
-													<button
-														hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
-														class="btn btn-outline btn-error btn-xs"
-													>
-														<Icon name="line-md:remove" /> Hapus
-													</button>
+													{role !== "admin" && (
+														<>
+															<button
+																hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
+																class="btn btn-outline btn-info btn-xs"
+															>
+																<Icon name="line-md:edit-twotone" /> Edit
+															</button>
+															<button
+																hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
+																class="btn btn-outline btn-error btn-xs"
+															>
+																<Icon name="line-md:remove" /> Hapus
+															</button>
+														</>
+													)}
 												</div>
 											</td>
 										</tr>

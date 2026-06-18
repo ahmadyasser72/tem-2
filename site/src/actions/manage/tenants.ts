@@ -1,5 +1,5 @@
 import { and, db, eq } from "@e-kos/database";
-import { leases, tenants, auditLogs } from "@e-kos/database/schema";
+import { auditLogs, leases, tenants } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -15,9 +15,12 @@ export const add = defineAction({
 		end_date: z.string().optional(),
 	}),
 	handler: async (input, context) => {
+		const phone = input.phone_number.replace(/\D/g, "").replace(/^0/, "");
+		const phoneNumber = phone.startsWith("62") ? phone : `62${phone}`;
+
 		const samePhone = await db.query.tenants.findFirst({
 			columns: { id: true },
-			where: { phoneNumber: input.phone_number },
+			where: { phoneNumber },
 		});
 		if (samePhone?.id) {
 			throw new ActionError({
@@ -46,7 +49,7 @@ export const add = defineAction({
 				.insert(tenants)
 				.values({
 					fullName: input.full_name,
-					phoneNumber: input.phone_number,
+					phoneNumber: phoneNumber,
 					originRegion: input.origin_region || null,
 				})
 				.returning({ id: tenants.id })
@@ -115,5 +118,61 @@ export const terminate = defineAction({
 		});
 
 		return { id: input.id };
+	},
+});
+
+export const edit = defineAction({
+	accept: "form",
+	input: z.object({
+		id: z.coerce.number(),
+		full_name: z.string(),
+		phone_number: z.string(),
+		origin_region: z.string().optional(),
+	}),
+	handler: async (input, context) => {
+		const target = await db.query.tenants.findFirst({
+			columns: { id: true },
+			where: { id: input.id },
+		});
+		if (!target)
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Penghuni tidak ditemukan.",
+			});
+
+		const phone = input.phone_number.replace(/\D/g, "").replace(/^0/, "");
+		const phoneNumber = phone.startsWith("62") ? phone : `62${phone}`;
+
+		const samePhone = await db.query.tenants.findFirst({
+			columns: { id: true },
+			where: { phoneNumber, id: { ne: input.id } },
+		});
+		if (samePhone?.id) {
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Nomor HP sudah terdaftar.",
+			});
+		}
+
+		const [updated] = await db
+			.update(tenants)
+			.set({
+				fullName: input.full_name,
+				phoneNumber,
+				originRegion: input.origin_region || null,
+			})
+			.where(eq(tenants.id, input.id))
+			.returning({ id: tenants.id });
+
+		const user = await context.session?.get("user");
+		await db.insert(auditLogs).values({
+			userId: user?.id ?? null,
+			action: "UPDATE",
+			tableName: "tenants",
+			recordId: updated.id,
+			details: `Mengubah data penghuni ${input.full_name} (${phoneNumber})`,
+		});
+
+		return updated;
 	},
 });

@@ -69,7 +69,6 @@ const filteredTenants = tenantsFromDb.map((tenant) => {
 	};
 });
 
-
 const STATUS_BADGES: Record<string, string> = {
 	Aktif: "badge-success",
 	Selesai: "badge-neutral opacity-60",
@@ -236,10 +235,12 @@ const formResult = (():
 															</div>
 														</div>
 														<div class="flex flex-col">
-															<span>{fullName}</span>
-															<span class="text-base-content/40 text-xs font-normal">
-																Penyewa Utama
-															</span>
+															<button
+																hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+																class="hover:link text-left font-semibold"
+															>
+																{fullName}
+															</button>
 														</div>
 													</div>
 												</td>
@@ -253,7 +254,9 @@ const formResult = (():
 															name="line-md:phone-call-twotone"
 															size="size-3.5"
 														/>
-														{phoneNumber}
+														{phoneNumber.startsWith("62")
+															? `+${phoneNumber}`
+															: phoneNumber}
 													</a>
 												</td>
 												<td>
@@ -280,11 +283,10 @@ const formResult = (():
 												<td class="text-right">
 													<div class="flex justify-end gap-1.5">
 														<button
-															hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+															hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 															class="btn btn-outline btn-info btn-xs flex items-center gap-1"
 														>
-															<Icon name="line-md:document-list-twotone" />{" "}
-															Detail
+															<Icon name="line-md:edit-twotone" /> Edit
 														</button>
 														{isActive && (
 															<button

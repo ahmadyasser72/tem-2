@@ -66,13 +66,15 @@ const emptyRooms = allRooms.filter(
 				<legend class="fieldset-legend text-sm font-semibold"
 					>Nomor HP (WhatsApp)</legend
 				>
-				<input
-					class="input w-full"
-					name="phone_number"
-					type="text"
-					placeholder="Contoh: 081234567890..."
-					required
-				/>
+				<label class="input w-full">
+					<span class="label">+62</span>
+					<input
+						name="phone_number"
+						type="text"
+						placeholder="81234567890..."
+						required
+					/>
+				</label>
 			</fieldset>
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend text-sm font-semibold"

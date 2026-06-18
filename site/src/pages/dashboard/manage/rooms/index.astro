@@ -79,6 +79,7 @@ const filteredRoomsFromDb = await db.query.rooms.findMany({
 		...(params.query && {
 			OR: [
 				{ roomNumber: { like: `%${params.query}%` } },
+				{ roomType: { like: `%${params.query}%` } },
 				{
 					leases: {
 						isActive: true,
@@ -196,6 +197,7 @@ const formResult = (():
 					Kelola inventaris, spesifikasi, dan status hunian kamar indekos
 				</p>
 			</div>
+
 			<button
 				hx-get="/dashboard/manage/rooms/modal/add"
 				class="btn btn-primary"
@@ -245,7 +247,7 @@ const formResult = (():
 						placeholder="Cari nomor/penghuni..."
 					/>
 				</label>
-				<div class="flex gap-2">
+				<div class="flex gap-2" id="filter_rooms_status" hx-swap-oob="true">
 					<input
 						class="filter-rooms"
 						id="status-filter"

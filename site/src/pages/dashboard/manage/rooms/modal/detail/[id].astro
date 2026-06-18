@@ -1,0 +1,144 @@
+---
+import { db, eq } from "@e-kos/database";
+import { tenants } from "@e-kos/database/schema";
+
+import Icon from "~/components/icon.astro";
+import { formatDate } from "~/lib/date";
+
+export const partial = true;
+
+const room = await db.query.rooms.findFirst({
+	columns: {
+		id: true,
+		roomNumber: true,
+		roomType: true,
+		monthlyPrice: true,
+		isActive: true,
+	},
+	where: { id: Number(Astro.params.id) },
+});
+
+const roomLeases = room
+	? await db.query.leases.findMany({
+			where: { roomId: room.id },
+			with: { tenant: true },
+			orderBy: (leases, { desc }) => [desc(leases.startDate)],
+		})
+	: [];
+
+if (!room) Astro.response.status = 404;
+---
+
+<dialog class="modal" id="detail_room_modal">
+	{
+		room ? (
+			<div class="modal-box border-base-300 max-w-lg border">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon
+						class="text-primary"
+						name="line-md:home-md-twotone"
+						size="size-6"
+					/>
+					Detail Kamar
+				</h3>
+
+				<div class="border-base-200 grid grid-cols-2 gap-x-4 gap-y-2.5 border-b pb-4 text-sm">
+					<span class="text-base-content/60 font-semibold">Nomor Kamar:</span>
+					<span class="font-bold">{room.roomNumber}</span>
+
+					<span class="text-base-content/60 font-semibold">Jenis Kamar:</span>
+					<span>{room.roomType}</span>
+
+					<span class="text-base-content/60 font-semibold">Harga/Bulan:</span>
+					<span class="font-mono font-bold">
+						Rp {room.monthlyPrice.toLocaleString("id-ID")}
+					</span>
+
+					<span class="text-base-content/60 font-semibold">Status:</span>
+					<span
+						class:list={[
+							"badge badge-sm",
+							room.isActive ? "badge-success" : "badge-ghost",
+						]}
+					>
+						{room.isActive ? "Aktif" : "Tidak Aktif"}
+					</span>
+
+					<span class="text-base-content/60 font-semibold">Penghuni:</span>
+					<span>
+						{roomLeases.find((l) => l.isActive)?.tenant?.fullName ?? (
+							<span class="text-base-content/40 italic">Kosong</span>
+						)}
+					</span>
+				</div>
+
+				<div class="mt-4">
+					<h4 class="text-base-content/80 mb-2 flex items-center gap-1.5 text-sm font-bold">
+						<Icon name="line-md:document-list-twotone" size="size-4" />
+						Riwayat Sewa
+					</h4>
+					{roomLeases.length === 0 ? (
+						<p class="text-base-content/50 py-2 text-xs italic">
+							Belum ada riwayat sewa.
+						</p>
+					) : (
+						<div class="divide-base-200 max-h-48 divide-y overflow-y-auto">
+							{roomLeases.map((lease) => (
+								<div class="flex items-center justify-between py-2.5 text-xs">
+									<div class="flex flex-col gap-0.5">
+										<div class="flex items-center gap-2">
+											<span class="font-semibold">
+												{lease.tenant?.fullName ?? "—"}
+											</span>
+										</div>
+										<span class="text-base-content/60">
+											{formatDate(lease.startDate)} s/d{" "}
+											{formatDate(lease.endDate)}
+										</span>
+									</div>
+									<div class="flex flex-col items-end gap-1">
+										<span
+											class:list={[
+												"badge badge-xs font-bold",
+												lease.isActive
+													? "badge-success"
+													: "badge-neutral opacity-60",
+											]}
+										>
+											{lease.isActive ? "Aktif" : "Selesai"}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
+				<div class="modal-action">
+					<form method="dialog">
+						<button class="btn btn-neutral btn-sm">Tutup</button>
+					</form>
+				</div>
+			</div>
+		) : (
+			<div class="modal-box border-base-300 border">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+				<h3 class="mb-4 text-xl font-bold">Detail Kamar</h3>
+				<p class="py-4">Kamar dengan ID: {Astro.params.id} tidak ditemukan.</p>
+			</div>
+		)
+	}
+	<form class="modal-backdrop" method="dialog">
+		<button>close</button>
+	</form>
+</dialog>

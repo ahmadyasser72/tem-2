@@ -229,12 +229,7 @@ const formResult = (():
 															</div>
 														</div>
 														<div class="flex flex-col">
-															<button
-																hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
-																class="hover:link text-left font-semibold"
-															>
-																{fullName}
-															</button>
+															<span class="font-semibold">{fullName}</span>
 														</div>
 													</div>
 												</td>
@@ -296,6 +291,15 @@ const formResult = (():
 																	id={`aksi-popover-${id}`}
 																	popover
 																>
+																	<li>
+																		<button
+																			hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+																			class="flex items-center gap-2"
+																		>
+																			<Icon name="line-md:document-list-twotone" />
+																			Detail
+																		</button>
+																	</li>
 																	<li>
 																		<button
 																			hx-get={`/dashboard/manage/tenants/modal/move/${id}`}

@@ -21,6 +21,7 @@ interface PendingMessage {
 
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingMessages = new Map<string, PendingMessage>();
+const unknownCooldowns = new Map<string, number>();
 let lastSendTime = 0;
 let botUserId: number;
 
@@ -86,40 +87,38 @@ export async function main() {
 		for (const message of messages) {
 			if (message.key.fromMe) continue;
 
-			const jid = message.key.remoteJid;
+			const jid = message.key.remoteJidAlt;
 			if (!jid?.endsWith("@s.whatsapp.net")) continue;
 
-			const phone = jid.replace("@s.whatsapp.net", "");
 			const text = message.message?.conversation?.trim() || "";
 			if (!text) continue;
 
 			// Cari tenant berdasarkan nomor
+			const phone = jid.replace("@s.whatsapp.net", "");
 			const tenant = await db.query.tenants.findFirst({
 				where: { phoneNumber: phone },
 			});
 
 			if (!tenant) {
-				// Nomor tidak dikenal — debounce 10 detik
-				const existing = debounceTimers.get(jid);
-				if (existing) clearTimeout(existing);
+				// Nomor tidak dikenal — cooldown 30 detik per nomor
+				const cooldownUntil = unknownCooldowns.get(jid);
+				if (cooldownUntil && Date.now() < cooldownUntil) {
+					continue;
+				}
 
-				debounceTimers.set(
-					jid,
-					setTimeout(async () => {
-						debounceTimers.delete(jid);
+				await sendWithRateLimit(sock, jid, {
+					text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
+				});
 
-						await sendWithRateLimit(sock, jid, {
-							text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
-						});
+				// Cooldown 30 detik sebelum bisa reply nomor yg sama lagi
+				unknownCooldowns.set(jid, Date.now() + 30_000);
 
-						await db.insert(auditLogs).values({
-							userId: botUserId,
-							action: "REJECT",
-							tableName: "chatbot_messages",
-							details: `Menolak pesan dari nomor tidak terdaftar: ${phone}`,
-						});
-					}, 10_000),
-				);
+				await db.insert(auditLogs).values({
+					userId: botUserId,
+					action: "REJECT",
+					tableName: "chatbot_messages",
+					details: `Menolak pesan dari nomor tidak terdaftar: ${phone}`,
+				});
 
 				continue;
 			}

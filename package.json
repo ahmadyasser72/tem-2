@@ -10,9 +10,10 @@
 	"scripts": {
 		"check": "pacwich run check",
 		"dev": "pacwich run dev",
-		"prebuild": "bun --cwd=packages/database --sequential db:push db:seed",
+		"prebuild": "bun --cwd=packages/database --sequential db:push db:seed && bun wa:login",
 		"build": "pacwich run build @e-kos/site",
 		"start": "pacwich run start",
+		"wa:login": "bun --cwd=packages/whatsapp-bot run login",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",
 		"docs:build-css": "tailwindcss --minify --input ./docs/wireframes/tailwind.css --output ./docs/wireframes/style.css",

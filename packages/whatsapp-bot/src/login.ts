@@ -6,6 +6,8 @@ import { useSqliteAuthState } from "./auth";
 async function login() {
 	const { state, saveCreds } = await useSqliteAuthState();
 
+	if (state.creds.me) return;
+
 	const sock = makeWASocket({
 		auth: state,
 	});

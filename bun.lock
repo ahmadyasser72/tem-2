@@ -47,8 +47,8 @@
       "name": "@e-kos/whatsapp-bot",
       "dependencies": {
         "@e-kos/database": "workspace:*",
-        "baileys": "latest",
-        "qrcode-terminal": "latest",
+        "baileys": "7.0.0-rc13",
+        "qrcode-terminal": "0.12.0",
       },
       "devDependencies": {
         "@types/node": "25.4.0",

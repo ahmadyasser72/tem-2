@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "bun src/start.ts",
 		"check": "tsc --noEmit",
-		"dev": "bun --watch src/start.ts"
+		"trigger": "bun src/trigger.ts"
 	},
 	"dependencies": {
 		"@e-kos/database": "workspace:*"

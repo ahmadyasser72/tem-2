@@ -1,14 +1,17 @@
 import { db } from "@e-kos/database";
 import { auditLogs, notifications, users } from "@e-kos/database/schema";
 
-export async function runRentReminder(systemUser: typeof users.$inferSelect) {
-	const now = new Date();
-	const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+export async function runRentReminder(
+	systemUser: typeof users.$inferSelect,
+	now?: Date,
+) {
+	const ref = now ?? new Date();
+	const threeDaysLater = new Date(ref.getTime() + 3 * 24 * 60 * 60 * 1000);
 
 	const dueInvoices = await db.query.invoices.findMany({
 		where: {
 			status: "unpaid",
-			dueDate: { gte: now, lte: threeDaysLater },
+			dueDate: { gte: ref, lte: threeDaysLater },
 		},
 		with: {
 			lease: {

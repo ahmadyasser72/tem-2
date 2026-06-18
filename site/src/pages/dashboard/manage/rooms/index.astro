@@ -367,12 +367,18 @@ const formResult = (():
 										</div>
 									</div>
 
-									<div class="card-actions justify-end">
+									<div class="card-actions flex-col">
 										<button
 											hx-get={`/dashboard/manage/rooms/modal/edit/${id}`}
 											class="btn btn-outline btn-primary btn-xs flex w-full items-center justify-center gap-1"
 										>
 											<Icon name="line-md:edit-twotone" /> Edit Kamar
+										</button>
+										<button
+											hx-get={`/dashboard/manage/rooms/modal/delete/${id}`}
+											class="btn btn-outline btn-error btn-xs flex w-full items-center justify-center gap-1"
+										>
+											<Icon name="line-md:remove" /> Hapus
 										</button>
 									</div>
 								</div>

@@ -1,5 +1,5 @@
 import { db, eq } from "@e-kos/database";
-import { rooms, auditLogs } from "@e-kos/database/schema";
+import { auditLogs, rooms } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -87,5 +87,37 @@ export const edit = defineAction({
 		});
 
 		return updated;
+	},
+});
+
+export const _delete = defineAction({
+	accept: "form",
+	input: z.object({ id: z.coerce.number() }),
+	handler: async (input, context) => {
+		const target = await db.query.rooms.findFirst({
+			columns: { id: true },
+			where: { id: input.id },
+		});
+		if (!target)
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Kamar tidak ditemukan.",
+			});
+
+		const [deleted] = await db
+			.delete(rooms)
+			.where(eq(rooms.id, input.id))
+			.returning({ id: rooms.id });
+
+		const user = await context.session?.get("user");
+		await db.insert(auditLogs).values({
+			userId: user?.id ?? null,
+			action: "DELETE",
+			tableName: "rooms",
+			recordId: deleted.id,
+			details: `Menghapus kamar dengan ID: ${deleted.id}`,
+		});
+
+		return deleted;
 	},
 });

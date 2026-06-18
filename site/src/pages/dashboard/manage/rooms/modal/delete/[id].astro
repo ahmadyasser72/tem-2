@@ -1,0 +1,109 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+
+import IconLoader from "~/components/icon-loader.astro";
+import Icon from "~/components/icon.astro";
+
+export const partial = true;
+
+const room = await db.query.rooms.findFirst({
+	columns: {
+		id: true,
+		roomNumber: true,
+		roomType: true,
+		monthlyPrice: true,
+		isActive: true,
+	},
+	where: { id: Number(Astro.params.id) },
+});
+
+if (!room) Astro.response.status = 404;
+---
+
+<dialog class="modal" id="delete_room_modal">
+	{
+		room ? (
+			<div class="modal-box border-base-300 border">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon class="text-primary" name="line-md:home-md-twotone" size="size-6" />
+					Hapus kamar berikut?
+				</h3>
+
+				<div class="mb-3 grid grid-cols-2 gap-2 text-sm">
+					<span class="font-bold">Nomor Kamar:</span>
+					<span>{room.roomNumber}</span>
+					<span class="font-bold">Jenis Kamar:</span>
+					<span>{room.roomType}</span>
+					<span class="font-bold">Harga/Bulan:</span>
+					<span>Rp {room.monthlyPrice.toLocaleString("id-ID")}</span>
+					<span class="font-bold">Status:</span>
+					<span
+						class:list={[
+							"badge badge-sm",
+							room.isActive ? "badge-success" : "badge-ghost",
+						]}
+					>
+						{room.isActive ? "Aktif" : "Tidak Aktif"}
+					</span>
+				</div>
+
+				<form
+					hx-post={actions.manage.rooms._delete}
+					class="hidden"
+					id="delete_room_form"
+					hx-indicator="#delete_room_btn"
+					hx-on--after-request="event.detail.successful && delete_room_modal.close()"
+					hx-select-oob="#form_error, #form_result, #rooms-grid"
+					hx-swap="none transition:true"
+					action={actions.manage.rooms._delete}
+					method="post"
+				>
+					<input name="id" type="hidden" value={room.id} />
+				</form>
+
+				<p id="form_error" class="text-error text-sm" />
+
+				<div class="modal-action">
+					<form class="flex gap-2" method="dialog">
+						<button class="btn btn-outline btn-sm">Batal</button>
+						<button
+							class="btn btn-error btn-sm"
+							id="delete_room_btn"
+							type="submit"
+							form="delete_room_form"
+						>
+							<IconLoader />
+							Hapus
+						</button>
+					</form>
+				</div>
+			</div>
+		) : (
+			<div class="modal-box border-base-300 border">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+						✕
+					</button>
+				</form>
+
+				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+					<Icon class="text-primary" name="line-md:home-md-twotone" size="size-6" />
+					Hapus Kamar
+				</h3>
+
+				<p class="py-4">Kamar dengan ID: {Astro.params.id} tidak ditemukan.</p>
+			</div>
+		)
+	}
+	<form class="modal-backdrop" method="dialog">
+		<button>close</button>
+	</form>
+</dialog>

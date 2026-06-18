@@ -71,12 +71,14 @@ const MENU = (() => {
 	switch (role) {
 		case "admin":
 			return {
+				dashboard: ALL.dashboard,
 				manajemen: [
 					ALL.manajemen[0], // only Manajemen Akun
 				],
 			};
 		case "owner":
 			return {
+				dashboard: ALL.dashboard,
 				laporan: ALL.laporan,
 			};
 		case "staff":

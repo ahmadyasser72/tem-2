@@ -272,10 +272,10 @@ const formResult = (():
 												<td class="text-right">
 													<div class="flex justify-end gap-1.5">
 														<button
-															hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
-															class="btn btn-outline btn-info btn-xs flex items-center gap-1"
+															hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+															class="btn btn-outline btn-primary btn-xs flex items-center gap-1"
 														>
-															<Icon name="line-md:edit-twotone" /> Edit
+															<Icon name="line-md:document-list" /> Detail
 														</button>
 														{isActive ? (
 															<>
@@ -293,20 +293,20 @@ const formResult = (():
 																>
 																	<li>
 																		<button
-																			hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
+																			hx-get={`/dashboard/manage/tenants/modal/move/${id}`}
 																			class="flex items-center gap-2"
 																		>
-																			<Icon name="line-md:document-list-twotone" />
-																			Detail
+																			<Icon name="line-md:arrow-right-circle" />
+																			Pindah Kamar
 																		</button>
 																	</li>
 																	<li>
 																		<button
-																			hx-get={`/dashboard/manage/tenants/modal/move/${id}`}
+																			hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 																			class="flex items-center gap-2"
 																		>
-																			<Icon name="line-md:arrow-right-circle-twotone" />
-																			Pindah Kamar
+																			<Icon name="line-md:edit" />
+																			Edit
 																		</button>
 																	</li>
 																	<li>

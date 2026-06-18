@@ -6,6 +6,7 @@ import { z } from "astro/zod";
 import { pick } from "es-toolkit";
 
 import Alert from "~/components/alert.astro";
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
@@ -117,8 +118,6 @@ const STATUS_BADGES: Record<string, string> = {
 	Terkirim: "badge-success",
 	Gagal: "badge-error",
 };
-
-
 
 const formResult = (():
 	| { success: false; message: string }
@@ -312,6 +311,7 @@ const formResult = (():
 					hx-post={actions.manage.notifications.send}
 					class="flex flex-col gap-4"
 					id="send_notification_form"
+					hx-indicator="#send_notification_btn"
 					hx-on--after-request="event.detail.successful && document.getElementById('modal-kirim-notifikasi').close()"
 					hx-select-oob="#form_error, #form_result, #notifications-table-body"
 					hx-swap="none transition:true"
@@ -351,9 +351,11 @@ const formResult = (():
 						<button class="btn btn-outline btn-sm">Batal</button>
 						<button
 							class="btn btn-primary btn-sm"
+							id="send_notification_btn"
 							type="submit"
 							form="send_notification_form"
 						>
+							<IconLoader />
 							Kirim Pesan
 						</button>
 					</form>

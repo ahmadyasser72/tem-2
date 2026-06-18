@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 
 export const partial = true;
@@ -44,6 +45,7 @@ if (!room) Astro.response.status = 404;
 					hx-post={actions.manage.rooms.edit}
 					class="flex flex-col gap-4"
 					id="edit_room_form"
+					hx-indicator="#edit_room_btn"
 					hx-on--after-request="event.detail.successful && edit_room_modal.close()"
 					hx-select-oob="#form_error, #form_result, #rooms-grid"
 					hx-swap="none transition:true"
@@ -114,9 +116,11 @@ if (!room) Astro.response.status = 404;
 						<button class="btn btn-outline btn-sm">Batal</button>
 						<button
 							class="btn btn-primary btn-sm"
+							id="edit_room_btn"
 							type="submit"
 							form="edit_room_form"
 						>
+							<IconLoader />
 							Simpan Kamar
 						</button>
 					</form>

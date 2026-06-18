@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 
 export const partial = true;
@@ -39,6 +40,7 @@ if (!complaint) Astro.response.status = 404;
 				<form
 					hx-post={actions.manage.complaints.resolve}
 					id="resolve_complaint_form"
+					hx-indicator="#resolve_complaint_btn"
 					hx-on--after-request="event.detail.successful && resolve_complaint_modal.close()"
 					hx-select-oob="#form_error, #form_result, #complaints-list"
 					hx-swap="none transition:true"
@@ -48,34 +50,38 @@ if (!complaint) Astro.response.status = 404;
 					<input name="id" type="hidden" value={complaint.id} />
 
 					<div class="mb-4">
-						<span class="font-bold text-xs block mb-1">Deskripsi Masalah:</span>
-						<p class="bg-base-200 border border-base-300 rounded p-3 text-xs leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap break-words">
+						<span class="mb-1 block text-xs font-bold">Deskripsi Masalah:</span>
+						<p class="bg-base-200 border-base-300 max-h-24 overflow-y-auto rounded border p-3 text-xs leading-relaxed break-words whitespace-pre-wrap">
 							{complaint.description}
 						</p>
 					</div>
 
 					<div class="form-control mb-4">
 						<label class="label pt-0 pb-1">
-							<span class="label-text font-semibold text-xs">Keterangan Resolve (Opsional):</span>
+							<span class="label-text text-xs font-semibold">
+								Keterangan Resolve (Opsional):
+							</span>
 						</label>
 						<textarea
-							name="resolveNotes"
 							class="textarea textarea-bordered h-20 text-sm"
+							name="resolveNotes"
 							placeholder="Tuliskan detail perbaikan atau catatan penyelesaian (opsional)..."
-						></textarea>
+						/>
 					</div>
 				</form>
 
-				<p id="form_error" class="text-error mb-4 text-sm" />
+				<p class="text-error mb-4 text-sm" id="form_error" />
 
 				<div class="modal-action">
 					<form class="flex gap-2" method="dialog">
 						<button class="btn btn-outline btn-sm">Batal</button>
 						<button
 							class="btn btn-success btn-sm text-white"
+							id="resolve_complaint_btn"
 							type="submit"
 							form="resolve_complaint_form"
 						>
+							<IconLoader />
 							Konfirmasi Selesai
 						</button>
 					</form>

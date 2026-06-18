@@ -1,6 +1,7 @@
 ---
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 
 export const partial = true;
@@ -23,6 +24,7 @@ export const partial = true;
 			hx-post={actions.manage.accounts.add}
 			class="flex flex-col gap-4"
 			id="add_account_form"
+			hx-indicator="#add_account_btn"
 			hx-on--after-request="event.detail.successful && add_account_modal.close()"
 			hx-select-oob="#form_error, #form_result, #rows"
 			hx-swap="none transition:true"
@@ -78,9 +80,11 @@ export const partial = true;
 				<button class="btn btn-outline btn-sm">Batal</button>
 				<button
 					class="btn btn-primary btn-sm"
+					id="add_account_btn"
 					type="submit"
 					form="add_account_form"
 				>
+					<IconLoader />
 					Simpan Akun
 				</button>
 			</form>

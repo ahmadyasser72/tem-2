@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 import { formatDate } from "~/lib/date";
 
@@ -48,15 +49,22 @@ if (!log) Astro.response.status = 404;
 					Hapus audit log berikut?
 				</h3>
 
-				<div class="grid grid-cols-2 gap-2 text-sm border-b border-base-200 pb-4">
+				<div class="border-base-200 grid grid-cols-2 gap-2 border-b pb-4 text-sm">
 					<span class="font-bold">Pengguna:</span>
 					<span>{auditLog.userName}</span>
 					<span class="font-bold">Jenis Aksi:</span>
-					<span class:list={["badge badge-xs font-bold", ACTION_BADGES[auditLog.action]]}>
+					<span
+						class:list={[
+							"badge badge-xs font-bold",
+							ACTION_BADGES[auditLog.action],
+						]}
+					>
 						{auditLog.action}
 					</span>
 					<span class="font-bold">Tabel Target:</span>
-					<span class="font-mono text-xs text-primary font-semibold">{auditLog.table}</span>
+					<span class="text-primary font-mono text-xs font-semibold">
+						{auditLog.table}
+					</span>
 					<span class="font-bold">ID Record:</span>
 					<span class="font-mono text-xs">{auditLog.recordId}</span>
 					<span class="font-bold">Waktu:</span>
@@ -67,6 +75,7 @@ if (!log) Astro.response.status = 404;
 					hx-post={actions.manage.audit.remove}
 					class="hidden"
 					id="delete_audit_form"
+					hx-indicator="#delete_audit_btn"
 					hx-on--after-request="event.detail.successful && delete_audit_modal.close()"
 					hx-select-oob="#form_result, #audit-table-body"
 					hx-swap="none transition:true"
@@ -83,9 +92,11 @@ if (!log) Astro.response.status = 404;
 						<button class="btn btn-outline btn-sm">Batal</button>
 						<button
 							class="btn btn-error btn-sm"
+							id="delete_audit_btn"
 							type="submit"
 							form="delete_audit_form"
 						>
+							<IconLoader />
 							Hapus
 						</button>
 					</form>
@@ -104,7 +115,9 @@ if (!log) Astro.response.status = 404;
 					Hapus Audit Log
 				</h3>
 
-				<p class="py-4">Audit log dengan ID: {Astro.params.id} tidak ditemukan.</p>
+				<p class="py-4">
+					Audit log dengan ID: {Astro.params.id} tidak ditemukan.
+				</p>
 			</div>
 		)
 	}

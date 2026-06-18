@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 
 export const partial = true;
@@ -41,6 +42,7 @@ if (!account) Astro.response.status = 404;
 							hx-post={actions.manage.accounts.edit}
 							class="flex flex-col gap-4"
 							id="edit_account_form"
+							hx-indicator="#edit_account_btn"
 							hx-on--after-request="event.detail.successful && add_account_modal.close()"
 							hx-select-oob="#form_error, #form_result, #rows"
 							hx-swap="none transition:true"
@@ -105,9 +107,11 @@ if (!account) Astro.response.status = 404;
 								<button class="btn btn-outline btn-sm">Batal</button>
 								<button
 									class="btn btn-primary btn-sm"
+									id="edit_account_btn"
 									type="submit"
 									form="edit_account_form"
 								>
+									<IconLoader />
 									Simpan Akun
 								</button>
 							</form>

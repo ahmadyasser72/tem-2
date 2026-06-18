@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 import { ROLE_BADGES } from "../../index.astro";
 
@@ -61,6 +62,7 @@ if (!account) Astro.response.status = 404;
 							hx-post={actions.manage.accounts._delete}
 							class="hidden"
 							id="delete_account_form"
+							hx-indicator="#delete_account_btn"
 							hx-on--after-request="event.detail.successful && delete_account_modal.close()"
 							hx-select-oob="#form_error, #form_result, #rows"
 							hx-swap="none transition:true"
@@ -77,9 +79,11 @@ if (!account) Astro.response.status = 404;
 								<button class="btn btn-outline btn-sm">Batal</button>
 								<button
 									class="btn btn-error btn-sm"
+									id="delete_account_btn"
 									type="submit"
 									form="delete_account_form"
 								>
+									<IconLoader />
 									Hapus
 								</button>
 							</form>

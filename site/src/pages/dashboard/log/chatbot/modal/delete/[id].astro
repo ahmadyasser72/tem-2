@@ -3,6 +3,7 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 import { formatDate } from "~/lib/date";
 
@@ -76,6 +77,7 @@ if (!log) Astro.response.status = 404;
 					hx-post={actions.manage.chatbot.remove}
 					class="hidden"
 					id="delete_chatbot_form"
+					hx-indicator="#delete_chatbot_btn"
 					hx-on--after-request="event.detail.successful && delete_chatbot_modal.close()"
 					hx-select-oob="#form_result, #chatbot-table-body"
 					hx-swap="none transition:true"
@@ -92,9 +94,11 @@ if (!log) Astro.response.status = 404;
 						<button class="btn btn-outline btn-sm">Batal</button>
 						<button
 							class="btn btn-error btn-sm"
+							id="delete_chatbot_btn"
 							type="submit"
 							form="delete_chatbot_form"
 						>
+							<IconLoader />
 							Hapus
 						</button>
 					</form>

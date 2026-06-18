@@ -4,6 +4,7 @@ import { leases, rooms as roomsTable } from "@e-kos/database/schema";
 
 import { actions } from "astro:actions";
 
+import IconLoader from "~/components/icon-loader.astro";
 import Icon from "~/components/icon.astro";
 
 export const partial = true;
@@ -42,6 +43,7 @@ const emptyRooms = allRooms.filter(
 			hx-post={actions.manage.tenants.add}
 			class="flex flex-col gap-4"
 			id="add_tenant_form"
+			hx-indicator="#add_tenant_btn"
 			hx-on--after-request="event.detail.successful && add_tenant_modal.close()"
 			hx-select-oob="#form_error, #form_result, #tenants-rows"
 			hx-swap="none transition:true"
@@ -129,9 +131,11 @@ const emptyRooms = allRooms.filter(
 				<button class="btn btn-outline btn-sm">Batal</button>
 				<button
 					class="btn btn-primary btn-sm"
+					id="add_tenant_btn"
 					type="submit"
 					form="add_tenant_form"
 				>
+					<IconLoader />
 					Simpan Kontrak
 				</button>
 			</form>

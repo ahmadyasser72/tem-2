@@ -8,10 +8,13 @@ import { formatCurrency } from "~/lib/currency";
 import { formatDate } from "~/lib/date";
 
 const currentMonthStr = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, "0")}`;
+const defaultFrom = currentMonthStr;
+const defaultTo = currentMonthStr;
 
 const params = Astro.locals.parseQuery(
 	z.object({
-		month: z.string().catch(currentMonthStr),
+		from: z.string().catch(defaultFrom),
+		to: z.string().catch(defaultTo),
 		status: z
 			.enum(["all", "paid", "unpaid", "overdue"])
 			.optional()
@@ -19,11 +22,15 @@ const params = Astro.locals.parseQuery(
 	}),
 );
 
-const [yearStr, monthStr] = params.month.split("-");
-const year = parseInt(yearStr, 10);
-const month = parseInt(monthStr, 10);
-const startOfMonth = new Date(year, month - 1, 1);
-const endOfMonth = new Date(year, month, 1);
+// If from > to, adjust to follow from
+if (params.from > params.to) {
+	params.to = params.from;
+}
+
+const [fromYear, fromMonth] = params.from.split("-").map(Number);
+const [toYear, toMonth] = params.to.split("-").map(Number);
+const startDate = new Date(fromYear, fromMonth - 1, 1);
+const endDate = new Date(toYear, toMonth, 0, 23, 59, 59, 999);
 
 const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
 
@@ -35,8 +42,8 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 const invoices = await db.query.invoices.findMany({
 	where: {
 		dueDate: {
-			gte: startOfMonth,
-			lt: endOfMonth,
+			gte: startDate,
+			lte: endDate,
 		},
 		...(params.status && params.status !== "all"
 			? { status: params.status }
@@ -84,7 +91,7 @@ const STATUS_LABELS: Record<string, string> = {
 	title="Laporan Transaksi Bulanan"
 	createdBy={createdBy}
 	knownBy={knownBy}
-	subtitle={"Periode " + params.month}
+	subtitle={`${params.from} s/d ${params.to}`}
 >
 	<!-- Stats Cards -->
 	<div

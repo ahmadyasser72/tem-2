@@ -39,16 +39,24 @@ const currentMonthStr = (() => {
 	const now = new Date();
 	return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
 })();
+const defaultFrom = currentMonthStr;
+const defaultTo = currentMonthStr;
 
 const params = Astro.locals.parseQuery(
 	z.object({
-		month: z.string().catch(currentMonthStr),
+		from: z.string().catch(defaultFrom),
+		to: z.string().catch(defaultTo),
 		status: z
 			.enum(["all", "paid", "unpaid", "overdue"])
 			.optional()
 			.catch(undefined),
 	}),
 );
+
+// If from > to, adjust to follow from
+if (params.from > params.to) {
+	params.to = params.from;
+}
 
 // Handle status messages from HTMX redirect
 const queryStatusMsg = Astro.url.searchParams.get("statusMsg");
@@ -69,19 +77,18 @@ const redirectResult = ((): { success: boolean; message: string } | void => {
 	};
 })();
 
-// Parse start and end of the selected month
-const [yearStr, monthStr] = params.month.split("-");
-const year = parseInt(yearStr, 10);
-const month = parseInt(monthStr, 10);
-const startOfMonth = new Date(year, month - 1, 1);
-const endOfMonth = new Date(year, month, 1);
+// Parse start and end month from params
+const [fromYear, fromMonth] = params.from.split("-").map(Number);
+const [toYear, toMonth] = params.to.split("-").map(Number);
+const startDate = new Date(fromYear, fromMonth - 1, 1);
+const endDate = new Date(toYear, toMonth, 0, 23, 59, 59, 999);
 
 // 1. Query all invoices for the selected month at database level
 const monthlyInvoicesFromDb = await db.query.invoices.findMany({
 	where: {
 		dueDate: {
-			gte: startOfMonth,
-			lt: endOfMonth,
+			gte: startDate,
+			lte: endDate,
 		},
 	},
 	with: {
@@ -131,7 +138,7 @@ const summaryStats = [
 	{
 		title: "Total Pemasukan",
 		value: `Rp ${totalRevenue.toLocaleString("id-ID")}`,
-		desc: `Periode ${params.month}`,
+		desc: `${params.from} s/d ${params.to}`,
 		icon: "line-md:edit-filled",
 	},
 	{
@@ -152,8 +159,8 @@ const summaryStats = [
 const filteredInvoicesFromDb = await db.query.invoices.findMany({
 	where: {
 		dueDate: {
-			gte: startOfMonth,
-			lt: endOfMonth,
+			gte: startDate,
+			lte: endDate,
 		},
 		...(params.status && params.status !== "all" && { status: params.status }),
 	},
@@ -262,10 +269,21 @@ const STATUS_BADGES: Record<string, string> = {
 					<input
 						hx-get
 						hx-trigger="change"
-						class="input input-sm filter-transactions w-full sm:w-44"
-						name="month"
+						class="input input-sm filter-transactions w-full sm:w-40"
+						name="from"
 						type="month"
-						value={params.month}
+						value={params.from}
+					/>
+					<span class="text-base-content/70 text-sm font-semibold">Sampai:</span
+					>
+					<input
+						hx-get
+						hx-trigger="change"
+						class="input input-sm filter-transactions w-full sm:w-40"
+						name="to"
+						type="month"
+						value={params.to}
+						min={params.from}
 					/>
 				</div>
 				<div class="flex w-full justify-end gap-2 sm:w-auto">

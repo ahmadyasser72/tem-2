@@ -14,6 +14,16 @@ interface GeneratePdfOptions {
 let browserInstance: Browser | null = null;
 let browserPromise: Promise<Browser> | null = null;
 
+// Persist across HMR via hot.data agar pending launch .then() tetap ter-track
+let allBrowsers: Set<Browser>;
+if (import.meta.hot) {
+	if (!import.meta.hot.data.allBrowsers)
+		import.meta.hot.data.allBrowsers = new Set();
+	allBrowsers = import.meta.hot.data.allBrowsers;
+} else {
+	allBrowsers = new Set();
+}
+
 async function getBrowser(): Promise<Browser> {
 	if (browserInstance?.connected) return browserInstance;
 	if (browserPromise) return browserPromise;
@@ -22,18 +32,36 @@ async function getBrowser(): Promise<Browser> {
 	if (!fs.existsSync(chromiumPath))
 		throw new Error(`Chromium not found at ${chromiumPath}`);
 
-	browserPromise = puppeteer.launch({
-		executablePath: chromiumPath,
-		args: ["--no-sandbox", "--headless=new"],
-	});
+	browserPromise = puppeteer
+		.launch({
+			executablePath: chromiumPath,
+			args: ["--no-sandbox", "--headless=new"],
+		})
+		.then((b) => {
+			browserInstance = b;
+			allBrowsers.add(b);
+			b.on("disconnected", () => {
+				browserInstance = null;
+				browserPromise = null;
+				allBrowsers.delete(b);
+			});
+			return b;
+		});
 
-	browserInstance = await browserPromise;
-	browserInstance.on("disconnected", () => {
-		browserInstance = null;
+	return await browserPromise;
+}
+
+// ── HMR cleanup — close all browsers before module reload ──────────────────
+
+if (import.meta.hot) {
+	import.meta.hot.dispose(() => {
 		browserPromise = null;
+		browserInstance = null;
+		for (const b of allBrowsers) {
+			b.close().catch(() => {});
+		}
+		allBrowsers.clear();
 	});
-
-	return browserInstance;
 }
 
 // ── Shared auth token for puppeteer ────────────────────────────────────────

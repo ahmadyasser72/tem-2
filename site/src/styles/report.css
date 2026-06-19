@@ -1,0 +1,6 @@
+/* ── Tailwind CSS for PDF reports ──────────────────────────────────────────
+   Hanya theme + utilities. Tanpa preflight agar tidak override layout PDF.
+   Layout laporan punya reset sendiri di report-layout.astro.
+*/
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";

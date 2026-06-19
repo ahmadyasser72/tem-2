@@ -106,12 +106,23 @@ const formResult = (():
 			)
 		}
 
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold">Log Percakapan Chatbot</h1>
-			<p class="text-base-content/60 text-sm">
-				Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem Chatbot
-				Indekos Ungu
-			</p>
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Log Percakapan Chatbot</h1>
+				<p class="text-base-content/60 text-sm">
+					Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem
+					Chatbot Indekos Ungu
+				</p>
+			</div>
+			<a
+				class="btn btn-outline btn-sm flex items-center gap-1"
+				href={`/dashboard/log/chatbot/report/download${Astro.url.search}`}
+				download
+			>
+				<Icon name="line-md:download" /> PDF
+			</a>
 		</div>
 
 		<div class="card bg-base-100 border-base-300 border shadow-sm">
@@ -157,7 +168,6 @@ const formResult = (():
 								Keluar
 							</option>
 						</select>
-
 					</div>
 				</div>
 
@@ -173,8 +183,10 @@ const formResult = (():
 								>
 								<th class="text-base-content/60 w-32 text-xs font-bold">Arah</th
 								>
-								<th class="text-base-content/60 text-xs font-bold">Isi Pesan</th>
-								<th class="text-base-content/60 w-16 text-right text-xs font-bold"
+								<th class="text-base-content/60 text-xs font-bold">Isi Pesan</th
+								>
+								<th
+									class="text-base-content/60 w-16 text-right text-xs font-bold"
 									>Aksi</th
 								>
 							</tr>
@@ -220,7 +232,7 @@ const formResult = (():
 											<td class="text-base-content/85 max-w-lg pt-4 text-sm leading-relaxed font-normal wrap-break-word">
 												{message}
 											</td>
-											<td class="text-right pt-2.5">
+											<td class="pt-2.5 text-right">
 												<button
 													hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
 													class="btn btn-square btn-ghost btn-xs text-error"

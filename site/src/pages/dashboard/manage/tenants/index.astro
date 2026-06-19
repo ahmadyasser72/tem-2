@@ -133,13 +133,22 @@ const formResult = (():
 					Kelola data identitas, kontak, dan masa aktif sewa penghuni
 				</p>
 			</div>
-			<button
-				hx-get="/dashboard/manage/tenants/modal/add"
-				class="btn btn-primary"
-			>
-				<Icon name="line-md:plus" size="size-5" />
-				Tambah Penghuni
-			</button>
+			<div class="flex items-center gap-2">
+				<a
+					class="btn btn-outline flex items-center gap-1"
+					href={`/dashboard/manage/tenants/report/download${Astro.url.search}`}
+					download
+				>
+					<Icon name="line-md:download" /> PDF
+				</a>
+				<button
+					hx-get="/dashboard/manage/tenants/modal/add"
+					class="btn btn-primary"
+				>
+					<Icon name="line-md:plus" size="size-5" />
+					Tambah Penghuni
+				</button>
+			</div>
 		</div>
 
 		<div class="card bg-base-100 border-base-300 border shadow-sm">

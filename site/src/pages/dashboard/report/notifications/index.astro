@@ -166,13 +166,22 @@ const formResult = (():
 					WhatsApp Chatbot
 				</p>
 			</div>
-			<button
-				class="btn btn-primary"
-				onclick="const modal = document.getElementById('modal-kirim-notifikasi'); if(modal instanceof HTMLDialogElement) modal.showModal();"
-			>
-				<Icon name="line-md:plus" size="size-5" />
-				Kirim Notifikasi
-			</button>
+			<div class="flex items-center gap-2">
+				<a
+					class="btn btn-outline flex items-center gap-1"
+					href={`/dashboard/report/notifications/report/download${Astro.url.search}`}
+					download
+				>
+					<Icon name="line-md:download" /> PDF
+				</a>
+				<button
+					class="btn btn-primary"
+					onclick="const modal = document.getElementById('modal-kirim-notifikasi'); if(modal instanceof HTMLDialogElement) modal.showModal();"
+				>
+					<Icon name="line-md:plus" size="size-5" />
+					Kirim Notifikasi
+				</button>
+			</div>
 		</div>
 
 		<Alert

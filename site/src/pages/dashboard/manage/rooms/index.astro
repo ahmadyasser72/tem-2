@@ -198,13 +198,22 @@ const formResult = (():
 				</p>
 			</div>
 
-			<button
-				hx-get="/dashboard/manage/rooms/modal/add"
-				class="btn btn-primary"
-			>
-				<Icon name="line-md:plus" size="size-5" />
-				Tambah Kamar
-			</button>
+			<div class="flex items-center gap-2">
+				<a
+					class="btn btn-outline flex items-center gap-1"
+					href={`/dashboard/manage/rooms/report/download${Astro.url.search}`}
+					download
+				>
+					<Icon name="line-md:download" /> PDF
+				</a>
+				<button
+					hx-get="/dashboard/manage/rooms/modal/add"
+					class="btn btn-primary"
+				>
+					<Icon name="line-md:plus" size="size-5" />
+					Tambah Kamar
+				</button>
+			</div>
 		</div>
 
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">

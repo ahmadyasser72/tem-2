@@ -100,12 +100,23 @@ const formResult = (():
 			)
 		}
 
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold">Audit Log Sistem</h1>
-			<p class="text-base-content/60 text-sm">
-				Jejak rekaman log aktivitas mutasi data dan operasional yang dilakukan
-				oleh pengguna
-			</p>
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Audit Log Sistem</h1>
+				<p class="text-base-content/60 text-sm">
+					Jejak rekaman log aktivitas mutasi data dan operasional yang dilakukan
+					oleh pengguna
+				</p>
+			</div>
+			<a
+				class="btn btn-outline btn-sm flex items-center gap-1"
+				href={`/dashboard/log/audit/report/download${Astro.url.search}`}
+				download
+			>
+				<Icon name="line-md:download" /> PDF
+			</a>
 		</div>
 
 		<div class="card bg-base-100 border-base-300 border shadow-sm">

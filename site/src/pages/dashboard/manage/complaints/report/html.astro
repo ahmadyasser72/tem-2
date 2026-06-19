@@ -1,0 +1,221 @@
+---
+import { db } from "@e-kos/database";
+
+import { z } from "astro/zod";
+
+import ReportLayout from "~/layouts/report-layout.astro";
+import dayjs, { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		status: z
+			.enum(["open", "in_progress", "resolved"])
+			.optional()
+			.catch(undefined),
+		from: z.string().optional().catch(undefined),
+		to: z.string().optional().catch(undefined),
+	}),
+);
+
+// knownBy — first owner user
+const owner = await db.query.users.findFirst({
+	where: { role: "owner" },
+	columns: { displayName: true },
+});
+const knownBy = owner?.displayName ?? "Pemilik Kos";
+
+// createdBy — from searchParams, fallback "Staff"
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+
+// Fetch all complaints for stats (no filter)
+const allComplaints = await db.query.complaints.findMany();
+
+const stats = [
+	{ label: "Total Masuk", value: allComplaints.length },
+	{
+		label: "Terbuka",
+		value: allComplaints.filter((c) => c.status === "open").length,
+	},
+	{
+		label: "Dalam Proses",
+		value: allComplaints.filter((c) => c.status === "in_progress").length,
+	},
+	{
+		label: "Selesai",
+		value: allComplaints.filter((c) => c.status === "resolved").length,
+	},
+];
+
+// Build filtered where clause
+const where: Record<string, unknown> = {};
+if (params.status) {
+	where.status = params.status;
+}
+if (params.from || params.to) {
+	const createdAtFilter: Record<string, Date> = {};
+	if (params.from) {
+		createdAtFilter.gte = dayjs(params.from).startOf("day").toDate();
+	}
+	if (params.to) {
+		createdAtFilter.lte = dayjs(params.to).endOf("day").toDate();
+	}
+	where.createdAt = createdAtFilter;
+}
+
+const complaintsFromDb = await db.query.complaints.findMany({
+	where,
+	with: {
+		tenant: {
+			with: {
+				leases: {
+					where: { isActive: true },
+					with: {
+						room: true,
+					},
+				},
+			},
+		},
+		resolver: true,
+	},
+});
+
+const rows = complaintsFromDb.map((complaint, idx) => {
+	const activeLease = complaint.tenant?.leases?.[0];
+	const statusLabel =
+		complaint.status === "open"
+			? "Terbuka"
+			: complaint.status === "in_progress"
+				? "Proses"
+				: "Selesai";
+	return {
+		no: idx + 1,
+		tenantName: complaint.tenant?.fullName ?? "-",
+		roomNumber: activeLease?.room?.roomNumber ?? "-",
+		description: complaint.description,
+		statusLabel,
+		createdAt: complaint.createdAt,
+		resolvedByUserName: complaint.resolver?.displayName ?? "-",
+	};
+});
+
+// Build subtitle
+const subtitleParts: string[] = [];
+if (params.status) {
+	const label =
+		params.status === "open"
+			? "Terbuka"
+			: params.status === "in_progress"
+				? "Dalam Proses"
+				: "Selesai";
+	subtitleParts.push(`Status: ${label}`);
+}
+if (params.from) subtitleParts.push(`Dari: ${formatDate(params.from)}`);
+if (params.to) subtitleParts.push(`Sampai: ${formatDate(params.to)}`);
+const subtitle =
+	subtitleParts.length > 0 ? subtitleParts.join(" | ") : undefined;
+---
+
+<ReportLayout
+	title="Laporan Komplain Penghuni"
+	createdBy={createdBy}
+	knownBy={knownBy}
+	subtitle={subtitle}
+>
+	<!-- Stats -->
+	<div
+		style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"
+	>
+		{
+			stats.map((s) => (
+				<div style="border:1px solid black;padding:8px 12px;text-align:center;">
+					<p style="font-size:10px;font-weight:400;margin-bottom:4px;">
+						{s.label}
+					</p>
+					<p style="font-size:18px;font-weight:700;">{s.value}</p>
+				</div>
+			))
+		}
+	</div>
+
+	<!-- Section title -->
+	<p style="font-size:12px;font-weight:700;margin-bottom:8px;">
+		Daftar Komplain
+	</p>
+
+	<!-- Table -->
+	<table>
+		<thead>
+			<tr>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>No.</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Penghuni</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Kamar</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Deskripsi</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Status</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Tanggal Lapor</th
+				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Ditangani Oleh</th
+				>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				rows.length === 0 && (
+					<tr>
+						<td
+							colspan="7"
+							style="border:1px solid black;padding:12px 8px;font-size:10px;text-align:center;"
+						>
+							Tidak ada data komplain.
+						</td>
+					</tr>
+				)
+			}
+			{
+				rows.map((row) => (
+					<tr>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							{row.no}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+							{row.tenantName}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							{row.roomNumber}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+							{row.description}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							{row.statusLabel}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							{formatDate(row.createdAt)}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+							{row.resolvedByUserName}
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</ReportLayout>

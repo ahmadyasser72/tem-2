@@ -1,0 +1,192 @@
+---
+import { db } from "@e-kos/database";
+
+import { z } from "astro/zod";
+
+import ReportLayout from "~/layouts/report-layout.astro";
+import { formatCurrency } from "~/lib/currency";
+import { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		status: z
+			.enum(["occupied", "vacant", "inactive"])
+			.optional()
+			.catch(undefined),
+		type: z.enum(["Standar", "Premium"]).optional().catch(undefined),
+	}),
+);
+
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+const owner = await db.query.users.findFirst({
+	where: { role: "owner" },
+	columns: { displayName: true },
+});
+const knownBy = owner?.displayName ?? "Pemilik Kos";
+
+// 1. Query all rooms with active leases and tenants
+const roomsFromDb = await db.query.rooms.findMany({
+	with: {
+		leases: {
+			where: { isActive: true },
+			with: {
+				tenant: true,
+			},
+		},
+	},
+});
+
+// 2. Map to display data
+const allRooms = roomsFromDb.map(
+	({ roomNumber, roomType, monthlyPrice, isActive, leases }) => {
+		const activeLease = leases[0];
+		return {
+			roomNumber,
+			roomType: roomType ?? "Standar",
+			monthlyPrice,
+			isActive,
+			tenantName: activeLease?.tenant?.fullName ?? null,
+		};
+	},
+);
+
+// 3. Derive status and apply filters
+const filteredRooms = allRooms.filter((r) => {
+	if (params.status === "inactive" && r.isActive) return false;
+	if (params.status === "occupied" && (!r.isActive || !r.tenantName))
+		return false;
+	if (params.status === "vacant" && (!r.isActive || r.tenantName)) return false;
+	if (params.type && r.roomType !== params.type) return false;
+	return true;
+});
+
+// 4. Stats
+const totalKamar = allRooms.length;
+const terisi = allRooms.filter((r) => r.isActive && r.tenantName).length;
+const tersedia = allRooms.filter((r) => r.isActive && !r.tenantName).length;
+const nonaktif = allRooms.filter((r) => !r.isActive).length;
+
+// Subtitle — describe filters being applied
+const filterParts: string[] = [];
+if (params.status) {
+	const labels: Record<string, string> = {
+		occupied: "Terisi",
+		vacant: "Kosong",
+		inactive: "Nonaktif",
+	};
+	filterParts.push(`Status: ${labels[params.status]}`);
+}
+if (params.type) {
+	filterParts.push(`Tipe: ${params.type}`);
+}
+const subtitle =
+	filterParts.length > 0 ? filterParts.join(" | ") : "Semua kamar";
+---
+
+<ReportLayout
+	title="Rekap Status Kamar"
+	createdBy={createdBy}
+	knownBy={knownBy}
+	subtitle={subtitle}
+>
+	<!-- Stats Cards -->
+	<div
+		style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;"
+	>
+		<div style="border: 1px solid black; padding: 12px; text-align: center;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6;"
+			>
+				Total Kamar
+			</div>
+			<div style="font-size: 20px; font-weight: 700; margin-top: 4px;">
+				{totalKamar}
+			</div>
+		</div>
+		<div style="border: 1px solid black; padding: 12px; text-align: center;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6;"
+			>
+				Terisi
+			</div>
+			<div style="font-size: 20px; font-weight: 700; margin-top: 4px;">
+				{terisi}
+			</div>
+		</div>
+		<div style="border: 1px solid black; padding: 12px; text-align: center;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6;"
+			>
+				Tersedia
+			</div>
+			<div style="font-size: 20px; font-weight: 700; margin-top: 4px;">
+				{tersedia}
+			</div>
+		</div>
+		<div style="border: 1px solid black; padding: 12px; text-align: center;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6;"
+			>
+				Nonaktif
+			</div>
+			<div style="font-size: 20px; font-weight: 700; margin-top: 4px;">
+				{nonaktif}
+			</div>
+		</div>
+	</div>
+
+	<!-- Waktu Cetak -->
+	<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
+		Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
+	</div>
+
+	<!-- Table -->
+	<table>
+		<thead>
+			<tr>
+				<th style="width: 20%;">No. Kamar</th>
+				<th style="width: 15%;">Jenis</th>
+				<th style="width: 22%;">Harga/Bulan</th>
+				<th style="width: 15%;">Status</th>
+				<th style="width: 28%;">Penghuni</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				filteredRooms.length === 0 ? (
+					<tr>
+						<td
+							colspan="5"
+							style="text-align: center; padding: 24px; font-size: 11px; opacity: 0.5;"
+						>
+							Tidak ada data kamar yang sesuai dengan filter.
+						</td>
+					</tr>
+				) : (
+					filteredRooms.map(
+						({ roomNumber, roomType, monthlyPrice, isActive, tenantName }) => {
+							const status = !isActive
+								? "Nonaktif"
+								: tenantName
+									? "Terisi"
+									: "Kosong";
+							return (
+								<tr>
+									<td style="font-family: 'Courier New', monospace;">
+										{roomNumber}
+									</td>
+									<td>{roomType}</td>
+									<td style="font-family: 'Courier New', monospace; text-align: right;">
+										{formatCurrency(monthlyPrice)}
+									</td>
+									<td>{status}</td>
+									<td>{tenantName ?? "-"}</td>
+								</tr>
+							);
+						},
+					)
+				)
+			}
+		</tbody>
+	</table>
+</ReportLayout>

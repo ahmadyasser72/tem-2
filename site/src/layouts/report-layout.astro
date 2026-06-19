@@ -1,0 +1,127 @@
+---
+import dayjs from "~/lib/date";
+
+import "~/styles/report.css";
+
+export interface Props {
+	title: string;
+	subtitle?: string;
+	createdBy: string;
+	knownBy: string;
+}
+
+const { title, subtitle, createdBy, knownBy } = Astro.props;
+const today = dayjs().format("DD MMMM YYYY");
+---
+
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="utf-8" />
+		<title>{title}</title>
+	</head>
+	<body class="report-body">
+		<!-- Kop -->
+		<div
+			style="border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 16px;"
+		>
+			<div style="display: flex; align-items: center; gap: 16px;">
+				<div
+					style="width: 56px; height: 56px; border-radius: 50%; background: #374151; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex-shrink: 0;"
+				>
+					KU
+				</div>
+				<div style="flex: 1; text-align: center;">
+					<div
+						style="font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;"
+					>
+						Kost Ungu
+					</div>
+					<div
+						style="border-bottom: 1px solid black; margin-top: 4px; margin-bottom: 4px;"
+					>
+					</div>
+					<div style="font-size: 11px; opacity: 0.7;">
+						Jl. Sejahtera, Komplek Damai, RT 002/RW 006, Kelurahan Mentaos, Kec.
+						Banjarbaru Utara, Kota Banjar Baru, Kalimantan Selatan 70714 · Telp:
+						+62 8xx-xxxx-xxxx
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Judul -->
+		<div style="text-align: center; margin-bottom: 16px;">
+			<h2
+				style="font-size: 14px; font-weight: 700; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.5px;"
+			>
+				{title}
+			</h2>
+			{
+				subtitle && (
+					<p style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
+						{subtitle}
+					</p>
+				)
+			}
+		</div>
+
+		<!-- Konten -->
+		<slot />
+
+		<!-- TTD -->
+		<div
+			style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; text-align: center; font-size: 11px;"
+		>
+			<div>
+				<p>Banjarbaru, {today}</p>
+				<p style="margin-top: 4px; font-weight: 600;">Dibuat oleh</p>
+				<p style="font-size: 10px; opacity: 0.6;">(Staff/Admin)</p>
+				<div
+					style="border-top: 2px solid black; padding-top: 4px; margin-top: 40px;"
+				>
+					<p>{createdBy}</p>
+				</div>
+			</div>
+			<div>
+				<p>Banjarbaru, {today}</p>
+				<p style="margin-top: 4px; font-weight: 600;">Diketahui oleh</p>
+				<p style="font-size: 10px; opacity: 0.6;">(Pemilik Kos)</p>
+				<div
+					style="border-top: 2px solid black; padding-top: 4px; margin-top: 40px;"
+				>
+					<p>{knownBy}</p>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
+
+<style is:global>
+	.report-body {
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 12px;
+		color: black;
+		background: white;
+		line-height: 1.5;
+		padding: 0;
+	}
+	.report-body table {
+		border-collapse: collapse;
+		width: 100%;
+	}
+	.report-body td,
+	.report-body th {
+		border: 1px solid black;
+		padding: 6px 8px;
+		text-align: left;
+		font-size: 10px;
+	}
+	.report-body th {
+		background: #f3f4f6;
+		font-weight: 700;
+	}
+	@page {
+		margin: 2cm 1.5cm 1.5cm 2cm;
+	}
+</style>

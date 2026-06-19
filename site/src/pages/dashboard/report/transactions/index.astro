@@ -227,9 +227,18 @@ const STATUS_BADGES: Record<string, string> = {
 					Rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni
 				</p>
 			</div>
-			<button class="btn btn-outline btn-sm flex items-center gap-1">
-				<Icon name="line-md:download" /> Export Excel
-			</button>
+			<div class="flex items-center gap-2">
+				<a
+					class="btn btn-outline btn-sm flex items-center gap-1"
+					href={`/dashboard/report/transactions/report/download${Astro.url.search}`}
+					download
+				>
+					<Icon name="line-md:download" /> PDF
+				</a>
+				<button class="btn btn-outline btn-sm flex items-center gap-1">
+					<Icon name="line-md:download" /> Export Excel
+				</button>
+			</div>
 		</div>
 
 		<div class="card bg-base-100 border-base-300 border shadow-sm">

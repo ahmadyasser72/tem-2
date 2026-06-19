@@ -1,0 +1,192 @@
+---
+import { db } from "@e-kos/database";
+import { z } from "astro/zod";
+import { formatDate } from "~/lib/date";
+import ReportLayout from "~/layouts/report-layout.astro";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		from: z.string().optional().catch(undefined),
+		to: z.string().optional().catch(undefined),
+		type: z
+			.enum(["all", "Pengingat", "Pembayaran", "Umum"])
+			.optional()
+			.catch(undefined),
+	}),
+);
+
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+
+const owners = await db.query.users.findMany({ where: { role: "owner" } });
+const knownBy = owners[0]?.displayName ?? "Pemilik Kos";
+
+// Query notifications with optional type filter
+const notificationsFromDb = await db.query.notifications.findMany({
+	where: {
+		...(params.type &&
+			params.type !== "all" && {
+				...(params.type === "Pembayaran" && {
+					invoiceId: { isNotNull: true },
+					chatbotMessage: {
+						OR: [
+							{ message: { like: "%lunas%" } },
+							{ message: { like: "%terima kasih%" } },
+						],
+					},
+				}),
+				...(params.type === "Pengingat" && {
+					invoiceId: { isNotNull: true },
+					NOT: {
+						chatbotMessage: {
+							OR: [
+								{ message: { like: "%lunas%" } },
+								{ message: { like: "%terima kasih%" } },
+							],
+						},
+					},
+				}),
+				...(params.type === "Umum" && {
+					invoiceId: { isNull: true },
+				}),
+			}),
+	},
+	with: {
+		tenant: {
+			with: {
+				leases: {
+					where: { isActive: true },
+					with: {
+						room: true,
+					},
+				},
+			},
+		},
+		invoice: true,
+		chatbotMessage: true,
+	},
+	orderBy: (notifications, { desc }) => [desc(notifications.id)],
+});
+
+// Map to display data — mirroring index.astro logic
+let filteredNotifications = notificationsFromDb.map((n) => {
+	const activeLease = n.tenant?.leases?.[0];
+	const msg = n.chatbotMessage?.message ?? "";
+	const type = n.invoiceId
+		? msg.toLowerCase().includes("lunas") ||
+			msg.toLowerCase().includes("terima kasih")
+			? "Pembayaran"
+			: "Pengingat"
+		: "Umum";
+	return {
+		time: n.chatbotMessage?.sentAt ?? null,
+		tenantName: n.tenant?.fullName ?? "-",
+		roomNumber: activeLease?.room?.roomNumber ?? "-",
+		invoiceNumber: n.invoiceId
+			? `INV-${n.invoiceId.toString().padStart(6, "0")}`
+			: "-",
+		type,
+		status: n.status === "sent" ? "Terkirim" : "Gagal",
+	};
+});
+
+// Apply date range filter in-memory (sentAt from chatbotMessage)
+if (params.from) {
+	const fromDate = new Date(params.from);
+	filteredNotifications = filteredNotifications.filter(
+		(n) => n.time && new Date(n.time) >= fromDate,
+	);
+}
+if (params.to) {
+	const toDate = new Date(params.to);
+	toDate.setHours(23, 59, 59, 999);
+	filteredNotifications = filteredNotifications.filter(
+		(n) => n.time && new Date(n.time) <= toDate,
+	);
+}
+
+// Build subtitle
+const subtitleParts: string[] = [];
+if (params.type && params.type !== "all")
+	subtitleParts.push(`Jenis: ${params.type}`);
+if (params.from)
+	subtitleParts.push(`Dari: ${formatDate(params.from, "DD MMM YYYY")}`);
+if (params.to)
+	subtitleParts.push(`Sampai: ${formatDate(params.to, "DD MMM YYYY")}`);
+const subtitle =
+	subtitleParts.length > 0 ? subtitleParts.join(" | ") : undefined;
+
+const total = filteredNotifications.length;
+---
+
+<ReportLayout
+	title="Laporan Riwayat Notifikasi"
+	subtitle={subtitle}
+	createdBy={createdBy}
+	knownBy={knownBy}
+>
+	<!-- Waktu Cetak -->
+	<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
+		Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
+	</div>
+
+	<!-- Table -->
+	<table>
+		<thead>
+			<tr>
+				<th style="width: 22%;">Waktu Kirim</th>
+				<th style="width: 28%;">Penghuni</th>
+				<th style="width: 18%;">No. Invoice</th>
+				<th style="width: 16%;">Jenis</th>
+				<th style="width: 16%;">Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{filteredNotifications.length === 0 ? (
+				<tr>
+					<td
+						colspan="5"
+						style="text-align: center; padding: 24px; font-size: 11px; opacity: 0.5;"
+					>
+						Tidak ada data notifikasi yang sesuai dengan filter.
+					</td>
+				</tr>
+			) : (
+				filteredNotifications.map(
+					({ time, tenantName, roomNumber, invoiceNumber, type, status }) => (
+						<tr>
+							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
+								{formatDate(time, "DD MMM YYYY HH:mm")}
+							</td>
+							<td>
+								{tenantName}
+								<span
+									style="font-family: 'Courier New', monospace; font-size: 10px; opacity: 0.6; margin-left: 4px;">
+									({roomNumber})
+								</span>
+							</td>
+							<td
+								style="font-family: 'Courier New', monospace; font-weight: 600;"
+							>
+								{invoiceNumber}
+							</td>
+							<td>{type}</td>
+							<td style="font-weight: 600;">
+								{status === "Terkirim" ? "Terkirim" : "Gagal"}
+							</td>
+						</tr>
+					),
+				)
+			)}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td
+					colspan="5"
+					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
+				>
+					Total notifikasi: {total}
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</ReportLayout>

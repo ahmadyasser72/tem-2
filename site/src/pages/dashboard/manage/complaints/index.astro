@@ -121,7 +121,6 @@ const STATUS_BORDERS: Record<string, string> = {
 	resolved: "border-l-success",
 };
 
-
 const formResult = (():
 	| { success: false; message: string }
 	| { success: true; title: string; description: string }
@@ -161,11 +160,22 @@ const formResult = (():
 			)
 		}
 
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold">Daftar Komplain</h1>
-			<p class="text-base-content/60 text-sm">
-				Monitor pengaduan kerusakan dan keluhan sarana dari penghuni indekos
-			</p>
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold">Daftar Komplain</h1>
+				<p class="text-base-content/60 text-sm">
+					Monitor pengaduan kerusakan dan keluhan sarana dari penghuni indekos
+				</p>
+			</div>
+			<a
+				class="btn btn-outline btn-sm flex items-center gap-1"
+				href={`/dashboard/manage/complaints/report/download${Astro.url.search}`}
+				download
+			>
+				<Icon name="line-md:download" /> PDF
+			</a>
 		</div>
 
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -296,14 +306,16 @@ const formResult = (():
 										<p class="text-base-content text-base font-bold">
 											{description}
 										</p>
-										{
-											resolveNotes && (
-												<div class="mt-2 text-xs bg-success/5 border border-success/20 rounded p-2.5 max-w-xl">
-													<span class="font-bold text-success block mb-0.5">Catatan Penyelesaian:</span>
-													<p class="text-base-content/85 whitespace-pre-wrap break-words">{resolveNotes}</p>
-												</div>
-											)
-										}
+										{resolveNotes && (
+											<div class="bg-success/5 border-success/20 mt-2 max-w-xl rounded border p-2.5 text-xs">
+												<span class="text-success mb-0.5 block font-bold">
+													Catatan Penyelesaian:
+												</span>
+												<p class="text-base-content/85 break-words whitespace-pre-wrap">
+													{resolveNotes}
+												</p>
+											</div>
+										)}
 										<div class="text-base-content/50 mt-1 flex items-center gap-2 text-xs">
 											<Icon name="line-md:calendar" size="size-3.5" />
 											<span>Dilaporkan pada: {formatDate(createdAt)}</span>

@@ -14,6 +14,10 @@ export default defineConfig({
 				access: "secret",
 				context: "server",
 			}),
+			CHROMIUM_PATH: envField.string({
+				access: "secret",
+				context: "server",
+			}),
 			DUITKU_MERCHANT_CODE: envField.string({
 				access: "secret",
 				context: "server",

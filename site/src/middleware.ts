@@ -1,6 +1,8 @@
 import { defineMiddleware } from "astro:middleware";
 import { z } from "astro/zod";
 
+import { getPDFToken } from "~/lib/pdf";
+
 export const onRequest = defineMiddleware(
 	async ({ locals, url, session, redirect }, next) => {
 		locals.parseQuery = (schema) => {
@@ -33,6 +35,17 @@ export const onRequest = defineMiddleware(
 		};
 
 		if (url.pathname.startsWith("/dashboard")) {
+			// Puppeteer PDF bypass — token dari download.ts, tidak perlu session
+			const pdfToken = url.searchParams.get("_pdf_token");
+			if (pdfToken && pdfToken === getPDFToken()) {
+				locals.user = {
+					id: 0,
+					name: url.searchParams.get("createdBy") ?? "Staff",
+					role: "staff",
+				};
+				return next();
+			}
+
 			const user = await session?.get("user");
 			if (!user) return redirect(new URL("/login", url).pathname);
 

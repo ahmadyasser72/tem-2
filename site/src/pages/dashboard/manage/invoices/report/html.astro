@@ -1,0 +1,225 @@
+---
+import { db } from "@e-kos/database";
+
+import { z } from "astro/zod";
+
+import ReportLayout from "~/layouts/report-layout.astro";
+import { formatCurrency } from "~/lib/currency";
+import { formatDate } from "~/lib/date";
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		tenantId: z.coerce.number().optional().catch(undefined),
+	}),
+);
+
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+const owner = await db.query.users.findFirst({
+	where: { role: "owner" },
+	columns: { displayName: true },
+});
+const knownBy = owner?.displayName ?? "Pemilik Kos";
+
+// tenantId wajib ada — redirect or show nothing useful without it
+const hasValidTenant =
+	params.tenantId != null && !Number.isNaN(params.tenantId);
+
+// 1. Cari tenant dengan active lease dan room
+const tenant = hasValidTenant
+	? await db.query.tenants.findFirst({
+			where: { id: params.tenantId },
+			with: {
+				leases: {
+					where: { isActive: true },
+					with: { room: true },
+				},
+			},
+		})
+	: null;
+
+const activeLease = tenant?.leases?.[0] ?? null;
+
+// 2. Query semua invoice milik tenant via active lease (atau semua lease milik tenant)
+const invoices =
+	hasValidTenant && activeLease
+		? await db.query.invoices.findMany({
+				where: { leaseId: activeLease.id },
+				with: {
+					lease: {
+						with: {
+							room: true,
+						},
+					},
+				},
+			})
+		: [];
+
+// 3. Map ke display data
+const STATUS_LABELS: Record<string, string> = {
+	paid: "Lunas",
+	unpaid: "Belum Bayar",
+	overdue: "Terlambat",
+};
+
+const invoiceRows = invoices.map((inv) => ({
+	id: inv.id,
+	invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
+	period: formatDate(inv.dueDate, "MMMM YYYY"),
+	amount: inv.amount,
+	dueDate: inv.dueDate,
+	status: inv.status,
+	statusLabel: STATUS_LABELS[inv.status] ?? inv.status,
+}));
+
+// 4. Footer summaries
+const totalTagihan = invoiceRows.reduce((sum, r) => sum + r.amount, 0);
+const totalLunas = invoiceRows
+	.filter((r) => r.status === "paid")
+	.reduce((sum, r) => sum + r.amount, 0);
+const totalBelumLunas = invoiceRows
+	.filter((r) => r.status !== "paid")
+	.reduce((sum, r) => sum + r.amount, 0);
+
+// 5. Subtitle info
+const subtitle = tenant
+	? `${tenant.fullName} — ${activeLease?.room?.roomNumber ?? "-"} (${formatDate(activeLease?.startDate, "DD MMM YYYY")} — ${activeLease?.endDate ? formatDate(activeLease.endDate, "DD MMM YYYY") : "Sekarang"})`
+	: params.tenantId
+		? "Penghuni tidak ditemukan"
+		: "Silakan pilih penghuni";
+---
+
+<ReportLayout
+	title="Rekap Tagihan Per Penghuni"
+	createdBy={createdBy}
+	knownBy={knownBy}
+	subtitle={subtitle}
+>
+	<!-- Waktu Cetak -->
+	<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
+		Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
+	</div>
+
+	<!-- Header Info -->
+	{
+		tenant && (
+			<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; font-size: 11px;">
+				<div>
+					<span style="font-weight: 700; opacity: 0.6;">Nama</span>
+					<div style="font-weight: 700; margin-top: 2px;">
+						{tenant.fullName}
+					</div>
+				</div>
+				<div>
+					<span style="font-weight: 700; opacity: 0.6;">Kamar</span>
+					<div style="font-weight: 700; margin-top: 2px; font-family: 'Courier New', monospace;">
+						{activeLease?.room?.roomNumber ?? "-"}
+					</div>
+				</div>
+				<div>
+					<span style="font-weight: 700; opacity: 0.6;">Periode Sewa</span>
+					<div style="font-weight: 700; margin-top: 2px; font-family: 'Courier New', monospace;">
+						{formatDate(activeLease?.startDate, "DD MMM YYYY")}—
+						{activeLease?.endDate
+							? formatDate(activeLease.endDate, "DD MMM YYYY")
+							: "Sekarang"}
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	<!-- Tabel Invoice -->
+	<table>
+		<thead>
+			<tr>
+				<th style="width: 5%; text-align: center;">No.</th>
+				<th style="width: 22%;">Invoice</th>
+				<th style="width: 18%;">Periode</th>
+				<th style="width: 20%; text-align: right;">Nominal</th>
+				<th style="width: 18%;">Jatuh Tempo</th>
+				<th style="width: 17%;">Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				invoiceRows.length === 0 ? (
+					<tr>
+						<td
+							colspan="6"
+							style="text-align: center; padding: 24px; font-size: 11px; opacity: 0.5;"
+						>
+							{params.tenantId
+								? "Tidak ada tagihan untuk penghuni ini."
+								: "Pilih penghuni untuk melihat rekap tagihan."}
+						</td>
+					</tr>
+				) : (
+					invoiceRows.map((row, i) => (
+						<tr>
+							<td style="text-align: center; font-size: 10px;">{i + 1}</td>
+							<td style="font-family: 'Courier New', monospace; font-weight: 600;">
+								{row.invoiceNumber}
+							</td>
+							<td>{row.period}</td>
+							<td style="font-family: 'Courier New', monospace; text-align: right;">
+								{formatCurrency(row.amount)}
+							</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{formatDate(row.dueDate)}
+							</td>
+							<td style="font-weight: 600;">{row.statusLabel}</td>
+						</tr>
+					))
+				)
+			}
+		</tbody>
+		{
+			invoiceRows.length > 0 && (
+				<tfoot>
+					<tr>
+						<td
+							colspan="2"
+							style="border-top: 2px solid black; font-weight: 700; font-size: 11px;"
+						>
+							Total Tagihan
+						</td>
+						<td
+							colspan="4"
+							style="border-top: 2px solid black; text-align: right; font-family: 'Courier New', monospace; font-weight: 700; font-size: 11px;"
+						>
+							{formatCurrency(totalTagihan)}
+						</td>
+					</tr>
+					<tr>
+						<td
+							colspan="2"
+							style="font-weight: 700; font-size: 10px; opacity: 0.7;"
+						>
+							Total Lunas
+						</td>
+						<td
+							colspan="4"
+							style="text-align: right; font-family: 'Courier New', monospace; font-weight: 700; font-size: 10px; opacity: 0.7;"
+						>
+							{formatCurrency(totalLunas)}
+						</td>
+					</tr>
+					<tr>
+						<td
+							colspan="2"
+							style="font-weight: 700; font-size: 10px; opacity: 0.7;"
+						>
+							Total Belum Lunas
+						</td>
+						<td
+							colspan="4"
+							style="text-align: right; font-family: 'Courier New', monospace; font-weight: 700; font-size: 10px; opacity: 0.7;"
+						>
+							{formatCurrency(totalBelumLunas)}
+						</td>
+					</tr>
+				</tfoot>
+			)
+		}
+	</table>
+</ReportLayout>

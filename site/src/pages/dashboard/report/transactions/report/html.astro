@@ -1,0 +1,173 @@
+---
+import { db } from "@e-kos/database";
+
+import { z } from "astro/zod";
+
+import ReportLayout from "~/layouts/report-layout.astro";
+import { formatCurrency } from "~/lib/currency";
+import { formatDate } from "~/lib/date";
+
+const currentMonthStr = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, "0")}`;
+
+const params = Astro.locals.parseQuery(
+	z.object({
+		month: z.string().catch(currentMonthStr),
+		status: z
+			.enum(["all", "paid", "unpaid", "overdue"])
+			.optional()
+			.catch(undefined),
+	}),
+);
+
+const [yearStr, monthStr] = params.month.split("-");
+const year = parseInt(yearStr, 10);
+const month = parseInt(monthStr, 10);
+const startOfMonth = new Date(year, month - 1, 1);
+const endOfMonth = new Date(year, month, 1);
+
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+
+const owner = await db.query.users.findFirst({
+	where: { role: "owner" },
+});
+const knownBy = owner?.displayName ?? "Pemilik Kos";
+
+const invoices = await db.query.invoices.findMany({
+	where: {
+		dueDate: {
+			gte: startOfMonth,
+			lt: endOfMonth,
+		},
+		...(params.status && params.status !== "all"
+			? { status: params.status }
+			: {}),
+	},
+	with: {
+		lease: {
+			with: {
+				tenant: true,
+				room: true,
+			},
+		},
+	},
+});
+
+const mapped = invoices.map((inv) => ({
+	invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
+	tenantName: inv.lease?.tenant?.fullName ?? "-",
+	roomNumber: inv.lease?.room?.roomNumber ?? "-",
+	amount: inv.amount,
+	dueDate: inv.dueDate,
+	status: inv.status,
+	gatewayRef: inv.duitkuReference ?? "-",
+}));
+
+const paidInvoices = mapped.filter((inv) => inv.status === "paid");
+const unpaidInvoices = mapped.filter((inv) => inv.status !== "paid");
+
+const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+const paidCount = paidInvoices.length;
+const unpaidCount = unpaidInvoices.length;
+const outstandingAmount = unpaidInvoices.reduce(
+	(sum, inv) => sum + inv.amount,
+	0,
+);
+
+const STATUS_LABELS: Record<string, string> = {
+	paid: "Lunas",
+	unpaid: "Belum Bayar",
+	overdue: "Terlambat",
+};
+---
+
+<ReportLayout
+	title="Laporan Transaksi Bulanan"
+	createdBy={createdBy}
+	knownBy={knownBy}
+	subtitle={"Periode " + params.month}
+>
+	<!-- Stats Cards -->
+	<div
+		style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;"
+	>
+		<div style="border: 1px solid black; padding: 12px 16px;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
+			>
+				Total Pemasukan
+			</div>
+			<div
+				style="font-size: 18px; font-weight: 700; font-family: 'Courier New', monospace;"
+			>
+				{formatCurrency(totalRevenue)}
+			</div>
+		</div>
+		<div style="border: 1px solid black; padding: 12px 16px;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
+			>
+				Sudah Terbayar
+			</div>
+			<div style="font-size: 18px; font-weight: 700;">
+				{paidCount} Invoice
+			</div>
+		</div>
+		<div style="border: 1px solid black; padding: 12px 16px;">
+			<div
+				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
+			>
+				Belum Terbayar
+			</div>
+			<div style="font-size: 18px; font-weight: 700;">
+				{unpaidCount} Invoice
+			</div>
+			<div
+				style="font-size: 11px; margin-top: 2px; font-family: 'Courier New', monospace;"
+			>
+				{formatCurrency(outstandingAmount)}
+			</div>
+		</div>
+	</div>
+
+	<!-- Transactions Table -->
+	<table>
+		<thead>
+			<tr>
+				<th style="text-align: center; width: 24px;">No</th>
+				<th>No. Invoice</th>
+				<th>Penghuni</th>
+				<th style="width: 60px;">Kamar</th>
+				<th style="text-align: right;">Nominal</th>
+				<th>Jatuh Tempo</th>
+				<th>Status</th>
+				<th>Ref. Gateway</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				mapped.map((inv, idx) => (
+					<tr>
+						<td class="text-center">{idx + 1}</td>
+						<td style="font-family: 'Courier New', monospace;">
+							{inv.invoiceNumber}
+						</td>
+						<td>{inv.tenantName}</td>
+						<td style="font-family: 'Courier New', monospace;">
+							{inv.roomNumber}
+						</td>
+						<td style="text-align: right; font-family: 'Courier New', monospace;">
+							{formatCurrency(inv.amount)}
+						</td>
+						<td style="font-family: 'Courier New', monospace;">
+							{formatDate(inv.dueDate)}
+						</td>
+						<td>{STATUS_LABELS[inv.status]}</td>
+						<td style="font-family: 'Courier New', monospace; font-size: 9px;">
+							{inv.gatewayRef}
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</ReportLayout>

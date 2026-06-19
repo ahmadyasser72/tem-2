@@ -8,15 +8,28 @@ import { pick } from "es-toolkit";
 import Alert from "~/components/alert.astro";
 import Icon from "~/components/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate } from "~/lib/date";
+import { formatDate, getCurrentMonthStr, parsePeriod } from "~/lib/date";
+
+const defaultFrom = getCurrentMonthStr();
+const defaultTo = getCurrentMonthStr();
 
 const params = Astro.locals.parseQuery(
 	z.object({
 		query: z.string().catch(""),
+		from: z.string().catch(defaultFrom),
+		to: z.string().catch(defaultTo),
 		action: z.enum(["CREATE", "UPDATE", "DELETE"]).optional().catch(undefined),
 		show_system: z.string().optional().catch(undefined),
 	}),
 );
+
+// If from > to, adjust to follow from
+if (params.from > params.to) {
+	params.to = params.from;
+}
+
+// Parse period
+const { startDate, endDate } = parsePeriod(params.from, params.to);
 
 const showSystem = params.show_system !== undefined;
 
@@ -34,6 +47,10 @@ const logsFromDb = await db.query.auditLogs.findMany({
 				},
 			],
 		}),
+		createdAt: {
+			gte: startDate,
+			lte: endDate,
+		},
 		...(params.action && { action: params.action }),
 		...(!showSystem && {
 			user: {
@@ -120,15 +137,110 @@ const formResult = (():
 		</div>
 
 		<div class="card bg-base-100 border-base-300 border shadow-sm">
-			<div class="card-body p-0">
-				<div
-					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
-					hx-include=".filter-audit"
-					hx-select="#audit-table-body"
-					hx-swap="outerHTML transition:true"
-					hx-target="#audit-table-body"
-				>
-					<label class="input input-sm max-w-xs flex-1">
+			<div
+				class="card-body flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+				hx-include=".filter-audit"
+				hx-select="#audit-content-wrapper"
+				hx-swap="outerHTML transition:true"
+				hx-target="#audit-content-wrapper"
+			>
+				<div class="flex w-full items-center gap-3 sm:flex-1">
+					<Icon
+						class="text-primary shrink-0"
+						name="line-md:calendar"
+						size="size-5"
+					/>
+					<span
+						class="text-base-content/75 hidden text-sm font-semibold md:inline"
+						>Pilih Periode:</span
+					>
+					<input
+						hx-get
+						class="input input-sm filter-audit w-full sm:w-40"
+						name="from"
+						type="month"
+						value={params.from}
+					/>
+					<span class="text-base-content/70 text-sm font-semibold">Sampai:</span
+					>
+					<input
+						hx-get
+						class="input input-sm filter-audit w-full sm:w-40"
+						name="to"
+						type="month"
+						value={params.to}
+						min={params.from}
+					/>
+				</div>
+
+				<div class="flex gap-2">
+					<button
+						class="btn btn-sm btn-outline"
+						popovertarget="filter-audit-popover"
+						style="anchor-name:--filter-audit"
+					>
+						<Icon name="line-md:filter" size="size-4" />
+						Filter
+					</button>
+					<div
+						class="dropdown menu rounded-box bg-base-100 mt-2 min-w-64 shadow-sm"
+						id="filter-audit-popover"
+						popover
+						style="position-anchor:--filter-audit"
+					>
+						<li class="menu-title">Jenis aksi</li>
+
+						<div class="mx-2 mb-4 filter">
+							<input
+								hx-get
+								class="btn filter-reset filter-audit btn-sm"
+								name="action"
+								type="radio"
+								value="all"
+							/>
+							<input
+								hx-get
+								class="btn filter-audit btn-sm"
+								name="action"
+								type="radio"
+								value="CREATE"
+								aria-label="CREATE"
+								checked={params.action === "CREATE"}
+							/>
+							<input
+								hx-get
+								class="btn filter-audit btn-sm"
+								name="action"
+								type="radio"
+								value="UPDATE"
+								aria-label="UPDATE"
+								checked={params.action === "UPDATE"}
+							/>
+							<input
+								hx-get
+								class="btn filter-audit btn-sm"
+								name="action"
+								type="radio"
+								value="DELETE"
+								aria-label="DELETE"
+								checked={params.action === "DELETE"}
+							/>
+						</div>
+
+						<label class="label label-sm mx-2">
+							<input
+								hx-get
+								class="checkbox checkbox-sm filter-audit"
+								name="show_system"
+								type="checkbox"
+								value="1"
+								checked={showSystem}
+							/>
+							Tampilkan System
+						</label>
+					</div>
+
+					<label class="input input-sm w-full sm:max-w-xs">
 						<Icon name="line-md:search" size="size-4" />
 						<input
 							hx-get
@@ -140,39 +252,15 @@ const formResult = (():
 							placeholder="Cari aksi, tabel, atau pengguna..."
 						/>
 					</label>
-					<div class="flex items-center gap-2">
-						<select
-							hx-get
-							class="select select-sm filter-audit w-32"
-							name="action"
-						>
-							<option value="all" selected={!params.action}>
-								Aksi (Semua)
-							</option>
-							<option value="CREATE" selected={params.action === "CREATE"}>
-								CREATE
-							</option>
-							<option value="UPDATE" selected={params.action === "UPDATE"}>
-								UPDATE
-							</option>
-							<option value="DELETE" selected={params.action === "DELETE"}>
-								DELETE
-							</option>
-						</select>
-
-						<label class="flex cursor-pointer items-center gap-2">
-							<span class="label-text text-xs">System</span>
-							<input
-								hx-get
-								class="toggle toggle-sm filter-audit"
-								name="show_system"
-								type="checkbox"
-								checked={showSystem}
-							/>
-						</label>
-					</div>
 				</div>
+			</div>
+		</div>
 
+		<div
+			class="card bg-base-100 border-base-300 border shadow-sm"
+			id="audit-content-wrapper"
+		>
+			<div class="card-body p-0">
 				<div class="overflow-x-auto">
 					<table class="table w-full">
 						<thead>
@@ -195,7 +283,7 @@ const formResult = (():
 								>
 							</tr>
 						</thead>
-						<tbody id="audit-table-body">
+						<tbody>
 							{
 								auditLogs.map(
 									({

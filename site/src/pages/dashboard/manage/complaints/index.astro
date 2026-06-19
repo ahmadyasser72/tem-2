@@ -178,26 +178,6 @@ const formResult = (():
 			</a>
 		</div>
 
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-			{
-				complaintStats.map(({ title, value, icon }) => (
-					<div class="card bg-base-100 border-base-300 border shadow-sm">
-						<div class="card-body flex-row items-center gap-3 p-4">
-							<div class:list={["flex rounded-lg p-2.5", STAT_COLORS[title]]}>
-								<Icon name={icon as any} size="size-6" />
-							</div>
-							<div class="flex flex-col">
-								<span class="text-base-content/60 text-xs font-semibold">
-									{title}
-								</span>
-								<span class="text-xl font-bold">{value}</span>
-							</div>
-						</div>
-					</div>
-				))
-			}
-		</div>
-
 		<div
 			class="bg-base-100 border-base-300 flex flex-col gap-4 rounded-xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
 			hx-include=".filter-complaints"
@@ -245,6 +225,7 @@ const formResult = (():
 					Selesai
 				</button>
 			</div>
+
 			<label class="input input-sm w-full max-w-xs">
 				<Icon name="line-md:search" size="size-4" />
 				<input
@@ -257,6 +238,26 @@ const formResult = (():
 					placeholder="Cari isi komplain/penghuni..."
 				/>
 			</label>
+		</div>
+
+		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+			{
+				complaintStats.map(({ title, value, icon }) => (
+					<div class="card bg-base-100 border-base-300 border shadow-sm">
+						<div class="card-body flex-row items-center gap-3 p-4">
+							<div class:list={["flex rounded-lg p-2.5", STAT_COLORS[title]]}>
+								<Icon name={icon as any} size="size-6" />
+							</div>
+							<div class="flex flex-col">
+								<span class="text-base-content/60 text-xs font-semibold">
+									{title}
+								</span>
+								<span class="text-xl font-bold">{value}</span>
+							</div>
+						</div>
+					</div>
+				))
+			}
 		</div>
 
 		<div class="flex flex-col gap-4" id="complaints-list">
@@ -311,7 +312,7 @@ const formResult = (():
 												<span class="text-success mb-0.5 block font-bold">
 													Catatan Penyelesaian:
 												</span>
-												<p class="text-base-content/85 break-words whitespace-pre-wrap">
+												<p class="text-base-content/85 wrap-break-word whitespace-pre-wrap">
 													{resolveNotes}
 												</p>
 											</div>

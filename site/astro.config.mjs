@@ -29,7 +29,7 @@ export default defineConfig({
 
 	vite: {
 		plugins: [tailwindcss()],
-		server: { allowedHosts: ["indekos-ungu.loophole.site"] },
+		server: { allowedHosts: ["indekos-ungu.loophole.site"], hmr: false },
 	},
 	devToolbar: { enabled: false },
 });

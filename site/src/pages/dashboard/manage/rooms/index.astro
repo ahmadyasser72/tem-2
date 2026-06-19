@@ -237,90 +237,106 @@ const formResult = (():
 		</div>
 
 		<div
-			class="bg-base-100 border-base-300 flex flex-col justify-between gap-3 rounded-xl border p-4 sm:flex-row sm:items-center"
+			class="flex items-center justify-end gap-2"
 			hx-include=".filter-rooms"
 			hx-select="#rooms-grid"
 			hx-swap="outerHTML transition:true"
 			hx-target="#rooms-grid"
 		>
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-				<label class="input input-sm">
-					<Icon name="line-md:search" size="size-4" />
+			<button
+				class="btn btn-sm btn-outline"
+				popovertarget="filter-rooms-popover"
+				style="anchor-name:--filter-rooms"
+			>
+				<Icon name="line-md:filter" size="size-4" />
+				Filter
+			</button>
+			<div
+				class="dropdown menu rounded-box bg-base-100 mt-2 min-w-64 shadow-sm"
+				id="filter-rooms-popover"
+				popover
+				style="position-anchor:--filter-rooms"
+			>
+				<li class="menu-title">Status</li>
+				<div class="mx-2 mb-4 filter">
 					<input
 						hx-get
-						hx-trigger="input changed delay:300ms"
-						class="filter-rooms"
-						name="query"
-						type="search"
-						value={params.query}
-						placeholder="Cari nomor/penghuni..."
-					/>
-				</label>
-				<div class="flex gap-2" id="filter_rooms_status" hx-swap-oob="true">
-					<input
-						class="filter-rooms"
-						id="status-filter"
+						class="btn filter-reset btn-sm filter-rooms"
 						name="status"
-						type="hidden"
-						value={params.status || "all"}
+						type="radio"
+						value="all"
 					/>
-					<button
+					<input
 						hx-get
-						hx-on:click="document.getElementById('status-filter').value = 'all'"
-						class:list={[
-							"btn btn-sm",
-							(params.status || "all") === "all"
-								? "btn-neutral"
-								: "btn-outline",
-						]}
-					>
-						Semua
-					</button>
-					<button
+						class="btn btn-sm filter-rooms"
+						name="status"
+						type="radio"
+						value="occupied"
+						aria-label="Terisi"
+						checked={params.status === "occupied"}
+					/>
+					<input
 						hx-get
-						hx-on:click="document.getElementById('status-filter').value = 'occupied'"
-						class:list={[
-							"btn btn-sm",
-							params.status === "occupied" ? "btn-neutral" : "btn-outline",
-						]}
-					>
-						Terisi
-					</button>
-					<button
+						class="btn btn-sm filter-rooms"
+						name="status"
+						type="radio"
+						value="vacant"
+						aria-label="Kosong"
+						checked={params.status === "vacant"}
+					/>
+					<input
 						hx-get
-						hx-on:click="document.getElementById('status-filter').value = 'vacant'"
-						class:list={[
-							"btn btn-sm",
-							params.status === "vacant" ? "btn-neutral" : "btn-outline",
-						]}
-					>
-						Kosong
-					</button>
-					<button
+						class="btn btn-sm filter-rooms"
+						name="status"
+						type="radio"
+						value="inactive"
+						aria-label="Nonaktif"
+						checked={params.status === "inactive"}
+					/>
+				</div>
+				<li class="menu-title mt-2">Tipe Kamar</li>
+
+				<div class="mx-2 mb-4 filter">
+					<input
 						hx-get
-						hx-on:click="document.getElementById('status-filter').value = 'inactive'"
-						class:list={[
-							"btn btn-sm",
-							params.status === "inactive" ? "btn-neutral" : "btn-outline",
-						]}
-					>
-						Nonaktif
-					</button>
+						class="btn filter-reset btn-sm filter-rooms"
+						name="type"
+						type="radio"
+						value="all"
+					/>
+					<input
+						hx-get
+						class="btn btn-sm filter-rooms"
+						name="type"
+						type="radio"
+						value="Standar"
+						aria-label="Standar"
+						checked={params.type === "Standar"}
+					/>
+					<input
+						hx-get
+						class="btn btn-sm filter-rooms"
+						name="type"
+						type="radio"
+						value="Premium"
+						aria-label="Premium"
+						checked={params.type === "Premium"}
+					/>
 				</div>
 			</div>
-			<div class="flex gap-2">
-				<select hx-get class="select select-sm filter-rooms w-36" name="type">
-					<option value="all" selected={!params.type}>
-						Tipe Kamar (Semua)
-					</option>
-					<option value="Standar" selected={params.type === "Standar"}>
-						Standar
-					</option>
-					<option value="Premium" selected={params.type === "Premium"}>
-						Premium
-					</option>
-				</select>
-			</div>
+
+			<label class="input input-sm w-full sm:max-w-xs">
+				<Icon name="line-md:search" size="size-4" />
+				<input
+					hx-get
+					hx-trigger="input changed delay:300ms"
+					class="filter-rooms"
+					name="query"
+					type="search"
+					value={params.query}
+					placeholder="Cari nomor/penghuni..."
+				/>
+			</label>
 		</div>
 
 		<div

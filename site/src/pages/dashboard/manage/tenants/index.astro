@@ -135,7 +135,7 @@ const formResult = (():
 			</div>
 			<div class="flex items-center gap-2">
 				<a
-					class="btn btn-outline flex items-center gap-1"
+					class="btn btn-outline btn-sm flex items-center gap-1"
 					href={`/dashboard/manage/tenants/report/download${Astro.url.search}`}
 					download
 				>
@@ -143,7 +143,7 @@ const formResult = (():
 				</a>
 				<button
 					hx-get="/dashboard/manage/tenants/modal/add"
-					class="btn btn-primary"
+					class="btn btn-primary btn-sm"
 				>
 					<Icon name="line-md:plus" size="size-5" />
 					Tambah Penghuni
@@ -151,48 +151,76 @@ const formResult = (():
 			</div>
 		</div>
 
-		<div class="card bg-base-100 border-base-300 border shadow-sm">
-			<div class="card-body p-0">
-				<div
-					class="border-base-200 flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
-					hx-include=".filter-tenants"
-					hx-select="#tenants-rows"
-					hx-swap="outerHTML transition:true"
-					hx-target="#tenants-rows"
-				>
-					<label class="input input-sm max-w-xs flex-1">
-						<Icon name="line-md:search" size="size-4" />
-						<input
-							hx-get
-							hx-trigger="input changed delay:300ms"
-							class="filter-tenants"
-							name="query"
-							type="search"
-							value={params.query}
-							placeholder="Cari nama penghuni..."
-						/>
-					</label>
-					<div class="flex gap-2">
-						<select
-							hx-get
-							class="select select-sm filter-tenants w-36"
-							name="status"
-						>
-							<option
-								value="all"
-								selected={params.status === "all" || !params.status}
-								>Semua Status</option
-							>
-							<option value="active" selected={params.status === "active"}
-								>Aktif</option
-							>
-							<option value="completed" selected={params.status === "completed"}
-								>Selesai</option
-							>
-						</select>
-					</div>
+		<div
+			class="flex items-center justify-end gap-2"
+			hx-include=".filter-tenants"
+			hx-select="#tenants-content-wrapper"
+			hx-swap="outerHTML transition:true"
+			hx-target="#tenants-content-wrapper"
+		>
+			<button
+				class="btn btn-sm btn-outline"
+				popovertarget="filter-tenants-popover"
+				style="anchor-name:--filter-tenants"
+			>
+				<Icon name="line-md:filter" size="size-4" />
+				Filter
+			</button>
+			<div
+				class="dropdown menu rounded-box bg-base-100 mt-2 min-w-36 shadow-sm"
+				id="filter-tenants-popover"
+				popover
+				style="position-anchor:--filter-tenants"
+			>
+				<li class="menu-title">Status</li>
+				<div class="mx-2 mb-4 filter">
+					<input
+						hx-get
+						class="btn btn-sm filter-reset filter-tenants"
+						name="status"
+						type="radio"
+						value="all"
+					/>
+					<input
+						hx-get
+						class="btn btn-sm filter-tenants"
+						name="status"
+						type="radio"
+						value="active"
+						aria-label="Aktif"
+						checked={params.status === "active"}
+					/>
+					<input
+						hx-get
+						class="btn btn-sm filter-tenants"
+						name="status"
+						type="radio"
+						value="completed"
+						aria-label="Selesai"
+						checked={params.status === "completed"}
+					/>
 				</div>
+			</div>
 
+			<label class="input input-sm w-full sm:max-w-xs">
+				<Icon name="line-md:search" size="size-4" />
+				<input
+					hx-get
+					hx-trigger="input changed delay:300ms"
+					class="filter-tenants"
+					name="query"
+					type="search"
+					value={params.query}
+					placeholder="Cari nama penghuni..."
+				/>
+			</label>
+		</div>
+
+		<div
+			class="card bg-base-100 border-base-300 border shadow-sm"
+			id="tenants-content-wrapper"
+		>
+			<div class="card-body p-0">
 				<div class="overflow-x-auto">
 					<table class="table w-full">
 						<thead>

@@ -29,7 +29,7 @@ export const users = sqliteTable("users", {
 export const tenants = sqliteTable("tenants", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	fullName: text("full_name").notNull(),
-	phoneNumber: text("phone_number").notNull().unique(),
+	phoneNumber: text("phone_number").notNull(),
 	originRegion: text("origin_region"),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.notNull()
@@ -72,6 +72,7 @@ export const invoices = sqliteTable("invoices", {
 		.references(() => leases.id),
 	amount: integer("amount").notNull(),
 	dueDate: integer("due_date", { mode: "timestamp" }).notNull(),
+	paidAt: integer("paid_at", { mode: "timestamp" }),
 	duitkuReference: text("duitku_reference"),
 	callbackPayload: text("callback_payload"),
 	status: text("status", { enum: INVOICE_STATUS }).notNull().default("unpaid"),
@@ -102,6 +103,9 @@ export const notifications = sqliteTable("notifications", {
 
 	type: text("type", { enum: NOTIFICATION_TYPES }).notNull(),
 	status: text("status", { enum: NOTIFICATION_STATUS }).notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`)
+		.notNull(),
 });
 
 export const auditLogs = sqliteTable("audit_logs", {

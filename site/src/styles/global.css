@@ -9,6 +9,10 @@
 		properties /* https://github.com/saadeghi/daisyui/issues/3882 */;
 }
 
+:root {
+	scrollbar-gutter: stable;
+}
+
 :not(.htmx-request) > .htmx-indicator:not(.htmx-request),
 .htmx-indicator-replace.htmx-request,
 .htmx-request > .htmx-indicator-replace {

@@ -22,18 +22,18 @@
 		"docs:export-diagrams": "bun ./docs/scripts/export.ts"
 	},
 	"devDependencies": {
-		"@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-		"@mermaid-js/mermaid-cli": "^11.12.0",
-		"@tailwindcss/cli": "^4.2.2",
-		"@types/bun": "^1.3.11",
-		"@types/node": "^25.5.0",
-		"@xeonlink/prettier-plugin-organize-attributes": "^1.1.0",
-		"daisyui": "^5.5.19",
+		"@ianvs/prettier-plugin-sort-imports": "4.7.1",
+		"@mermaid-js/mermaid-cli": "11.15.0",
+		"@tailwindcss/cli": "4.3.1",
+		"@types/bun": "1.3.14",
+		"@types/node": "25.9.4",
+		"@xeonlink/prettier-plugin-organize-attributes": "1.1.0",
+		"daisyui": "5.5.23",
 		"pacwich": "0.1.0",
-		"plantuml-cli": "^1.2026.1",
-		"prettier": "^3.8.1",
-		"prettier-plugin-astro": "^0.14.1",
-		"prettier-plugin-tailwindcss": "^0.7.2",
-		"tailwindcss": "^4.2.2"
+		"plantuml-cli": "1.2026.1",
+		"prettier": "3.8.4",
+		"prettier-plugin-astro": "0.14.1",
+		"prettier-plugin-tailwindcss": "0.7.4",
+		"tailwindcss": "4.3.1"
 	}
 }

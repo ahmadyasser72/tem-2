@@ -1,7 +1,7 @@
 ---
 import { actions } from "astro:actions";
 
-import Icon from "~/components/icon.astro";
+import Icon from "~/components/ui/icon.astro";
 
 export interface Props {
 	user: {
@@ -45,7 +45,7 @@ const initial = user.name.charAt(0).toUpperCase();
 </button>
 
 <ul
-	class="dropdown dropdown-top menu rounded-box bg-base-100 w-56 p-2 shadow-sm"
+	class="dropdown dropdown-top menu bg-base-100 w-56 p-2 shadow-sm"
 	id="user-popover"
 	popover="auto"
 	style="position-anchor:--user-anchor"

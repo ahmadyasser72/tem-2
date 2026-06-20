@@ -3,8 +3,10 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
+import FormField from "~/components/form/form-field.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
 
 export const partial = true;
 
@@ -25,38 +27,19 @@ const displayPhone = tenant?.phoneNumber
 if (!tenant) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="edit_tenant_modal">
+<Modal id="edit_tenant" title="Edit Penghuni" icon="line-md:edit">
 	{
 		tenant ? (
-			<div class="modal-box border-base-300 max-w-lg border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:account-twotone" size="size-6" />
-					Edit Penghuni (ID: {tenant.id})
-				</h3>
-
-				<form
-					hx-post={actions.manage.tenants.edit}
-					class="flex flex-col gap-4"
-					id="edit_tenant_form"
-					hx-indicator="#edit_tenant_btn"
-					hx-on--after-request="event.detail.successful && edit_tenant_modal.close()"
-					hx-select-oob="#form_error, #form_result, #tenants-rows"
-					hx-swap="none transition:true"
+			<>
+				<ModalForm
 					action={actions.manage.tenants.edit}
-					method="post"
+					modalId="edit_tenant"
+					submitLabel="Simpan"
+					target="#form_result, #tenants-content-wrapper"
 				>
 					<input name="id" type="hidden" value={tenant.id} />
 
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold"
-							>Nama Lengkap</legend
-						>
+					<FormField label="Nama Lengkap">
 						<input
 							class="input w-full"
 							name="full_name"
@@ -65,12 +48,8 @@ if (!tenant) Astro.response.status = 404;
 							placeholder="Nama sesuai KTP..."
 							required
 						/>
-					</fieldset>
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold"
-							>Nomor HP (WhatsApp)</legend
-						>
+					</FormField>
+					<FormField label="Nomor HP (WhatsApp)">
 						<label class="input w-full">
 							<span class="label">+62</span>
 							<input
@@ -81,12 +60,8 @@ if (!tenant) Astro.response.status = 404;
 								required
 							/>
 						</label>
-					</fieldset>
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold"
-							>Daerah Asal</legend
-						>
+					</FormField>
+					<FormField label="Daerah Asal">
 						<input
 							class="input w-full"
 							name="origin_region"
@@ -94,44 +69,11 @@ if (!tenant) Astro.response.status = 404;
 							value={tenant.originRegion ?? ""}
 							placeholder="Opsional (misal: Bandung, Surabaya...)"
 						/>
-					</fieldset>
-
-					<p class="text-error text-sm" id="form_error"></p>
-				</form>
-
-				<div class="modal-action">
-					<form class="flex gap-2" method="dialog">
-						<button class="btn btn-outline btn-sm">Batal</button>
-						<button
-							class="btn btn-primary btn-sm"
-							id="edit_tenant_btn"
-							type="submit"
-							form="edit_tenant_form"
-						>
-							<IconLoader />
-							Simpan Perubahan
-						</button>
-					</form>
-				</div>
-			</div>
+					</FormField>
+				</ModalForm>
+			</>
 		) : (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:account-twotone" size="size-6" />
-					Edit Penghuni
-				</h3>
-
-				<p class="py-4">Penghuni dengan ID: {Astro.params.id} tidak ditemukan.</p>
-			</div>
+			<NotFound label="Penghuni" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</Modal>

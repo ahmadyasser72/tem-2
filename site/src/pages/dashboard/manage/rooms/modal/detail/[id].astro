@@ -1,7 +1,9 @@
 ---
 import { db } from "@e-kos/database";
 
-import Icon from "~/components/icon.astro";
+import DetailModal from "~/components/modal/detail-modal.astro";
+import Icon from "~/components/ui/icon.astro";
+import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
 
 export const partial = true;
@@ -28,25 +30,15 @@ const roomLeases = room
 if (!room) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="detail_room_modal">
+<DetailModal
+	id="detail_room"
+	title={`Detail Kamar ${room?.roomNumber ?? ""}`}
+	icon="line-md:home"
+	modalClass="max-w-lg"
+>
 	{
 		room ? (
-			<div class="modal-box border-base-300 max-w-lg border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon
-						class="text-primary"
-						name="line-md:home-md-twotone"
-						size="size-6"
-					/>
-					Detail Kamar
-				</h3>
-
+			<>
 				<div class="border-base-200 grid grid-cols-2 gap-x-4 gap-y-2.5 border-b pb-4 text-sm">
 					<span class="text-base-content/60 font-semibold">Nomor Kamar:</span>
 					<span class="font-bold">{room.roomNumber}</span>
@@ -118,26 +110,9 @@ if (!room) Astro.response.status = 404;
 						</div>
 					)}
 				</div>
-
-				<div class="modal-action">
-					<form method="dialog">
-						<button class="btn btn-neutral btn-sm">Tutup</button>
-					</form>
-				</div>
-			</div>
+			</>
 		) : (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-				<h3 class="mb-4 text-xl font-bold">Detail Kamar</h3>
-				<p class="py-4">Kamar dengan ID: {Astro.params.id} tidak ditemukan.</p>
-			</div>
+			<NotFound label="Kamar" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</DetailModal>

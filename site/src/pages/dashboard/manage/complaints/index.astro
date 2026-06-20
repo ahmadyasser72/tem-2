@@ -1,362 +1,201 @@
 ---
-import { db } from "@e-kos/database";
-
 import { actions } from "astro:actions";
-import { z } from "astro/zod";
-import { pick } from "es-toolkit";
 
-import Alert from "~/components/alert.astro";
-import Icon from "~/components/icon.astro";
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import FormResult from "~/components/form/form-result.astro";
+import Icon from "~/components/ui/icon.astro";
+import SearchInput from "~/components/data/search-input.astro";
+import Stats from "~/components/data/stats.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
+import { createActionResult } from "~/lib/form-result";
+import {
+	COMPLAINT_STATUS_BADGES,
+	COMPLAINT_STATUS_BORDERS,
+	COMPLAINT_STATUS_LABELS,
+	complaintQuerySchema,
+	fetchComplaints,
+	getComplaintStats,
+} from "./_data";
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		query: z.string().catch(""),
-		status: z
-			.enum(["all", "open", "in_progress", "resolved"])
-			.optional()
-			.catch(undefined),
-	}),
-);
-
-// 1. Fetch all complaints for statistics
-const allComplaintsFromDb = await db.query.complaints.findMany();
-
-const complaintStats = [
-	{
-		title: "Total Komplain",
-		value: allComplaintsFromDb.length.toString(),
-		icon: "line-md:document-list",
-	},
-	{
-		title: "Terbuka",
-		value: allComplaintsFromDb
-			.filter(({ status }) => status === "open")
-			.length.toString(),
-		icon: "line-md:alert-circle",
-	},
-	{
-		title: "Proses",
-		value: allComplaintsFromDb
-			.filter(({ status }) => status === "in_progress")
-			.length.toString(),
-		icon: "line-md:alert",
-	},
-	{
-		title: "Selesai",
-		value: allComplaintsFromDb
-			.filter(({ status }) => status === "resolved")
-			.length.toString(),
-		icon: "line-md:circle-to-confirm-circle-transition",
-	},
-];
-
-// 2. Fetch filtered complaints using spread-based conditional where clause
-const filteredComplaintsFromDb = await db.query.complaints.findMany({
-	where: {
-		...(params.query && {
-			OR: [
-				{ description: { like: `%${params.query}%` } },
-				{
-					tenant: {
-						fullName: { like: `%${params.query}%` },
-					},
-				},
-			],
-		}),
-		...(params.status && params.status !== "all" && { status: params.status }),
-	},
-	with: {
-		tenant: {
-			with: {
-				leases: {
-					where: { isActive: true },
-					with: {
-						room: true,
-					},
-				},
-			},
-		},
-		resolver: true,
-	},
-});
-
-const filteredComplaints = filteredComplaintsFromDb.map((complaint) => {
-	const activeLease = complaint.tenant?.leases?.[0];
-	return {
-		id: complaint.id,
-		description: complaint.description,
-		status: complaint.status,
-		createdAt: complaint.createdAt,
-		tenantName: complaint.tenant?.fullName ?? "-",
-		roomNumber: activeLease?.room?.roomNumber ?? null,
-		resolvedByUserName: complaint.resolver?.displayName ?? null,
-		resolveNotes: complaint.resolveNotes,
-	};
-});
-
-const STAT_COLORS: Record<string, string> = {
-	"Total Komplain": "bg-primary/40 text-base-content",
-	Terbuka: "bg-error/40 text-base-content",
-	Proses: "bg-warning/40 text-base-content",
-	Selesai: "bg-success/40 text-base-content",
-};
-
-const STATUS_LABELS = {
-	open: "Terbuka",
-	in_progress: "Proses",
-	resolved: "Selesai",
-};
-
-const STATUS_BADGES: Record<string, string> = {
-	open: "badge-error",
-	in_progress: "badge-warning",
-	resolved: "badge-success",
-};
-
-const STATUS_BORDERS: Record<string, string> = {
-	open: "border-l-error",
-	in_progress: "border-l-warning",
-	resolved: "border-l-success",
-};
-
-const formResult = (():
-	| { success: false; message: string }
-	| { success: true; title: string; description: string }
-	| void => {
-	const resolveResult = Astro.getActionResult(
-		actions.manage.complaints.resolve,
-	);
-	if (resolveResult?.error)
-		return { success: false, message: resolveResult.error.message };
-	else if (resolveResult?.data) {
-		return {
-			success: true,
-			title: "Selesaikan komplain",
-			description: `Berhasil menyelesaikan komplain! (ID: ${resolveResult.data.id})`,
-		};
-	}
-})();
+const params = Astro.locals.parseQuery(complaintQuerySchema);
+const filteredComplaints = await fetchComplaints(params);
+const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
+	title: s.label,
+	value: String(s.value),
+	icon: "line-md:document-list",
+}));
 ---
 
-{
-	formResult?.success === false && (
-		<Alert id="form_error" type="error" description={formResult.message} />
-	)
-}
+<FormResult
+	actionResults={[
+		createActionResult(
+			actions.manage.complaints.resolve,
+			"Selesaikan komplain",
+			(d) => `Berhasil menyelesaikan komplain! (ID: ${d.id})`,
+		),
+	]}
+/>
 
-<DashboardLayout title="Daftar Komplain ">
-	<div class="flex flex-col gap-6">
+<DashboardLayout
+	title="Daftar Komplain"
+	description="Monitor pengaduan kerusakan dan keluhan sarana dari penghuni indekos"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			href={"/dashboard/manage/complaints/report/download" + Astro.url.search}
+			download
+		>
+			<Icon name="line-md:download" /> PDF
+		</a>
+	</Fragment>
+
+	<Stats items={complaintStats} />
+
+	<FilterToolbar name="complaints" from={params.from} to={params.to}>
+		<Fragment slot="actions">
+			<FilterPopover
+				name="complaints"
+				groups={[
+					{
+						title: "Status",
+						name: "status",
+						options: [
+							{
+								value: "open",
+								label: "Terbuka",
+								checked: params.status === "open",
+							},
+							{
+								value: "in_progress",
+								label: "Proses",
+								checked: params.status === "in_progress",
+							},
+							{
+								value: "resolved",
+								label: "Selesai",
+								checked: params.status === "resolved",
+							},
+						],
+					},
+				]}
+			/>
+			<SearchInput
+				value={params.query}
+				filterClass="filter-complaints"
+				placeholder="Cari isi komplain/penghuni..."
+			/>
+		</Fragment>
+	</FilterToolbar>
+
+	<div class="flex flex-col gap-4" id="complaints-content-wrapper">
 		{
-			formResult?.success ? (
-				<Alert
-					id="form_result"
-					type="info"
-					{...pick(formResult, ["title", "description"])}
-				/>
-			) : (
-				<p id="form_result" />
-			)
-		}
-
-		<div
-			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-		>
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold">Daftar Komplain</h1>
-				<p class="text-base-content/60 text-sm">
-					Monitor pengaduan kerusakan dan keluhan sarana dari penghuni indekos
-				</p>
-			</div>
-			<a
-				class="btn btn-outline btn-sm flex items-center gap-1"
-				href={`/dashboard/manage/complaints/report/download${Astro.url.search}`}
-				download
-			>
-				<Icon name="line-md:download" /> PDF
-			</a>
-		</div>
-
-		<div
-			class="bg-base-100 border-base-300 flex flex-col gap-4 rounded-xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-			hx-include=".filter-complaints"
-			hx-select="#complaints-list"
-			hx-swap="outerHTML transition:true"
-			hx-target="#complaints-list"
-		>
-			<div class="tabs tabs-box">
-				<input
-					class="filter-complaints"
-					id="complaints-status-filter"
-					name="status"
-					type="hidden"
-					value={params.status || "all"}
-				/>
-				<button
-					hx-get
-					hx-on:click="document.getElementById('complaints-status-filter').value = 'all'"
-					class:list={[
-						"tab",
-						(params.status || "all") === "all" && "tab-active",
-					]}
-				>
-					Semua
-				</button>
-				<button
-					hx-get
-					hx-on:click="document.getElementById('complaints-status-filter').value = 'open'"
-					class:list={["tab", params.status === "open" && "tab-active"]}
-				>
-					Terbuka
-				</button>
-				<button
-					hx-get
-					hx-on:click="document.getElementById('complaints-status-filter').value = 'in_progress'"
-					class:list={["tab", params.status === "in_progress" && "tab-active"]}
-				>
-					Proses
-				</button>
-				<button
-					hx-get
-					hx-on:click="document.getElementById('complaints-status-filter').value = 'resolved'"
-					class:list={["tab", params.status === "resolved" && "tab-active"]}
-				>
-					Selesai
-				</button>
-			</div>
-
-			<label class="input input-sm w-full max-w-xs">
-				<Icon name="line-md:search" size="size-4" />
-				<input
-					hx-get
-					hx-trigger="input changed delay:300ms"
-					class="filter-complaints"
-					name="query"
-					type="search"
-					value={params.query}
-					placeholder="Cari isi komplain/penghuni..."
-				/>
-			</label>
-		</div>
-
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-			{
-				complaintStats.map(({ title, value, icon }) => (
-					<div class="card bg-base-100 border-base-300 border shadow-sm">
-						<div class="card-body flex-row items-center gap-3 p-4">
-							<div class:list={["flex rounded-lg p-2.5", STAT_COLORS[title]]}>
-								<Icon name={icon as any} size="size-6" />
-							</div>
-							<div class="flex flex-col">
-								<span class="text-base-content/60 text-xs font-semibold">
-									{title}
-								</span>
-								<span class="text-xl font-bold">{value}</span>
-							</div>
-						</div>
-					</div>
-				))
-			}
-		</div>
-
-		<div class="flex flex-col gap-4" id="complaints-list">
-			{
-				filteredComplaints.map(
-					({
-						id,
-						description,
-						status,
-						createdAt,
-						tenantName,
-						roomNumber,
-						resolvedByUserName,
-						resolveNotes,
-					}) => {
-						const isResolvable = status !== "resolved";
-						return (
-							<div
-								class:list={[
-									"card bg-base-100 border-base-200 border border-l-4 shadow-sm transition-all hover:shadow-md",
-									STATUS_BORDERS[status],
-									{ "opacity-65": !isResolvable },
-								]}
-							>
-								<div class="card-body flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
-									<div class="flex flex-1 flex-col gap-2">
-										<div class="flex flex-wrap items-center gap-2">
-											<span class="text-mono text-base-content/40 text-xs font-bold">
-												KMP-{id}
-											</span>
-											<span
-												class:list={[
-													"badge badge-sm font-bold",
-													STATUS_BADGES[status],
-												]}
-											>
-												{STATUS_LABELS[status]}
-											</span>
-											<span class="badge badge-neutral font-mono font-bold">
-												{roomNumber || "-"}
-											</span>
-											<span class="text-base-content/50 text-xs">•</span>
-											<span class="text-base-content/60 text-xs font-semibold">
-												{tenantName}
-											</span>
-										</div>
-										<p class="text-base-content text-base font-bold">
-											{description}
-										</p>
-										{resolveNotes && (
-											<div class="bg-success/5 border-success/20 mt-2 max-w-xl rounded border p-2.5 text-xs">
-												<span class="text-success mb-0.5 block font-bold">
-													Catatan Penyelesaian:
-												</span>
-												<p class="text-base-content/85 wrap-break-word whitespace-pre-wrap">
-													{resolveNotes}
-												</p>
-											</div>
-										)}
-										<div class="text-base-content/50 mt-1 flex items-center gap-2 text-xs">
-											<Icon name="line-md:calendar" size="size-3.5" />
-											<span>Dilaporkan pada: {formatDate(createdAt)}</span>
-											{resolvedByUserName && (
-												<>
-													<span>•</span>
-													<span class="text-success flex items-center gap-1 font-semibold">
-														<Icon name="line-md:circle-to-confirm-circle-transition" />
-														Ditangani oleh: {resolvedByUserName}
-													</span>
-												</>
-											)}
-										</div>
+			filteredComplaints.map(
+				({
+					id,
+					description,
+					status,
+					createdAt,
+					tenantName,
+					roomNumber,
+					resolvedByUserName,
+					resolveNotes,
+				}) => {
+					const isResolvable = status !== "resolved";
+					return (
+						<div
+							class:list={[
+								"card bg-base-100 border-base-200 border border-l-4 shadow-sm transition-all hover:shadow-md",
+								COMPLAINT_STATUS_BORDERS[
+									status as keyof typeof COMPLAINT_STATUS_BORDERS
+								],
+								{ "opacity-65": !isResolvable },
+							]}
+						>
+							<div class="card-body justify-between gap-4 p-5 md:flex-row md:items-center">
+								<div class="flex flex-1 flex-col gap-2">
+									<div class="flex flex-wrap items-center gap-2">
+										<span class="text-mono text-base-content/40 text-xs font-bold">
+											KMP-{id}
+										</span>
+										<span
+											class:list={[
+												"badge badge-sm font-bold",
+												COMPLAINT_STATUS_BADGES[
+													status as keyof typeof COMPLAINT_STATUS_BADGES
+												],
+											]}
+										>
+											{
+												COMPLAINT_STATUS_LABELS[
+													status as keyof typeof COMPLAINT_STATUS_LABELS
+												]
+											}
+										</span>
+										<span class="badge badge-neutral font-mono font-bold">
+											{roomNumber || "-"}
+										</span>
+										<span class="text-base-content/50 text-xs">•</span>
+										<span class="text-base-content/60 text-xs font-semibold">
+											{tenantName}
+										</span>
 									</div>
-
-									<div class="flex shrink-0 items-center gap-2 self-end md:self-center">
-										{isResolvable ? (
-											<button
-												hx-get={`/dashboard/manage/complaints/modal/resolve/${id}`}
-												class="btn btn-sm btn-outline btn-success flex items-center gap-1.5"
-											>
-												<Icon name="line-md:circle-to-confirm-circle-transition" />
-												Tandai Selesai
-											</button>
-										) : (
-											<span class="text-success flex items-center gap-1 text-xs font-bold">
-												<Icon
-													name="line-md:circle-to-confirm-circle-transition"
-													size="size-4"
-												/>
-												Selesai
+									<p class="text-base-content text-base font-bold">
+										{description}
+									</p>
+									{resolveNotes && (
+										<div class="bg-success/5 border-success/20 mt-2 max-w-xl rounded border p-2.5 text-xs">
+											<span class="text-success mb-0.5 block font-bold">
+												Catatan Penyelesaian:
 											</span>
+											<p class="text-base-content/85 wrap-break-word whitespace-pre-wrap">
+												{resolveNotes}
+											</p>
+										</div>
+									)}
+									<div class="text-base-content/50 mt-1 flex items-center gap-2 text-xs">
+										<Icon name="line-md:calendar" size="size-3.5" />
+										<span>Dilaporkan pada: {formatDate(createdAt)}</span>
+										{resolvedByUserName && (
+											<>
+												<span>•</span>
+												<span class="text-success flex items-center gap-1 font-semibold">
+													<Icon name="line-md:circle-to-confirm-circle-transition" />
+													Ditangani oleh: {resolvedByUserName}
+												</span>
+											</>
 										)}
 									</div>
 								</div>
+
+								<div class="flex shrink-0 items-center gap-2 self-end md:self-center">
+									{isResolvable ? (
+										<button
+											hx-get={
+												"/dashboard/manage/complaints/modal/resolve/" + id
+											}
+											class="btn btn-sm btn-outline btn-success"
+										>
+											<Icon name="line-md:circle-to-confirm-circle-transition" />
+											Tandai Selesai
+										</button>
+									) : (
+										<span class="text-success flex items-center gap-1 text-xs font-bold">
+											<Icon
+												name="line-md:circle-to-confirm-circle-transition"
+												size="size-4"
+											/>
+											Selesai
+										</span>
+									)}
+								</div>
 							</div>
-						);
-					},
-				)
-			}
-		</div>
+						</div>
+					);
+				},
+			)
+		}
 	</div>
 </DashboardLayout>

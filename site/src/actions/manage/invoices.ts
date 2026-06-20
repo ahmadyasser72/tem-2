@@ -2,6 +2,7 @@ import { db, eq } from "@e-kos/database";
 import {
 	createInvoice as duitkuCreateInvoice,
 	DuitkuError,
+	getPaymentUrlFromReference,
 } from "@e-kos/database/duitku";
 import { auditLogs, invoices, notifications } from "@e-kos/database/schema";
 
@@ -12,14 +13,6 @@ import { isError } from "es-toolkit/predicate";
 // ─── Helper to strip trailing slash ─────────────────────────────
 function stripTrailingSlash(url: string): string {
 	return url.endsWith("/") ? url.slice(0, -1) : url;
-}
-
-// ─── Helper to construct payment URL from reference ─────────────
-function getPaymentUrlFromReference(reference: string): string {
-	const baseUrl =
-		process.env.DUITKU_BASE_URL?.replace("api", "app") ??
-		"https://app-sandbox.duitku.com";
-	return `${baseUrl}/redirect_checkout?reference=${reference}`;
 }
 
 // ─── Generate Payment Link ──────────────────────────────────────
@@ -225,35 +218,5 @@ export const markAsPaid = defineAction({
 		});
 
 		return { success: true };
-	},
-});
-
-// ─── Check Status ───────────────────────────────────────────────
-export const checkStatus = defineAction({
-	accept: "form",
-	input: z.object({
-		invoice_id: z.coerce.number(),
-	}),
-	handler: async (input) => {
-		const invoiceId = input.invoice_id;
-
-		const invoice = await db.query.invoices.findFirst({
-			where: { id: invoiceId },
-		});
-
-		if (!invoice) {
-			throw new ActionError({
-				code: "NOT_FOUND",
-				message: "Invoice tidak ditemukan.",
-			});
-		}
-
-		return {
-			id: invoice.id,
-			status: invoice.status,
-			duitkuReference: invoice.duitkuReference ?? null,
-			amount: invoice.amount,
-			dueDate: invoice.dueDate,
-		};
 	},
 });

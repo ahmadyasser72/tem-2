@@ -1,51 +1,13 @@
 ---
-import { db } from "@e-kos/database";
-import { z } from "astro/zod";
-import { formatDate } from "~/lib/date";
+import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
+import { formatDate } from "~/lib/date";
+import { fetchAllTenants, reportTenantsQuerySchema } from "../_data";
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		status: z.enum(["all", "active", "completed"]).optional().catch(undefined),
-	}),
-);
+const params = Astro.locals.parseQuery(reportTenantsQuerySchema);
 
-const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
-
-const owners = await db.query.users.findMany({ where: { role: "owner" } });
-const knownBy = owners[0]?.displayName ?? "Pemilik Kos";
-
-// Query all tenants with leases (with room)
-const tenantsFromDb = await db.query.tenants.findMany({
-	with: {
-		leases: {
-			with: {
-				room: true,
-			},
-		},
-	},
-});
-
-// Map to display data — find current/latest lease per tenant
-const allTenants = tenantsFromDb.map((tenant) => {
-	const currentLease = tenant.leases.find(({ isActive }) => isActive)
-		?? tenant.leases.reduce(
-				(latest, current) =>
-					new Date(current.startDate) > new Date(latest.startDate)
-						? current
-						: latest,
-				tenant.leases[0],
-			);
-
-	return {
-		fullName: tenant.fullName,
-		phoneNumber: tenant.phoneNumber,
-		roomNumber: currentLease?.room?.roomNumber ?? "-",
-		startDate: currentLease?.startDate ?? null,
-		endDate: currentLease?.endDate ?? null,
-		isActive: !!currentLease?.isActive,
-	};
-});
+// Query all tenants
+const allTenants = await fetchAllTenants();
 
 // Apply status filter
 const filteredTenants = allTenants.filter((t) => {
@@ -62,12 +24,7 @@ else if (params.status === "completed") subtitle = "Status: Selesai";
 const total = filteredTenants.length;
 ---
 
-<ReportLayout title="Daftar Penghuni Aktif" subtitle={subtitle} createdBy={createdBy} knownBy={knownBy}>
-	<!-- Waktu Cetak -->
-	<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
-		Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
-	</div>
-
+<ReportLayout title="Daftar Penghuni Aktif" subtitle={subtitle}>
 	<!-- Table -->
 	<table>
 		<thead>
@@ -82,31 +39,57 @@ const total = filteredTenants.length;
 			</tr>
 		</thead>
 		<tbody>
-			{filteredTenants.length === 0 ? (
-				<tr>
-					<td colspan="7" style="text-align: center; padding: 24px; font-size: 11px; opacity: 0.5;">
-						Tidak ada data penghuni yang sesuai dengan filter.
-					</td>
-				</tr>
-			) : (
-				filteredTenants.map(
-					({ fullName, phoneNumber, roomNumber, startDate, endDate, isActive }, i) => (
-						<tr>
-							<td style="text-align: center; font-family: 'Courier New', monospace;">{i + 1}</td>
-							<td>{fullName}</td>
-							<td style="font-family: 'Courier New', monospace;">{phoneNumber}</td>
-							<td style="text-align: center; font-family: 'Courier New', monospace;">{roomNumber}</td>
-							<td style="font-family: 'Courier New', monospace;">{formatDate(startDate)}</td>
-							<td style="font-family: 'Courier New', monospace;">{formatDate(endDate)}</td>
-							<td style="text-align: center;">{isActive ? "Aktif" : "Selesai"}</td>
-						</tr>
-					),
+			{
+				filteredTenants.length === 0 ? (
+					<ReportTableEmpty
+						colspan={7}
+						message="Tidak ada data penghuni yang sesuai dengan filter."
+					/>
+				) : (
+					filteredTenants.map(
+						(
+							{
+								fullName,
+								phoneNumber,
+								roomNumber,
+								startDate,
+								endDate,
+								isActive,
+							},
+							i,
+						) => (
+							<tr>
+								<td style="text-align: center; font-family: 'Courier New', monospace;">
+									{i + 1}
+								</td>
+								<td>{fullName}</td>
+								<td style="font-family: 'Courier New', monospace;">
+									{phoneNumber}
+								</td>
+								<td style="text-align: center; font-family: 'Courier New', monospace;">
+									{roomNumber}
+								</td>
+								<td style="font-family: 'Courier New', monospace;">
+									{formatDate(startDate)}
+								</td>
+								<td style="font-family: 'Courier New', monospace;">
+									{formatDate(endDate)}
+								</td>
+								<td style="text-align: center;">
+									{isActive ? "Aktif" : "Selesai"}
+								</td>
+							</tr>
+						),
+					)
 				)
-			)}
+			}
 		</tbody>
 		<tfoot>
 			<tr>
-				<td colspan="7" style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;">
+				<td
+					colspan="7"
+					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
+				>
 					Total penghuni: {total}
 				</td>
 			</tr>

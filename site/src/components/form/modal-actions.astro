@@ -1,0 +1,32 @@
+---
+import IconLoader from "~/components/ui/icon-loader.astro";
+
+interface Props {
+	formId: string;
+	btnId: string;
+	label?: string;
+	submitClass?: string;
+	cancelLabel?: string;
+}
+
+const {
+	formId,
+	btnId,
+	label = "Simpan",
+	submitClass = "btn-primary",
+	cancelLabel = "Batal",
+} = Astro.props;
+---
+
+<form class="flex gap-2" method="dialog">
+	<button class="btn btn-outline btn-sm">{cancelLabel}</button>
+	<button
+		class={`btn ${submitClass} btn-sm`}
+		id={btnId}
+		type="submit"
+		form={formId}
+	>
+		<IconLoader />
+		{label}
+	</button>
+</form>

@@ -1,95 +1,27 @@
 ---
-import { db } from "@e-kos/database";
-
-import { z } from "astro/zod";
+import { sumBy } from "es-toolkit";
 
 import ReportLayout from "~/layouts/report-layout.astro";
+import { INVOICE_STATUS_LABELS } from "~/lib/badges";
 import { formatCurrency } from "~/lib/currency";
 import { formatDate } from "~/lib/date";
+import { fetchTransactions, transactionQuerySchema } from "../_data";
 
-const currentMonthStr = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, "0")}`;
-const defaultFrom = currentMonthStr;
-const defaultTo = currentMonthStr;
+const params = Astro.locals.parseQuery(transactionQuerySchema);
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		from: z.string().catch(defaultFrom),
-		to: z.string().catch(defaultTo),
-		status: z
-			.enum(["all", "paid", "unpaid", "overdue"])
-			.optional()
-			.catch(undefined),
-	}),
-);
-
-// If from > to, adjust to follow from
-if (params.from > params.to) {
-	params.to = params.from;
-}
-
-const [fromYear, fromMonth] = params.from.split("-").map(Number);
-const [toYear, toMonth] = params.to.split("-").map(Number);
-const startDate = new Date(fromYear, fromMonth - 1, 1);
-const endDate = new Date(toYear, toMonth, 0, 23, 59, 59, 999);
-
-const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
-
-const owner = await db.query.users.findFirst({
-	where: { role: "owner" },
-});
-const knownBy = owner?.displayName ?? "Pemilik Kos";
-
-const invoices = await db.query.invoices.findMany({
-	where: {
-		dueDate: {
-			gte: startDate,
-			lte: endDate,
-		},
-		...(params.status && params.status !== "all"
-			? { status: params.status }
-			: {}),
-	},
-	with: {
-		lease: {
-			with: {
-				tenant: true,
-				room: true,
-			},
-		},
-	},
-});
-
-const mapped = invoices.map((inv) => ({
-	invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
-	tenantName: inv.lease?.tenant?.fullName ?? "-",
-	roomNumber: inv.lease?.room?.roomNumber ?? "-",
-	amount: inv.amount,
-	dueDate: inv.dueDate,
-	status: inv.status,
-}));
+const mapped = await fetchTransactions(params);
 
 const paidInvoices = mapped.filter((inv) => inv.status === "paid");
 const unpaidInvoices = mapped.filter((inv) => inv.status !== "paid");
 
-const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+const totalRevenue = sumBy(paidInvoices, (inv) => inv.amount);
 const paidCount = paidInvoices.length;
 const unpaidCount = unpaidInvoices.length;
-const outstandingAmount = unpaidInvoices.reduce(
-	(sum, inv) => sum + inv.amount,
-	0,
-);
-
-const STATUS_LABELS: Record<string, string> = {
-	paid: "Lunas",
-	unpaid: "Belum Bayar",
-	overdue: "Terlambat",
-};
+const outstandingAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
 ---
 
 <ReportLayout
 	title="Laporan Transaksi Bulanan"
-	createdBy={createdBy}
-	knownBy={knownBy}
 	subtitle={`${params.from} s/d ${params.to}`}
 >
 	<!-- Stats Cards -->
@@ -166,7 +98,13 @@ const STATUS_LABELS: Record<string, string> = {
 						<td style="font-family: 'Courier New', monospace;">
 							{formatDate(inv.dueDate)}
 						</td>
-						<td>{STATUS_LABELS[inv.status]}</td>
+						<td>
+							{
+								INVOICE_STATUS_LABELS[
+									inv.status as keyof typeof INVOICE_STATUS_LABELS
+								]
+							}
+						</td>
 					</tr>
 				))
 			}

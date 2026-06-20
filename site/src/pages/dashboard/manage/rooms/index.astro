@@ -1,439 +1,206 @@
 ---
-import { db } from "@e-kos/database";
-
 import { actions } from "astro:actions";
-import { z } from "astro/zod";
-import { pick } from "es-toolkit";
 
-import Alert from "~/components/alert.astro";
-import Icon from "~/components/icon.astro";
+import ActionsMenu from "~/components/ui/actions-menu.astro";
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FormResult from "~/components/form/form-result.astro";
+import Icon from "~/components/ui/icon.astro";
+import SearchInput from "~/components/data/search-input.astro";
+import Stats from "~/components/data/stats.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { createActionResult } from "~/lib/form-result";
+import {
+	fetchFilteredRooms,
+	getAllRoomsStats,
+	ROOM_STATUS_BADGES,
+	ROOM_STATUS_LABELS,
+	roomQuerySchema,
+} from "./_data";
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		query: z.string().catch(""),
-		status: z
-			.enum(["occupied", "vacant", "inactive"])
-			.optional()
-			.catch(undefined),
-		type: z.enum(["Standar", "Premium"]).optional().catch(undefined),
-	}),
-);
-
-// 1. Fetch all rooms for stats calculation
-const allRoomsFromDb = await db.query.rooms.findMany({
-	with: {
-		leases: {
-			where: { isActive: true },
-			with: {
-				tenant: true,
-			},
-		},
-	},
-});
-
-const allRooms = allRoomsFromDb.map(
-	({ id, roomNumber, roomType, monthlyPrice, isActive, leases }) => {
-		const activeLease = leases[0];
-		return {
-			id,
-			roomNumber,
-			roomType: roomType ?? "Standar",
-			monthlyPrice,
-			isActive,
-			tenantName: activeLease?.tenant?.fullName ?? null,
-		};
-	},
-);
-
-const roomStats = [
-	{
-		title: "Total Kamar",
-		value: allRooms.length.toString(),
-		icon: "line-md:home-md",
-	},
-	{
-		title: "Kamar Terisi",
-		value: allRooms
-			.filter(({ isActive, tenantName }) => isActive && tenantName)
-			.length.toString(),
-		icon: "line-md:circle-to-confirm-circle-transition",
-	},
-	{
-		title: "Kamar Tersedia",
-		value: allRooms
-			.filter(({ isActive, tenantName }) => isActive && !tenantName)
-			.length.toString(),
-		icon: "line-md:alert-circle",
-	},
-	{
-		title: "Kamar Nonaktif",
-		value: allRooms.filter(({ isActive }) => !isActive).length.toString(),
-		icon: "line-md:close-circle",
-	},
-];
-
-// 2. Fetch filtered rooms using spread-based conditional where clause
-const filteredRoomsFromDb = await db.query.rooms.findMany({
-	where: {
-		...(params.query && {
-			OR: [
-				{ roomNumber: { like: `%${params.query}%` } },
-				{ roomType: { like: `%${params.query}%` } },
-				{
-					leases: {
-						isActive: true,
-						tenant: {
-							fullName: { like: `%${params.query}%` },
-						},
-					},
-				},
-			],
-		}),
-		...(params.status && {
-			...(params.status === "inactive" && { isActive: false }),
-			...(params.status === "occupied" && {
-				isActive: true,
-				leases: { isActive: true },
-			}),
-			...(params.status === "vacant" && {
-				isActive: true,
-				NOT: { leases: { isActive: true } },
-			}),
-		}),
-		...(params.type && { roomType: params.type }),
-	},
-	with: {
-		leases: {
-			where: { isActive: true },
-			with: {
-				tenant: true,
-			},
-		},
-	},
-});
-
-const filteredRooms = filteredRoomsFromDb.map(
-	({ id, roomNumber, roomType, monthlyPrice, isActive, leases }) => {
-		const activeLease = leases[0];
-		return {
-			id,
-			roomNumber,
-			roomType: roomType ?? "Standar",
-			monthlyPrice,
-			isActive,
-			tenantName: activeLease?.tenant?.fullName ?? null,
-		};
-	},
-);
-
-const STAT_COLORS: Record<string, string> = {
-	"Total Kamar": "bg-primary/40 text-base-content",
-	"Kamar Terisi": "bg-success/40 text-base-content",
-	"Kamar Tersedia": "bg-warning/40 text-base-content",
-	"Kamar Nonaktif": "bg-neutral/40 text-base-content",
-};
-
-const STATUS_BADGES: Record<string, string> = {
-	Terisi: "badge-success",
-	Kosong: "badge-warning",
-	Nonaktif: "badge-neutral",
-};
-
-const formResult = (():
-	| { success: false; message: string }
-	| { success: true; title: string; description: string }
-	| void => {
-	const addResult = Astro.getActionResult(actions.manage.rooms.add);
-	if (addResult?.error)
-		return { success: false, message: addResult.error.message };
-	else if (addResult?.data) {
-		return {
-			success: true,
-			title: "Tambah kamar",
-			description: `Berhasil menambah kamar! (ID: ${addResult.data.id})`,
-		};
-	}
-
-	const editResult = Astro.getActionResult(actions.manage.rooms.edit);
-	if (editResult?.error)
-		return { success: false, message: editResult.error.message };
-	else if (editResult?.data) {
-		return {
-			success: true,
-			title: "Edit kamar",
-			description: `Berhasil edit kamar! (ID: ${editResult.data.id})`,
-		};
-	}
-})();
+const params = Astro.locals.parseQuery(roomQuerySchema);
+const filteredRooms = await fetchFilteredRooms(params);
+const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
+	...s,
+	value: String(s.value),
+}));
 ---
 
-{
-	formResult?.success === false && (
-		<Alert id="form_error" type="error" description={formResult.message} />
-	)
-}
+<FormResult
+	actionResults={[
+		createActionResult(
+			actions.manage.rooms.add,
+			"Tambah kamar",
+			(d) => `Berhasil menambah kamar! (ID: ${d.id})`,
+		),
+		createActionResult(
+			actions.manage.rooms.edit,
+			"Edit kamar",
+			(d) => `Berhasil edit kamar! (ID: ${d.id})`,
+		),
+	]}
+/>
 
-<DashboardLayout title="Manajemen Kamar ">
-	<div class="flex flex-col gap-6">
+<DashboardLayout
+	title="Manajemen Kamar"
+	description="Kelola inventaris, spesifikasi, dan status hunian kamar indekos"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			href={"/dashboard/manage/rooms/report/download" + Astro.url.search}
+			download
+		>
+			<Icon name="line-md:download" /> PDF
+		</a>
+		<button
+			hx-get="/dashboard/manage/rooms/modal/add"
+			class="btn btn-sm btn-primary"
+		>
+			<Icon name="line-md:plus" size="size-5" />
+			Tambah Kamar
+		</button>
+	</Fragment>
+
+	<div
+		class="flex items-center justify-end gap-2"
+		hx-include=".filter-rooms"
+		hx-select="#rooms-content-wrapper"
+		hx-swap="outerHTML transition:true"
+		hx-target="#rooms-content-wrapper"
+	>
+		<FilterPopover
+			name="rooms"
+			groups={[
+				{
+					title: "Status",
+					name: "status",
+					options: [
+						{
+							value: "occupied",
+							label: "Terisi",
+							checked: params.status === "occupied",
+						},
+						{
+							value: "vacant",
+							label: "Kosong",
+							checked: params.status === "vacant",
+						},
+						{
+							value: "inactive",
+							label: "Nonaktif",
+							checked: params.status === "inactive",
+						},
+					],
+				},
+				{
+					title: "Tipe Kamar",
+					name: "type",
+					options: [
+						{
+							value: "Standar",
+							label: "Standar",
+							checked: params.type === "Standar",
+						},
+						{
+							value: "Premium",
+							label: "Premium",
+							checked: params.type === "Premium",
+						},
+					],
+				},
+			]}
+		/>
+		<SearchInput
+			value={params.query}
+			filterClass="filter-rooms"
+			placeholder="Cari nomor/penghuni..."
+		/>
+	</div>
+
+	<Stats items={roomStats} />
+
+	<div
+		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+		id="rooms-content-wrapper"
+	>
 		{
-			formResult?.success ? (
-				<Alert
-					id="form_result"
-					type="info"
-					{...pick(formResult, ["title", "description"])}
-				/>
-			) : (
-				<p id="form_result" />
-			)
-		}
+			filteredRooms.map(
+				({ id, roomNumber, roomType, monthlyPrice, isActive, tenantName }) => {
+					const statusKey = !isActive
+						? "inactive"
+						: tenantName
+							? "occupied"
+							: "vacant";
+					const price = "Rp " + monthlyPrice.toLocaleString("id-ID");
+					return (
+						<div class="card bg-base-100 border-base-300 border shadow-sm transition-all hover:shadow-md">
+							<div class="card-body gap-3 p-5">
+								<div class="flex items-start justify-between">
+									<div class="flex flex-col">
+										<span class="text-base-content/50 text-xs font-bold">
+											{roomType}
+										</span>
+										<span class="text-2xl font-bold">{roomNumber}</span>
+									</div>
+									<span
+										class:list={[
+											"badge badge-sm font-bold",
+											ROOM_STATUS_BADGES[statusKey],
+										]}
+									>
+										{ROOM_STATUS_LABELS[statusKey]}
+									</span>
+								</div>
 
-		<div
-			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-		>
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold">Manajemen Kamar</h1>
-				<p class="text-base-content/60 text-sm">
-					Kelola inventaris, spesifikasi, dan status hunian kamar indekos
-				</p>
-			</div>
-
-			<div class="flex items-center gap-2">
-				<a
-					class="btn btn-outline flex items-center gap-1"
-					href={`/dashboard/manage/rooms/report/download${Astro.url.search}`}
-					download
-				>
-					<Icon name="line-md:download" /> PDF
-				</a>
-				<button
-					hx-get="/dashboard/manage/rooms/modal/add"
-					class="btn btn-primary"
-				>
-					<Icon name="line-md:plus" size="size-5" />
-					Tambah Kamar
-				</button>
-			</div>
-		</div>
-
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-			{
-				roomStats.map(({ title, value, icon }) => (
-					<div class="card bg-base-100 border-base-300 border shadow-sm">
-						<div class="card-body flex-row items-center gap-3 p-4">
-							<div class:list={["flex rounded-lg p-2.5", STAT_COLORS[title]]}>
-								<Icon name={icon as any} size="size-6" />
-							</div>
-							<div class="flex flex-col">
-								<span class="text-base-content/60 text-xs font-semibold">
-									{title}
-								</span>
-								<span class="text-xl font-bold">{value}</span>
-							</div>
-						</div>
-					</div>
-				))
-			}
-		</div>
-
-		<div
-			class="flex items-center justify-end gap-2"
-			hx-include=".filter-rooms"
-			hx-select="#rooms-grid"
-			hx-swap="outerHTML transition:true"
-			hx-target="#rooms-grid"
-		>
-			<button
-				class="btn btn-sm btn-outline"
-				popovertarget="filter-rooms-popover"
-				style="anchor-name:--filter-rooms"
-			>
-				<Icon name="line-md:filter" size="size-4" />
-				Filter
-			</button>
-			<div
-				class="dropdown menu rounded-box bg-base-100 mt-2 min-w-64 shadow-sm"
-				id="filter-rooms-popover"
-				popover
-				style="position-anchor:--filter-rooms"
-			>
-				<li class="menu-title">Status</li>
-				<div class="mx-2 mb-4 filter">
-					<input
-						hx-get
-						class="btn filter-reset btn-sm filter-rooms"
-						name="status"
-						type="radio"
-						value="all"
-					/>
-					<input
-						hx-get
-						class="btn btn-sm filter-rooms"
-						name="status"
-						type="radio"
-						value="occupied"
-						aria-label="Terisi"
-						checked={params.status === "occupied"}
-					/>
-					<input
-						hx-get
-						class="btn btn-sm filter-rooms"
-						name="status"
-						type="radio"
-						value="vacant"
-						aria-label="Kosong"
-						checked={params.status === "vacant"}
-					/>
-					<input
-						hx-get
-						class="btn btn-sm filter-rooms"
-						name="status"
-						type="radio"
-						value="inactive"
-						aria-label="Nonaktif"
-						checked={params.status === "inactive"}
-					/>
-				</div>
-				<li class="menu-title mt-2">Tipe Kamar</li>
-
-				<div class="mx-2 mb-4 filter">
-					<input
-						hx-get
-						class="btn filter-reset btn-sm filter-rooms"
-						name="type"
-						type="radio"
-						value="all"
-					/>
-					<input
-						hx-get
-						class="btn btn-sm filter-rooms"
-						name="type"
-						type="radio"
-						value="Standar"
-						aria-label="Standar"
-						checked={params.type === "Standar"}
-					/>
-					<input
-						hx-get
-						class="btn btn-sm filter-rooms"
-						name="type"
-						type="radio"
-						value="Premium"
-						aria-label="Premium"
-						checked={params.type === "Premium"}
-					/>
-				</div>
-			</div>
-
-			<label class="input input-sm w-full sm:max-w-xs">
-				<Icon name="line-md:search" size="size-4" />
-				<input
-					hx-get
-					hx-trigger="input changed delay:300ms"
-					class="filter-rooms"
-					name="query"
-					type="search"
-					value={params.query}
-					placeholder="Cari nomor/penghuni..."
-				/>
-			</label>
-		</div>
-
-		<div
-			class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-			id="rooms-grid"
-		>
-			{
-				filteredRooms.map(
-					({
-						id,
-						roomNumber,
-						roomType,
-						monthlyPrice,
-						isActive,
-						tenantName,
-					}) => {
-						const status = !isActive
-							? "Nonaktif"
-							: tenantName
-								? "Terisi"
-								: "Kosong";
-						const price = `Rp ${monthlyPrice.toLocaleString("id-ID")}`;
-						return (
-							<div class="card bg-base-100 border-base-300 border shadow-sm transition-all hover:shadow-md">
-								<div class="card-body gap-3 p-5">
-									<div class="flex items-start justify-between">
-										<div class="flex flex-col">
-											<span class="text-base-content/50 text-xs font-bold">
-												{roomType}
-											</span>
-											<span class="text-2xl font-bold">{roomNumber}</span>
-										</div>
-										<span
-											class:list={[
-												"badge badge-sm font-bold",
-												STATUS_BADGES[status],
-											]}
-										>
-											{status}
+								<div class="border-base-200 my-1 flex flex-col gap-1 border-t border-b py-3">
+									<div class="flex justify-between text-xs">
+										<span class="text-base-content/60">Harga Sewa:</span>
+										<span class="font-mono font-bold">{price}/Bln</span>
+									</div>
+									<div class="mt-1 flex justify-between text-xs">
+										<span class="text-base-content/60">Penghuni:</span>
+										<span class="text-base-content max-w-30 truncate font-semibold">
+											{tenantName || "-"}
 										</span>
 									</div>
+								</div>
 
-									<div class="border-base-200 my-1 flex flex-col gap-1 border-t border-b py-3">
-										<div class="flex justify-between text-xs">
-											<span class="text-base-content/60">Harga Sewa:</span>
-											<span class="font-mono font-bold">{price}/Bln</span>
-										</div>
-										<div class="mt-1 flex justify-between text-xs">
-											<span class="text-base-content/60">Penghuni:</span>
-											<span class="text-base-content max-w-30 truncate font-semibold">
-												{tenantName || "-"}
-											</span>
-										</div>
-									</div>
-
-									<div class="card-actions flex-row gap-2">
-										<button
-											hx-get={`/dashboard/manage/rooms/modal/detail/${id}`}
-											class="btn btn-outline btn-primary btn-xs flex flex-1 items-center justify-center gap-1"
-										>
-											<Icon name="line-md:document-list" /> Detail
-										</button>
-										<button
-											class="btn btn-outline btn-xs"
-											popovertarget={`aksi-rm-${id}`}
-										>
-											<Icon name="line-md:chevron-up" />
-										</button>
-										<ul
-											class="dropdown dropdown-end dropdown-top menu bg-base-100 rounded-box border-base-300 z-10 w-52 border shadow-sm"
-											id={`aksi-rm-${id}`}
-											popover
-										>
-											<li>
-												<button
-													hx-get={`/dashboard/manage/rooms/modal/edit/${id}`}
-													class="flex items-center gap-2"
-												>
-													<Icon name="line-md:edit" /> Edit Kamar
-												</button>
-											</li>
-											<li>
-												<button
-													hx-get={`/dashboard/manage/rooms/modal/delete/${id}`}
-													class="text-error flex items-center gap-2"
-												>
-													<Icon name="line-md:remove" /> Hapus
-												</button>
-											</li>
-										</ul>
-									</div>
+								<div class="card-actions flex-row gap-2">
+									<button
+										hx-get={"/dashboard/manage/rooms/modal/detail/" + id}
+										class="btn btn-outline btn-primary btn-xs flex flex-1 items-center justify-center gap-1"
+									>
+										<Icon name="line-md:document-list" /> Detail
+									</button>
+									<ActionsMenu
+										id={id}
+										direction="top"
+										menuClass="w-52"
+										triggerIcon="line-md:chevron-up"
+									>
+										<li>
+											<button
+												hx-get={"/dashboard/manage/rooms/modal/edit/" + id}
+												class="flex items-center gap-2"
+											>
+												<Icon name="line-md:edit" /> Edit Kamar
+											</button>
+										</li>
+										<li>
+											<button
+												hx-get={"/dashboard/manage/rooms/modal/delete/" + id}
+												class="text-error flex items-center gap-2"
+											>
+												<Icon name="line-md:remove" /> Hapus
+											</button>
+										</li>
+									</ActionsMenu>
 								</div>
 							</div>
-						);
-					},
-				)
-			}
-		</div>
+						</div>
+					);
+				},
+			)
+		}
 	</div>
 </DashboardLayout>

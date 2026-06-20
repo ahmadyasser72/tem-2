@@ -1,60 +1,26 @@
 ---
 import { db } from "@e-kos/database";
 
-import { z } from "astro/zod";
-
+import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
+import {
+	AUDIT_ACTION_LABELS,
+	auditQuerySchema,
+	fetchAuditLogs,
+} from "../_data";
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		userId: z.coerce.number().optional().catch(undefined),
-		from: z.string().optional().catch(undefined),
-		to: z.string().optional().catch(undefined),
-		action: z.enum(["CREATE", "UPDATE", "DELETE"]).optional().catch(undefined),
-	}),
-);
+const params = Astro.locals.parseQuery(auditQuerySchema);
 
-const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
-const owner = await db.query.users.findFirst({ where: { role: "owner" } });
-const knownBy = owner?.displayName ?? "Pemilik Kos";
-
-const { userId, from, to, action } = params;
+const rawUserId = Astro.url.searchParams.get("userId");
+const userId = rawUserId ? Number(rawUserId) : undefined;
 
 const targetUser =
-	userId != null
+	userId != null && !Number.isNaN(userId)
 		? await db.query.users.findFirst({ where: { id: userId } })
 		: null;
 
-const fromDate = from ? new Date(from) : undefined;
-const toDate = to
-	? (() => {
-			const d = new Date(to);
-			d.setHours(23, 59, 59, 999);
-			return d;
-		})()
-	: undefined;
-
-const logs = await db.query.auditLogs.findMany({
-	where: {
-		...(userId != null && { userId }),
-		...(action != null && { action }),
-		...(fromDate && toDate && { createdAt: { gte: fromDate, lte: toDate } }),
-		...(!fromDate && toDate && { createdAt: { lte: toDate } }),
-		...(fromDate && !toDate && { createdAt: { gte: fromDate } }),
-	},
-	with: { user: true },
-	orderBy: { createdAt: "desc" },
-});
-
-const rows = logs.map((log) => ({
-	time: log.createdAt,
-	username: log.user?.username ?? "Sistem",
-	displayName: log.user?.displayName ?? log.user?.username ?? "Sistem",
-	action: log.action,
-	tableName: log.tableName,
-	recordId: log.recordId,
-}));
+const rows = await fetchAuditLogs(params, { userId, showSystem: true });
 
 const filterParts: string[] = [];
 if (targetUser) {
@@ -62,30 +28,13 @@ if (targetUser) {
 		`Pengguna: ${targetUser.displayName ?? targetUser.username}`,
 	);
 }
-if (action != null) {
-	const label: Record<string, string> = {
-		CREATE: "Membuat",
-		UPDATE: "Mengubah",
-		DELETE: "Menghapus",
-	};
-	filterParts.push(`Aksi: ${label[action] ?? action}`);
+if (params.action) {
+	filterParts.push(`Aksi: ${AUDIT_ACTION_LABELS[params.action]}`);
 }
-if (from) filterParts.push(`Dari: ${formatDate(from, "DD MMM YYYY")}`);
-if (to) filterParts.push(`Sampai: ${formatDate(to, "DD MMM YYYY")}`);
-
 const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
-<ReportLayout
-	title="Laporan Aktivitas Pengguna"
-	createdBy={createdBy}
-	knownBy={knownBy}
-	subtitle={subtitle}
->
-	<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
-		Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
-	</div>
-
+<ReportLayout title="Laporan Aktivitas Pengguna" subtitle={subtitle}>
 	{
 		targetUser && (
 			<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; font-size: 11px; padding: 8px; border: 1px solid black; background: #fafafa;">
@@ -119,14 +68,10 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 		<tbody>
 			{
 				rows.length === 0 ? (
-					<tr>
-						<td
-							colspan="6"
-							style="text-align: center; padding: 24px; font-size: 11px; opacity: 0.5;"
-						>
-							Tidak ada data audit log untuk filter yang dipilih.
-						</td>
-					</tr>
+					<ReportTableEmpty
+						colspan={6}
+						message="Tidak ada data audit log untuk filter yang dipilih."
+					/>
 				) : (
 					rows.map((row, i) => (
 						<tr>
@@ -139,7 +84,7 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 								{row.action}
 							</td>
 							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
-								{row.tableName}
+								{row.table}
 							</td>
 							<td style="font-family: 'Courier New', monospace; font-size: 10px; text-align: center;">
 								{row.recordId ?? "-"}

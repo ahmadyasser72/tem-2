@@ -1,0 +1,58 @@
+---
+import type { ActionClient } from "astro:actions";
+
+import Alert from "~/components/ui/alert.astro";
+import { checkActionResult } from "~/lib/form-result";
+import type { FormResult } from "~/lib/form-result";
+
+interface ActionResultConfig {
+	action: ActionClient<any, any, any>;
+	title: string;
+	getDescription: (data: any) => string;
+}
+
+export interface Props {
+	result?: FormResult;
+	actionResults?: ActionResultConfig[];
+}
+
+const { result: propResult, actionResults } = Astro.props;
+
+// Auto-detect from action results array — first non-null wins
+let result: FormResult = propResult;
+if (!result && actionResults) {
+	for (const config of actionResults) {
+		const actionResult = Astro.getActionResult(config.action);
+		if (actionResult) {
+			result = checkActionResult(actionResult, {
+				title: config.title,
+				getDescription: config.getDescription,
+			});
+			break;
+		}
+	}
+}
+---
+
+{
+	result?.success === false && (
+		<Alert id="form_error" type="error" description={result.message} />
+	)
+}
+
+<div
+	class="toast sm:toast-center z-10"
+	id="notification-toasts"
+	hx-swap-oob="beforeend:#notification-toasts"
+>
+	{
+		result?.success && (
+			<Alert
+				type="info"
+				title={result.title}
+				hx-on:htmx-load="setTimeout(() => this.remove(), 5000)"
+				description={result.description}
+			/>
+		)
+	}
+</div>

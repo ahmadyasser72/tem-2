@@ -1,0 +1,47 @@
+---
+import ModalActions from "~/components/form/modal-actions.astro";
+
+interface Props {
+	modalId: string;
+	action: any;
+	target: string;
+	submitLabel: string;
+	hidden?: boolean;
+	submitClass?: string;
+	cancelLabel?: string;
+}
+
+const {
+	modalId,
+	action,
+	target,
+	submitLabel,
+	hidden = false,
+	submitClass,
+	cancelLabel,
+} = Astro.props;
+---
+
+<form
+	hx-post={action}
+	class={hidden ? "hidden" : "flex flex-col gap-4"}
+	id={`${modalId}_form`}
+	hx-indicator={`#${modalId}_btn`}
+	hx-on--after-request={`event.detail.successful && ${modalId}_modal.close()`}
+	hx-select-oob={`${target}, #form_error`}
+	hx-swap="none transition:true"
+	action={action}
+	method="post"
+>
+	<slot />
+	{!hidden && <p class="text-error text-sm" id="form_error" />}
+</form>
+<div class="modal-action">
+	<ModalActions
+		btnId={`${modalId}_btn`}
+		cancelLabel={cancelLabel}
+		formId={`${modalId}_form`}
+		label={submitLabel}
+		submitClass={submitClass}
+	/>
+</div>

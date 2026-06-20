@@ -1,0 +1,11 @@
+---
+interface Props {
+	label: string;
+}
+
+const { label } = Astro.props;
+Astro.response.status = 404;
+---
+<div class="py-4 text-center">
+	<p class="text-base-content/60">{label} tidak ditemukan.</p>
+</div>

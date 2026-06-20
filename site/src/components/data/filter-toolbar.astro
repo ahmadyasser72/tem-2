@@ -1,0 +1,63 @@
+---
+import Icon from "~/components/ui/icon.astro";
+
+interface Props {
+	name: string;
+	from?: string;
+	to?: string;
+}
+
+const { name, from, to } = Astro.props;
+const filterClass = `filter-${name}`;
+const targetId = `#${name}-content-wrapper`;
+---
+
+<div class="card bg-base-100 border-base-300 border shadow-sm">
+	<div
+		class="card-body gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+		hx-include={`.${filterClass}`}
+		hx-select={targetId}
+		hx-swap="outerHTML transition:true"
+		hx-target={targetId}
+	>
+		{
+			from != null && to != null && (
+				<div
+					class="flex w-full items-center gap-3 sm:flex-1"
+					id="filter-period"
+					hx-select-oob="#filter-period"
+				>
+					<Icon
+						class="text-primary shrink-0"
+						name="line-md:calendar"
+						size="size-5"
+					/>
+					<span class="text-base-content/75 hidden text-sm font-semibold md:inline">
+						Pilih Periode:
+					</span>
+					<input
+						hx-get
+						class={`input input-sm ${filterClass} w-full sm:w-40`}
+						name="from"
+						type="month"
+						value={from}
+					/>
+					<span class="text-base-content/70 text-sm font-semibold">
+						Sampai:
+					</span>
+					<input
+						hx-get
+						class={`input input-sm ${filterClass} w-full sm:w-40`}
+						name="to"
+						type="month"
+						value={to}
+						min={from}
+					/>
+				</div>
+			)
+		}
+		<div class="flex gap-2">
+			<slot name="actions" />
+		</div>
+	</div>
+</div>

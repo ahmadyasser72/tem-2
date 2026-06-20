@@ -3,8 +3,9 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
 
 export const partial = true;
 
@@ -16,21 +17,15 @@ const tenant = await db.query.tenants.findFirst({
 if (!tenant) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="terminate_lease_modal">
+<Modal
+	id="terminate_lease"
+	title="Akhiri Sewa"
+	icon="line-md:account-remove"
+	iconClass="text-error"
+>
 	{
 		tenant ? (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-error" name="line-md:alert-circle" size="size-6" />
-					Konfirmasi Keluar Penghuni
-				</h3>
-
+			<>
 				<p class="text-base-content/70 mb-4 text-sm">
 					Apakah Anda yakin ingin menandai penghuni{" "}
 					<strong>{tenant.fullName}</strong> telah keluar? Kontrak sewa aktif
@@ -38,52 +33,19 @@ if (!tenant) Astro.response.status = 404;
 					kosong/tersedia.
 				</p>
 
-				<form
-					hx-post={actions.manage.tenants.terminate}
-					class="hidden"
-					id="terminate_lease_form"
-					hx-indicator="#terminate_lease_btn"
-					hx-on--after-request="event.detail.successful && terminate_lease_modal.close()"
-					hx-select-oob="#form_error, #form_result, #tenants-rows"
-					hx-swap="none transition:true"
+				<ModalForm
 					action={actions.manage.tenants.terminate}
-					method="post"
+					hidden
+					modalId="terminate_lease"
+					submitClass="btn-error"
+					submitLabel="Konfirmasi Akhiri"
+					target="#form_result, #tenants-content-wrapper"
 				>
 					<input name="id" type="hidden" value={tenant.id} />
-				</form>
-
-				<p class="text-error mb-4 text-sm" id="form_error" />
-
-				<div class="modal-action">
-					<form class="flex gap-2" method="dialog">
-						<button class="btn btn-outline btn-sm">Batal</button>
-						<button
-							class="btn btn-error btn-sm"
-							id="terminate_lease_btn"
-							type="submit"
-							form="terminate_lease_form"
-						>
-							<IconLoader />
-							Konfirmasi Keluar
-						</button>
-					</form>
-				</div>
-			</div>
+				</ModalForm>
+			</>
 		) : (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-				<h3 class="mb-4 text-xl font-bold">Akhiri Kontrak</h3>
-				<p class="py-4">
-					Penghuni dengan ID: {Astro.params.id} tidak ditemukan.
-				</p>
-			</div>
+			<NotFound label="Penghuni" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</Modal>

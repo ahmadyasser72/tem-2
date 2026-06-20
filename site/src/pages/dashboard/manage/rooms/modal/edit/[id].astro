@@ -3,8 +3,10 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
+import FormField from "~/components/form/form-field.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
 
 export const partial = true;
 
@@ -22,42 +24,19 @@ const room = await db.query.rooms.findFirst({
 if (!room) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="edit_room_modal">
+<Modal id="edit_room" title="Edit Kamar" icon="line-md:edit">
 	{
 		room ? (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon
-						class="text-primary"
-						name="line-md:home-md-twotone"
-						size="size-6"
-					/>
-					Edit Kamar (ID: {room.id})
-				</h3>
-
-				<form
-					hx-post={actions.manage.rooms.edit}
-					class="flex flex-col gap-4"
-					id="edit_room_form"
-					hx-indicator="#edit_room_btn"
-					hx-on--after-request="event.detail.successful && edit_room_modal.close()"
-					hx-select-oob="#form_error, #form_result, #rooms-grid"
-					hx-swap="none transition:true"
+			<>
+				<ModalForm
 					action={actions.manage.rooms.edit}
-					method="post"
+					modalId="edit_room"
+					submitLabel="Simpan Kamar"
+					target="#form_result, #rooms-content-wrapper"
 				>
 					<input name="id" type="hidden" value={room.id} />
 
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold">
-							Nomor Kamar
-						</legend>
+					<FormField label="Nomor Kamar">
 						<input
 							class="input w-full"
 							name="room_number"
@@ -66,11 +45,8 @@ if (!room) Astro.response.status = 404;
 							placeholder="Contoh: C05, A12..."
 							required
 						/>
-					</fieldset>
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold">
-							Jenis Kamar
-						</legend>
+					</FormField>
+					<FormField label="Jenis Kamar">
 						<select class="select w-full" name="room_type" required>
 							<option value="Standar" selected={room.roomType === "Standar"}>
 								Standar
@@ -79,11 +55,8 @@ if (!room) Astro.response.status = 404;
 								Premium
 							</option>
 						</select>
-					</fieldset>
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend text-sm font-semibold">
-							Harga Sewa / Bulan (Rp)
-						</legend>
+					</FormField>
+					<FormField label="Harga Sewa / Bulan (Rp)">
 						<input
 							class="input w-full"
 							name="monthly_price"
@@ -92,7 +65,7 @@ if (!room) Astro.response.status = 404;
 							placeholder="800000"
 							required
 						/>
-					</fieldset>
+					</FormField>
 					<div class="bg-base-200/40 border-base-200 flex items-center gap-3 rounded-lg border p-3">
 						<input
 							class="toggle toggle-success"
@@ -108,37 +81,10 @@ if (!room) Astro.response.status = 404;
 							Kamar aktif (siap huni)
 						</label>
 					</div>
-
-					<p class="text-error text-sm" id="form_error" />
-				</form>
-				<div class="modal-action">
-					<form class="flex gap-2" method="dialog">
-						<button class="btn btn-outline btn-sm">Batal</button>
-						<button
-							class="btn btn-primary btn-sm"
-							id="edit_room_btn"
-							type="submit"
-							form="edit_room_form"
-						>
-							<IconLoader />
-							Simpan Kamar
-						</button>
-					</form>
-				</div>
-			</div>
+				</ModalForm>
+			</>
 		) : (
-			<div class="modal-box border-base-300 border">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-				<h3 class="mb-4 text-xl font-bold">Edit Kamar</h3>
-				<p class="py-4">Kamar dengan ID: {Astro.params.id} tidak ditemukan.</p>
-			</div>
+			<NotFound label="Kamar" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</Modal>

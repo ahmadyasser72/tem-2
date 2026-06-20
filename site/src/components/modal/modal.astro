@@ -1,0 +1,37 @@
+---
+import Icon from "~/components/ui/icon.astro";
+
+interface Props {
+	id: string;
+	title: string;
+	icon?: `line-md:${string}` | `svg-spinners:${string}`;
+	iconClass?: string;
+	modalClass?: string;
+}
+
+const {
+	id,
+	title,
+	icon,
+	iconClass = "text-primary",
+	modalClass = "",
+} = Astro.props;
+---
+
+<dialog class="modal" id={`${id}_modal`}>
+	<div class:list={["modal-box border-base-300 border", modalClass]}>
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
+				>✕</button
+			>
+		</form>
+		<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
+			{icon && <Icon class={iconClass} name={icon} size="size-6" />}
+			{title}
+		</h3>
+		<slot />
+	</div>
+	<form class="modal-backdrop" method="dialog">
+		<button>close</button>
+	</form>
+</dialog>

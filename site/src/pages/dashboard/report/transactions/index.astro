@@ -1,129 +1,29 @@
 ---
-import { db } from "@e-kos/database";
-
 import { actions } from "astro:actions";
-import { z } from "astro/zod";
 
-import Icon from "~/components/icon.astro";
+import ActionsMenu from "~/components/ui/actions-menu.astro";
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import FormResult from "~/components/form/form-result.astro";
+import Icon from "~/components/ui/icon.astro";
+import SearchInput from "~/components/data/search-input.astro";
+import Stats from "~/components/data/stats.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate, getCurrentMonthStr, parsePeriod } from "~/lib/date";
+import { INVOICE_STATUS_BADGES, INVOICE_STATUS_LABELS } from "~/lib/badges";
+import { formatDate } from "~/lib/date";
+import { createActionResult } from "~/lib/form-result";
+import {
+	fetchTransactions,
+	getTransactionStats,
+	transactionQuerySchema,
+} from "./_data";
 
-const formResult = (():
-	| { success: false; message: string }
-	| { success: true; message: string }
-	| void => {
-	const linkResult = Astro.getActionResult(
-		actions.manage.invoices.generatePaymentLink,
-	);
-	if (linkResult?.error)
-		return { success: false, message: linkResult.error.message };
-	else if (linkResult?.data) {
-		return {
-			success: true,
-			message: `Link pembayaran berhasil dibuat! <a href="${linkResult.data.paymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`,
-		};
-	}
+const params = Astro.locals.parseQuery(transactionQuerySchema);
 
-	const paidResult = Astro.getActionResult(actions.manage.invoices.markAsPaid);
-	if (paidResult?.error)
-		return { success: false, message: paidResult.error.message };
-	else if (paidResult?.data) {
-		return {
-			success: true,
-			message: "Invoice berhasil ditandai sebagai lunas.",
-		};
-	}
-})();
-
-const defaultFrom = getCurrentMonthStr();
-const defaultTo = getCurrentMonthStr();
-
-const params = Astro.locals.parseQuery(
-	z.object({
-		query: z.string().catch(""),
-		from: z.string().catch(defaultFrom),
-		to: z.string().catch(defaultTo),
-		status: z
-			.enum(["all", "paid", "unpaid", "overdue"])
-			.optional()
-			.catch(undefined),
-	}),
-);
-
-// If from > to, adjust to follow from
-if (params.from > params.to) {
-	params.to = params.from;
-}
-
-// Parse period
-const { startDate, endDate } = parsePeriod(params.from, params.to);
-
-// Handle status messages from HTMX redirect
-const queryStatusMsg = Astro.url.searchParams.get("statusMsg");
-const queryStatusDetail = Astro.url.searchParams.get("statusDetail");
-const queryPaymentUrl = Astro.url.searchParams.get("paymentUrl");
-
-const redirectResult = ((): { success: boolean; message: string } | void => {
-	if (!queryStatusMsg) return;
-	if (queryStatusMsg === "success") {
-		const msg = queryPaymentUrl
-			? `Link pembayaran berhasil dibuat! <a href="${queryPaymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`
-			: queryStatusDetail;
-		return { success: true, message: msg ?? "Berhasil" };
-	}
-	return {
-		success: false,
-		message: queryStatusDetail ?? "Terjadi kesalahan",
-	};
-})();
-
-// 1. Query all invoices for the selected month at database level
-const monthlyInvoicesFromDb = await db.query.invoices.findMany({
-	where: {
-		dueDate: {
-			gte: startDate,
-			lte: endDate,
-		},
-	},
-	with: {
-		lease: {
-			with: {
-				tenant: true,
-				room: true,
-			},
-		},
-	},
-});
-
-const monthlyInvoices = monthlyInvoicesFromDb.map((inv) => {
-	return {
-		id: inv.id,
-		invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
-		tenantName: inv.lease?.tenant?.fullName ?? "-",
-		roomNumber: inv.lease?.room?.roomNumber ?? "-",
-		amount: inv.amount,
-		dueDate: inv.dueDate,
-		status: inv.status,
-		gatewayRef: inv.duitkuReference ?? "-",
-		duitkuReference: inv.duitkuReference,
-	};
-});
-
-// Compute stats based on the monthly set
-const totalRevenue = monthlyInvoices
-	.filter(({ status }) => status === "paid")
-	.reduce((sum, { amount }) => sum + amount, 0);
-
-const paidCount = monthlyInvoices.filter(
-	({ status }) => status === "paid",
-).length;
-const unpaidCount = monthlyInvoices.filter(
-	({ status }) => status !== "paid",
-).length;
-const outstandingAmount = monthlyInvoices
-	.filter(({ status }) => status !== "paid")
-	.reduce((sum, { amount }) => sum + amount, 0);
-
+// Query all invoices for stats
+const monthlyInvoices = await fetchTransactions(params);
+const { totalRevenue, paidCount, unpaidCount, outstandingAmount } =
+	getTransactionStats(monthlyInvoices);
 const totalCount = monthlyInvoices.length;
 const paidPercent =
 	totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
@@ -149,381 +49,253 @@ const summaryStats = [
 	},
 ];
 
-// 2. Query filtered invoices using spread-based conditional where clause
-const filteredInvoicesFromDb = await db.query.invoices.findMany({
-	where: {
-		dueDate: {
-			gte: startDate,
-			lte: endDate,
-		},
-		...(params.query && {
-			OR: [
-				{
-					lease: {
-						tenant: {
-							fullName: { like: `%${params.query}%` },
-						},
-					},
-				},
-				{
-					lease: {
-						room: {
-							roomNumber: { like: `%${params.query}%` },
-						},
-					},
-				},
-			],
-		}),
-		...(params.status && params.status !== "all" && { status: params.status }),
-	},
-	with: {
-		lease: {
-			with: {
-				tenant: true,
-				room: true,
-			},
-		},
-	},
-});
-
-const filteredInvoices = filteredInvoicesFromDb.map((inv) => {
-	return {
-		id: inv.id,
-		invoiceNumber: `INV-${inv.id.toString().padStart(6, "0")}`,
-		tenantName: inv.lease?.tenant?.fullName ?? "-",
-		roomNumber: inv.lease?.room?.roomNumber ?? "-",
-		amount: inv.amount,
-		dueDate: inv.dueDate,
-		status: inv.status,
-		gatewayRef: inv.duitkuReference ?? "-",
-		duitkuReference: inv.duitkuReference,
-	};
-});
-
-const STAT_COLORS: Record<string, string> = {
-	"Total Pemasukan": "bg-success/40 text-base-content",
-	"Sudah Terbayar": "bg-success/40 text-base-content",
-	"Belum Terbayar": "bg-error/40 text-base-content",
-};
-
-const STATUS_LABELS = {
-	paid: "Lunas",
-	unpaid: "Belum Bayar",
-	overdue: "Terlambat",
-};
-
-const STATUS_BADGES: Record<string, string> = {
-	paid: "badge-success",
-	unpaid: "badge-warning",
-	overdue: "badge-error",
-};
+// Query filtered invoices
+const filteredInvoices = await fetchTransactions(params, { useQuery: true });
 ---
 
-<DashboardLayout title="Laporan Transaksi ">
-	<div class="flex flex-col gap-6">
-		{
-			(formResult || redirectResult) && (
-				<div
-					id="form-result"
-					class:list={[
-						"alert",
-						(formResult ?? redirectResult)?.success
-							? "alert-success"
-							: "alert-error",
-					]}
-				>
-					<span set:html={(formResult ?? redirectResult)?.message ?? ""} />
-				</div>
-			)
-		}
+<FormResult
+	actionResults={[
+		createActionResult(
+			actions.manage.invoices.generatePaymentLink,
+			"Buat link bayar",
+			(d) =>
+				`Link pembayaran berhasil dibuat! <a href="${d.paymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`,
+		),
+		createActionResult(
+			actions.manage.invoices.markAsPaid,
+			"Tandai Lunas",
+			() => "Berhasil menandai invoice sebagai lunas!",
+		),
+	]}
+/>
 
-		<div
-			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+<DashboardLayout
+	title="Laporan Transaksi"
+	description="Rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			href={`/dashboard/report/transactions/report/download${Astro.url.search}`}
+			download
 		>
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold">Laporan Transaksi</h1>
-				<p class="text-base-content/60 text-sm">
-					Rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni
-				</p>
-			</div>
-			<div class="flex items-center gap-2">
-				<a
-					class="btn btn-outline btn-sm flex items-center gap-1"
-					href={`/dashboard/report/transactions/report/download${Astro.url.search}`}
-					download
-				>
-					<Icon name="line-md:download" /> PDF
-				</a>
-				<button class="btn btn-outline btn-sm flex items-center gap-1">
-					<Icon name="line-md:download" /> Export Excel
-				</button>
-			</div>
-		</div>
+			<Icon name="line-md:download" /> PDF
+		</a>
+		<button class="btn btn-outline btn-sm">
+			<Icon name="line-md:download" /> Export Excel
+		</button>
+	</Fragment>
 
-		<div class="card bg-base-100 border-base-300 border shadow-sm">
-			<div
-				class="card-body flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-				hx-include=".filter-transactions"
-				hx-select="#transactions-content-wrapper"
-				hx-swap="outerHTML transition:true"
-				hx-target="#transactions-content-wrapper"
-			>
-				<div
-					class="flex w-full items-center gap-3 sm:w-auto"
-					id="filter-period"
-					hx-select-oob="#filter-period"
-				>
-					<Icon
-						class="text-primary shrink-0"
-						name="line-md:calendar"
-						size="size-5"
-					/>
-					<span
-						class="text-base-content/75 hidden text-sm font-semibold md:inline"
-						>Pilih Periode:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-transactions w-full sm:w-40"
-						name="from"
-						type="month"
-						value={params.from}
-					/>
-					<span class="text-base-content/70 text-sm font-semibold">Sampai:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-transactions w-full sm:w-40"
-						name="to"
-						type="month"
-						value={params.to}
-						min={params.from}
-					/>
-				</div>
+	<FilterToolbar name="transactions" from={params.from} to={params.to}>
+		<Fragment slot="actions">
+			<FilterPopover
+				name="transactions"
+				groups={[
+					{
+						title: "Status",
+						name: "status",
+						options: [
+							{
+								value: "paid",
+								label: "Lunas",
+								checked: params.status === "paid",
+							},
+							{
+								value: "unpaid",
+								label: "Belum Bayar",
+								checked: params.status === "unpaid",
+							},
+							{
+								value: "overdue",
+								label: "Terlambat",
+								checked: params.status === "overdue",
+							},
+						],
+					},
+				]}
+			/>
+			<SearchInput
+				value={params.query}
+				filterClass="filter-transactions"
+				placeholder="Cari nama/No. Kamar..."
+			/>
+		</Fragment>
+	</FilterToolbar>
 
-				<div class="flex gap-2">
-					<button
-						class="btn btn-sm btn-outline"
-						popovertarget="filter-transactions-popover"
-						style="anchor-name:--filter-transactions"
-					>
-						<Icon name="line-md:filter" size="size-4" />
-						Filter
-					</button>
-					<div
-						class="dropdown menu rounded-box bg-base-100 mt-2 min-w-64 shadow-sm"
-						id="filter-transactions-popover"
-						popover
-						style="position-anchor:--filter-transactions"
-					>
-						<li class="menu-title">Status</li>
-						<div class="mx-2 mb-4 filter">
-							<input
-								hx-get
-								class="btn btn-sm filter-reset filter-transactions"
-								name="status"
-								type="radio"
-								value="all"
-							/>
-							<input
-								hx-get
-								class="btn btn-sm filter-transactions"
-								name="status"
-								type="radio"
-								value="paid"
-								aria-label="Lunas"
-								checked={params.status === "paid"}
-							/>
-							<input
-								hx-get
-								class="btn btn-sm filter-transactions"
-								name="status"
-								type="radio"
-								value="unpaid"
-								aria-label="Belum Bayar"
-								checked={params.status === "unpaid"}
-							/>
-							<input
-								hx-get
-								class="btn btn-sm filter-transactions"
-								name="status"
-								type="radio"
-								value="overdue"
-								aria-label="Terlambat"
-								checked={params.status === "overdue"}
-							/>
-						</div>
-					</div>
+	<div class="contents" id="transactions-content-wrapper">
+		<Stats items={summaryStats} />
 
-					<label class="input input-sm w-full sm:max-w-xs">
-						<Icon name="line-md:search" size="size-4" />
-						<input
-							hx-get
-							hx-trigger="input changed delay:300ms"
-							class="filter-transactions"
-							name="query"
-							type="search"
-							value={params.query}
-							placeholder="Cari nama/No. Kamar..."
-						/>
-					</label>
-				</div>
-			</div>
-		</div>
-
-		<div class="contents" id="transactions-content-wrapper">
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-				{
-					summaryStats.map(({ title, value, desc, icon }) => (
-						<div class="card bg-base-100 border-base-300 border shadow-sm">
-							<div class="card-body flex-row items-center gap-3 p-5">
-								<div class:list={["flex rounded-xl p-3", STAT_COLORS[title]]}>
-									<Icon name={icon as any} size="size-7" />
-								</div>
-								<div class="flex flex-col">
-									<span class="text-base-content/60 text-xs font-semibold">
-										{title}
-									</span>
-									<span class="text-2xl font-bold">{value}</span>
-									<span class="text-base-content/50 mt-0.5 text-xs">
-										{desc}
-									</span>
-								</div>
-							</div>
-						</div>
-					))
-				}
-			</div>
-
-			<div class="card bg-base-100 border-base-300 border shadow-sm">
-				<div class="card-body p-0">
-					<div class="overflow-x-auto">
-						<table class="table-zebra table w-full">
-							<thead>
-								<tr class="border-base-300 border-b">
-									<th class="text-base-content/60 text-xs font-bold"
-										>No. Invoice</th
+		<div class="border-base-300 rounded-box overflow-x-auto border shadow-sm">
+			<table class="table-zebra table-sm table w-full">
+				<thead>
+					<tr>
+						<th>No. Invoice</th>
+						<th>Penghuni</th>
+						<th>Kamar</th>
+						<th>Nominal</th>
+						<th>Jatuh Tempo</th>
+						<th>Status</th>
+						<th>Ref. Gateway</th>
+						<th>Aksi</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						filteredInvoices.map(
+							({
+								id,
+								invoiceNumber,
+								tenantName,
+								roomNumber,
+								amount,
+								dueDate,
+								status,
+								gatewayRef,
+								duitkuReference,
+								paymentUrl,
+							}) => (
+								<tr data-id={id}>
+									<td class="font-mono text-xs">{invoiceNumber}</td>
+									<td>{tenantName}</td>
+									<td>
+										<span class="badge badge-neutral font-mono">
+											{roomNumber}
+										</span>
+									</td>
+									<td class="font-mono">Rp {amount.toLocaleString("id-ID")}</td>
+									<td class="font-mono text-xs">{formatDate(dueDate)}</td>
+									<td>
+										<span
+											class:list={[
+												"badge badge-sm font-bold",
+												INVOICE_STATUS_BADGES[
+													status as keyof typeof INVOICE_STATUS_BADGES
+												],
+											]}
+										>
+											{
+												INVOICE_STATUS_LABELS[
+													status as keyof typeof INVOICE_STATUS_LABELS
+												]
+											}
+										</span>
+									</td>
+									<td
+										class="max-w-32 truncate font-mono text-xs"
+										title={gatewayRef}
 									>
-									<th class="text-base-content/60 text-xs font-bold"
-										>Penghuni</th
-									>
-									<th class="text-base-content/60 text-xs font-bold">Kamar</th>
-									<th class="text-base-content/60 text-xs font-bold">Nominal</th
-									>
-									<th class="text-base-content/60 text-xs font-bold"
-										>Jatuh Tempo</th
-									>
-									<th class="text-base-content/60 text-xs font-bold">Status</th>
-									<th class="text-base-content/60 text-xs font-bold"
-										>Ref. Gateway</th
-									>
-									<th class="text-base-content/60 text-xs font-bold">Aksi</th>
-								</tr>
-							</thead>
-							<tbody>
-								{
-									filteredInvoices.map(
-										({
-											id,
-											invoiceNumber,
-											tenantName,
-											roomNumber,
-											amount,
-											dueDate,
-											status,
-											gatewayRef,
-											duitkuReference,
-										}) => (
-											<tr
-												class="border-base-200 hover:bg-base-200/40 border-b transition-colors"
-												data-id={id}
-											>
-												<td class="text-primary font-mono text-xs font-bold">
-													{invoiceNumber}
-												</td>
-												<td class="text-sm font-semibold">{tenantName}</td>
-												<td>
-													<span class="badge badge-neutral font-mono font-semibold">
-														{roomNumber}
-													</span>
-												</td>
-												<td class="font-mono text-sm font-semibold">
-													Rp {amount.toLocaleString("id-ID")}
-												</td>
-												<td class="text-base-content/70 font-mono text-xs">
-													{formatDate(dueDate)}
-												</td>
-												<td>
-													<span
-														class:list={[
-															"badge badge-sm font-bold",
-															STATUS_BADGES[status],
-														]}
-													>
-														{STATUS_LABELS[status]}
-													</span>
-												</td>
-												<td
-													class="text-base-content/60 max-w-32 truncate font-mono text-xs"
-													title={gatewayRef}
+										{gatewayRef}
+									</td>
+									<td>
+										{status === "paid" ? (
+											<span class="text-xs">-</span>
+										) : duitkuReference ? (
+											<div class="flex items-center gap-1">
+												<a
+													class="btn btn-outline btn-success btn-xs w-24"
+													href={`/invoice/${id}`}
+													target="_blank"
 												>
-													{gatewayRef}
-												</td>
-												<td>
-													{status === "paid" ? (
-														<span class="text-base-content/40 text-xs">-</span>
-													) : duitkuReference ? (
-														<div class="flex items-center gap-1">
-															<button
-																class="btn btn-ghost btn-xs"
-																title="Salin Link Bayar"
-																onclick={`navigator.clipboard.writeText("https://app-sandbox.duitku.com/redirect_checkout?reference=${duitkuReference}"); this.innerHTML = "<span class='text-xs'>Tersalin!</span>"; setTimeout(() => this.innerHTML = "<span class=\"iconify\" data-icon=\"line-md:content-copy\"></span>", 2000)`}
-															>
-																<span
-																	class="iconify"
-																	data-icon="line-md:content-copy"
-																	data-width="14"
-																/>
-															</button>
-															<a
-																class="btn btn-ghost btn-xs"
-																href={`https://app-sandbox.duitku.com/redirect_checkout?reference=${duitkuReference}`}
-																title="Buka Pembayaran"
-																target="_blank"
-															>
-																<span
-																	class="iconify"
-																	data-icon="line-md:external-link"
-																	data-width="14"
-																/>
-															</a>
-														</div>
-													) : (
+													<Icon name="line-md:external-link" size="size-3.5" />{" "}
+													Invoice
+												</a>
+												<ActionsMenu id={id} direction="top" menuClass="w-36">
+													<li>
 														<button
-															hx-post="/dashboard/manage/invoices/generate-link"
-															class="btn btn-primary btn-xs"
-															name="invoice_id"
-															value={id}
+															class="flex items-center gap-2"
+															onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
+														>
+															<Icon
+																name="line-md:clipboard-list"
+																size="size-3.5"
+															/>
+															Salin
+														</button>
+													</li>
+													<li>
+														<form
+															hx-post={actions.manage.invoices.markAsPaid}
+															class="contents"
 															hx-select="#transactions-content-wrapper"
 															hx-swap="outerHTML transition:true"
 															hx-target="#transactions-content-wrapper"
-															hx-vals={JSON.stringify({
-																invoice_id: id,
-															})}
+															action={actions.manage.invoices.markAsPaid}
+															enctype="multipart/form-data"
+															method="post"
 														>
-															Generate Link
-														</button>
-													)}
-												</td>
-											</tr>
-										),
-									)
-								}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+															<input
+																name="invoice_id"
+																type="hidden"
+																value={id}
+															/>
+															<button
+																class="flex items-center gap-2"
+																type="submit"
+															>
+																<Icon name="line-md:confirm-circle" />
+																Tandai Lunas
+															</button>
+														</form>
+													</li>
+												</ActionsMenu>
+											</div>
+										) : (
+											<div class="flex items-center gap-1">
+												<form
+													hx-post={actions.manage.invoices.generatePaymentLink}
+													class="contents"
+													hx-select="#transactions-content-wrapper"
+													hx-swap="outerHTML transition:true"
+													hx-target="#transactions-content-wrapper"
+													action={actions.manage.invoices.generatePaymentLink}
+													enctype="multipart/form-data"
+													method="post"
+												>
+													<input name="invoice_id" type="hidden" value={id} />
+													<button
+														class="btn btn-outline btn-primary btn-xs w-24"
+														type="submit"
+													>
+														<Icon name="line-md:link" size="size-3.5" />{" "}
+														Generate
+													</button>
+												</form>
+												<ActionsMenu id={id} direction="top" menuClass="w-36">
+													<li>
+														<form
+															hx-post={actions.manage.invoices.markAsPaid}
+															class="contents"
+															hx-select="#transactions-content-wrapper"
+															hx-swap="outerHTML transition:true"
+															hx-target="#transactions-content-wrapper"
+															action={actions.manage.invoices.markAsPaid}
+															enctype="multipart/form-data"
+															method="post"
+														>
+															<input
+																name="invoice_id"
+																type="hidden"
+																value={id}
+															/>
+															<button
+																class="flex items-center gap-2"
+																type="submit"
+															>
+																<Icon name="line-md:confirm-circle" />
+																Tandai Lunas
+															</button>
+														</form>
+													</li>
+												</ActionsMenu>
+											</div>
+										)}
+									</td>
+								</tr>
+							),
+						)
+					}
+				</tbody>
+			</table>
 		</div>
 	</div>
 </DashboardLayout>

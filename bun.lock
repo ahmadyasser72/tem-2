@@ -65,6 +65,7 @@
         "@fastify/middie": "9.3.2",
         "@fastify/static": "9.1.3",
         "@tailwindcss/vite": "^4.3.0",
+        "@zumer/snapdom": "2.12.9",
         "astro": "^6.0.6",
         "daisyui": "^5.5.19",
         "dayjs": "^1.11.20",
@@ -686,6 +687,8 @@
     "@xeonlink/prettier-plugin-organize-attributes": ["@xeonlink/prettier-plugin-organize-attributes@1.1.0", "", { "dependencies": { "prettier": "^3.6.2" } }, "sha512-1Vmv+7zkQvPSgiBX0HsrZL4Xf6MYFinS3VE+dXeJCbF2i3BOM+nYQk1iRbcnnSTsJ+IB1IP5X5o3O4zp2ccTgg=="],
 
     "@zenuml/core": ["@zenuml/core@3.46.0", "", { "dependencies": { "@floating-ui/react": "^0.27.16", "@headlessui/react": "^2.2.9", "@headlessui/tailwindcss": "^0.2.2", "antlr4": "~4.11.0", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "color-string": "^2.1.4", "dompurify": "^3.3.1", "highlight.js": "^10.7.3", "html-to-image": "^1.11.13", "immer": "^10.2.0", "jotai": "^2.16.1", "lodash": "^4.17.21", "marked": "^4.3.0", "pako": "^2.1.0", "pino": "^8.21.0", "radash": "^12.1.1", "ramda": "^0.28.0", "react": "^19.2.3", "react-dom": "^19.2.3", "tailwind-merge": "^3.4.0", "tailwindcss": "^3.4.19" } }, "sha512-bjG37doCwXer4DhlBh1d7bHUuJbqAK/1I+kHyL7Evy0eWZnBOTEOfp6LodB5cokw3w2IMxzYuj7qyRzwjqoeiA=="],
+
+    "@zumer/snapdom": ["@zumer/snapdom@2.12.9", "", {}, "sha512-Zufl1vEthT931kcZfmAaRSnucAGIRLGi9N6JI8ZsdyHww5hHHLk4t5LU1DxS5pNAPi1MptPHcGON1pkXEBf5iw=="],
 
     "abort-controller": ["abort-controller@3.0.0", "", { "dependencies": { "event-target-shim": "^5.0.0" } }, "sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg=="],
 

@@ -3,9 +3,11 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
-import { ROLE_BADGES } from "../../index.astro";
+import Icon from "~/components/ui/icon.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
+import { ROLE_BADGES } from "~/lib/badges";
 
 export const partial = true;
 
@@ -23,92 +25,43 @@ const account = await db.query.users.findFirst({
 if (!account) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="delete_account_modal">
+<Modal id="delete_account" title="Hapus Akun" icon="line-md:account-delete">
 	{
 		account ? (
-			<div class="modal-box">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:account" size="size-6" />
-					Hapus akun berikut?
-				</h3>
-
-				{account.role === "admin" ? (
-					<div class="alert alert-error" role="alert">
-						<Icon name="line-md:alert" size="size-5" />
-						<span>Akun admin tidak dapat dihapus.</span>
+			account.role === "admin" ? (
+				<div class="alert alert-error" role="alert">
+					<Icon name="line-md:alert" size="size-5" />
+					<span>Akun admin tidak dapat dihapus.</span>
+				</div>
+			) : (
+				<>
+					<div class="grid grid-cols-2 gap-2 text-sm">
+						<span class="font-bold">Username:</span>
+						<span>@{account.username}</span>
+						<span class="font-bold">Nama:</span>
+						<span>{account.displayName}</span>
+						<span class="font-bold">Role:</span>
+						<span class:list={["badge badge-sm", ROLE_BADGES[account.role]]}>
+							{account.role.toUpperCase()}
+						</span>
+						<span class="font-bold">Terakhir diakses:</span>
+						<span>{account.lastAccessed ?? "N/A"}</span>
 					</div>
-				) : (
-					<>
-						<div class="grid grid-cols-2 gap-2 text-sm">
-							<span class="font-bold">Username:</span>
-							<span>@{account.username}</span>
-							<span class="font-bold">Nama:</span>
-							<span>{account.displayName}</span>
-							<span class="font-bold">Role:</span>
-							<span class:list={["badge badge-sm", ROLE_BADGES[account.role]]}>
-								{account.role.toUpperCase()}
-							</span>
-							<span class="font-bold">Terakhir diakses:</span>
-							<span>{account.lastAccessed ?? "N/A"}</span>
-						</div>
 
-						<form
-							hx-post={actions.manage.accounts._delete}
-							class="hidden"
-							id="delete_account_form"
-							hx-indicator="#delete_account_btn"
-							hx-on--after-request="event.detail.successful && delete_account_modal.close()"
-							hx-select-oob="#form_error, #form_result, #rows"
-							hx-swap="none transition:true"
-							action={actions.manage.accounts._delete}
-							method="post"
-						>
-							<input name="id" type="hidden" value={account.id} />
-						</form>
-
-						<p id="form_error" />
-
-						<div class="modal-action">
-							<form class="flex gap-2" method="dialog">
-								<button class="btn btn-outline btn-sm">Batal</button>
-								<button
-									class="btn btn-error btn-sm"
-									id="delete_account_btn"
-									type="submit"
-									form="delete_account_form"
-								>
-									<IconLoader />
-									Hapus
-								</button>
-							</form>
-						</div>
-					</>
-				)}
-			</div>
+					<ModalForm
+						action={actions.manage.accounts._delete}
+						hidden
+						modalId="delete_account"
+						submitClass="btn-error"
+						submitLabel="Hapus"
+						target="#form_result, #accounts-content-wrapper"
+					>
+						<input name="id" type="hidden" value={account.id} />
+					</ModalForm>
+				</>
+			)
 		) : (
-			<div class="modal-box">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:account" size="size-6" />
-					Hapus Akun
-				</h3>
-
-				<p class="py-4">Akun dengan ID: {Astro.params.id} tidak ditemukan.</p>
-			</div>
+			<NotFound label="Akun" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</Modal>

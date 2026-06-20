@@ -1,7 +1,10 @@
 ---
 import { db } from "@e-kos/database";
 
-import Icon from "~/components/icon.astro";
+import { sumBy } from "es-toolkit";
+
+import Icon from "~/components/ui/icon.astro";
+import Stats from "~/components/data/stats.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
 
@@ -16,10 +19,12 @@ const allRooms = await db.query.rooms.findMany({
 	},
 });
 const totalRooms = allRooms.length;
-const occupiedRooms = allRooms.filter(({ leases }) => leases.length > 0).length;
-const vacantRooms = allRooms.filter(
-	({ isActive, leases }) => isActive && leases.length === 0,
-).length;
+const occupiedRooms = sumBy(allRooms, ({ leases }) =>
+	leases.length > 0 ? 1 : 0,
+);
+const vacantRooms = sumBy(allRooms, ({ isActive, leases }) =>
+	isActive && leases.length === 0 ? 1 : 0,
+);
 
 // 2. Tenants Stats
 const allTenants = await db.query.tenants.findMany({
@@ -29,9 +34,9 @@ const allTenants = await db.query.tenants.findMany({
 		},
 	},
 });
-const activeTenantsCount = allTenants.filter(
-	({ leases }) => leases.length > 0,
-).length;
+const activeTenantsCount = sumBy(allTenants, ({ leases }) =>
+	leases.length > 0 ? 1 : 0,
+);
 
 const currentMonth = now.getMonth();
 const currentYear = now.getFullYear();
@@ -60,10 +65,7 @@ const unpaidInvoices = await db.query.invoices.findMany({
 	orderBy: (invoices, { asc }) => [asc(invoices.dueDate)],
 });
 
-const totalUnpaidAmount = unpaidInvoices.reduce(
-	(sum, inv) => sum + inv.amount,
-	0,
-);
+const totalUnpaidAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
 const totalUnpaidCount = unpaidInvoices.length;
 
 const pendingBills = unpaidInvoices.slice(0, 5).map((inv) => {
@@ -98,9 +100,9 @@ const complaintsFromDb = await db.query.complaints.findMany({
 	limit: 5,
 });
 
-const activeComplaintsCount = complaintsFromDb.filter(
-	({ status }) => status !== "resolved",
-).length;
+const activeComplaintsCount = sumBy(complaintsFromDb, ({ status }) =>
+	status !== "resolved" ? 1 : 0,
+);
 
 const recentComplaints = complaintsFromDb.map((c) => {
 	const activeLease = c.tenant?.leases?.[0];
@@ -147,13 +149,6 @@ const stats = [
 	},
 ];
 
-const STAT_COLORS: Record<string, string> = {
-	"Total Kamar": "bg-primary/40 text-base-content",
-	"Penghuni Aktif": "bg-secondary/40 text-base-content",
-	"Tagihan Belum Bayar": "bg-warning/40 text-base-content",
-	"Komplain Terbuka": "bg-error/40 text-base-content",
-};
-
 const getStatusBadge = (status: string) => {
 	if (status === "Overdue") return "badge-error";
 	const match = status.match(/H-(\d+)/);
@@ -173,150 +168,117 @@ const COMPLAINT_BADGES: Record<string, string> = {
 };
 ---
 
-<DashboardLayout title="Dashboard ">
-	<div class="flex flex-col gap-6">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold">Dashboard</h1>
-			<p class="text-base-content/60 text-sm">
-				Ringkasan operasional dan kondisi indekos saat ini
-			</p>
-		</div>
+<DashboardLayout
+	title="Dashboard"
+	description="Ringkasan operasional dan kondisi indekos saat ini"
+>
+	<Stats items={stats} />
 
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			{
-				stats.map(({ title, value, desc, icon }) => (
-					<div class="card bg-base-100 border-base-300 border shadow-sm transition-all hover:shadow-md">
-						<div class="card-body flex-row items-center gap-4 p-5">
-							<div class:list={["flex rounded-xl p-3", STAT_COLORS[title]]}>
-								<Icon name={icon as any} size="size-6" />
-							</div>
-							<div class="flex flex-col">
-								<span class="text-base-content/60 text-xs font-semibold">
-									{title}
-								</span>
-								<span class="text-2xl font-bold">{value}</span>
-								<span class="text-base-content/50 mt-0.5 text-xs">{desc}</span>
-							</div>
-						</div>
-					</div>
-				))
-			}
-		</div>
-
-		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-			<div class="card bg-base-100 border-base-300 border shadow-sm">
-				<div class="card-body p-6">
-					<div class="mb-4 flex items-center justify-between">
-						<h2 class="card-title flex items-center gap-2 text-lg font-bold">
-							<Icon
-								class="text-primary"
-								name="line-md:document-list"
-								size="size-5"
-							/>
-							Tagihan Mendekati Jatuh Tempo
-						</h2>
-						<a
-							class="btn btn-outline btn-primary btn-xs"
-							href="/dashboard/report/transactions">Lihat Semua</a
-						>
-					</div>
-					<div class="overflow-x-auto">
-						<table class="table-sm table w-full">
-							<thead>
-								<tr class="border-base-300 border-b">
-									<th class="text-base-content/60 text-xs font-bold"
-										>Penghuni</th
-									>
-									<th class="text-base-content/60 text-xs font-bold">Kamar</th>
-									<th class="text-base-content/60 text-xs font-bold">Nominal</th
-									>
-									<th class="text-base-content/60 text-xs font-bold"
-										>Jatuh Tempo</th
-									>
-									<th class="text-base-content/60 text-xs font-bold">Status</th>
-								</tr>
-							</thead>
-							<tbody>
-								{
-									pendingBills.map(
-										({ tenant, room, dueDate, status, amount }) => (
-											<tr class="border-base-200 hover:bg-base-200/40 border-b transition-colors">
-												<td class="text-sm font-semibold">{tenant}</td>
-												<td>
-													<span class="badge badge-neutral font-mono font-semibold">
-														{room}
-													</span>
-												</td>
-												<td class="font-mono text-sm font-semibold">
-													Rp {amount.toLocaleString("id-ID")}
-												</td>
-												<td class="text-base-content/70 font-mono text-xs">
-													{formatDate(dueDate)}
-												</td>
-												<td>
-													<span
-														class:list={[
-															"badge badge-sm font-bold",
-															getStatusBadge(status),
-														]}
-													>
-														{status}
-													</span>
-												</td>
-											</tr>
-										),
-									)
-								}
-							</tbody>
-						</table>
-					</div>
+	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-6">
+				<div class="mb-4 flex items-center justify-between">
+					<h2 class="card-title text-lg font-bold">
+						<Icon
+							class="text-primary"
+							name="line-md:document-list"
+							size="size-5"
+						/>
+						Tagihan Mendekati Jatuh Tempo
+					</h2>
+					<a
+						class="btn btn-outline btn-primary btn-xs"
+						href="/dashboard/report/transactions">Lihat Semua</a
+					>
+				</div>
+				<div class="overflow-x-auto">
+					<table class="table-sm table w-full">
+						<thead>
+							<tr>
+								<th>Penghuni</th>
+								<th>Kamar</th>
+								<th>Nominal</th>
+								<th>Jatuh Tempo</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							{
+								pendingBills.map(
+									({ tenant, room, dueDate, status, amount }) => (
+										<tr>
+											<td>{tenant}</td>
+											<td>
+												<span class="badge badge-neutral font-mono">
+													{room}
+												</span>
+											</td>
+											<td class="font-mono">
+												Rp {amount.toLocaleString("id-ID")}
+											</td>
+											<td class="font-mono">{formatDate(dueDate)}</td>
+											<td>
+												<span
+													class:list={[
+														"badge badge-sm font-bold",
+														getStatusBadge(status),
+													]}
+												>
+													{status}
+												</span>
+											</td>
+										</tr>
+									),
+								)
+							}
+						</tbody>
+					</table>
 				</div>
 			</div>
-
-			<div class="card bg-base-100 border-base-300 border shadow-sm">
-				<div class="card-body p-6">
-					<div class="mb-4 flex items-center justify-between">
-						<h2 class="card-title flex items-center gap-2 text-lg font-bold">
-							<Icon
-								class="text-error"
-								name="line-md:alert-circle"
-								size="size-5"
-							/>
-							Komplain Terbaru
-						</h2>
-						<a
-							class="btn btn-outline btn-primary btn-xs"
-							href="/dashboard/manage/complaints">Kelola Komplain</a
-						>
-					</div>
-					<div class="divide-base-200 divide-y">
-						{
-							recentComplaints.map(({ title, room, tenant, date, status }) => (
-								<div class="hover:bg-base-200/20 flex items-start justify-between rounded-lg px-2 py-3.5 transition-colors first:pt-0 last:pb-0">
-									<div class="flex flex-col gap-1">
-										<span class="text-base-content text-sm font-bold">
-											{title}
-										</span>
-										<div class="text-base-content/60 flex flex-wrap items-center gap-2 text-xs">
-											<span class="badge badge-ghost badge-sm">{room}</span>
-											<span>•</span>
-											<span>{tenant}</span>
-											<span>•</span>
-											<span>{formatDate(date)}</span>
-										</div>
-									</div>
-									<span
-										class:list={[
-											"badge badge-sm font-bold",
-											COMPLAINT_BADGES[status],
-										]}
-									>
-										{status}
+		</div>
+		<div class="card bg-base-100 border-base-300 border shadow-sm">
+			<div class="card-body p-6">
+				<div class="mb-4 flex items-center justify-between">
+					<h2 class="card-title text-lg font-bold">
+						<Icon
+							class="text-error"
+							name="line-md:alert-circle"
+							size="size-5"
+						/>
+						Komplain Terbaru
+					</h2>
+					<a
+						class="btn btn-outline btn-primary btn-xs"
+						href="/dashboard/manage/complaints">Kelola Komplain</a
+					>
+				</div>
+				<div class="divide-base-200 divide-y">
+					{
+						recentComplaints.map(({ title, room, tenant, date, status }) => (
+							<div class="hover:bg-base-200/20 flex items-start justify-between rounded-lg px-2 py-3.5 transition-colors first:pt-0 last:pb-0">
+								<div class="flex flex-col gap-1">
+									<span class="text-base-content text-sm font-bold">
+										{title}
 									</span>
+									<div class="text-base-content/60 flex flex-wrap items-center gap-2 text-xs">
+										<span class="badge badge-ghost badge-sm">{room}</span>
+										<span>•</span>
+										<span>{tenant}</span>
+										<span>•</span>
+										<span>{formatDate(date)}</span>
+									</div>
 								</div>
-							))
-						}
-					</div>
+								<span
+									class:list={[
+										"badge badge-sm font-bold",
+										COMPLAINT_BADGES[status],
+									]}
+								>
+									{status}
+								</span>
+							</div>
+						))
+					}
 				</div>
 			</div>
 		</div>

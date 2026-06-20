@@ -1,0 +1,22 @@
+---
+import Modal from "~/components/modal/modal.astro";
+
+interface Props {
+	id: string;
+	title: string;
+	icon?: `line-md:${string}` | `svg-spinners:${string}`;
+	iconClass?: string;
+	modalClass?: string;
+}
+
+const { id, title, icon, iconClass, modalClass } = Astro.props;
+---
+
+<Modal {id} {title} {icon} {iconClass} {modalClass}>
+	<slot />
+	<div class="modal-action">
+		<form method="dialog">
+			<button class="btn btn-neutral btn-sm">Tutup</button>
+		</form>
+	</div>
+</Modal>

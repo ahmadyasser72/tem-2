@@ -1,0 +1,33 @@
+---
+import Icon from "~/components/ui/icon.astro";
+
+export interface Props {
+	items: Array<{
+		title: string;
+		value: string;
+		desc?: string;
+		icon?: string;
+	}>;
+}
+
+const { items } = Astro.props;
+---
+
+<div
+	class="stats stats-vertical sm:stats-horizontal border-base-300 w-full border shadow-sm"
+>
+	{
+		items.map(({ title, value, desc, icon }) => (
+			<div class="stat text-center sm:text-left">
+				{icon && (
+					<div class="stat-figure">
+						<Icon class="text-secondary" name={icon as any} size="size-12" />
+					</div>
+				)}
+				<div class="stat-title">{title}</div>
+				<div class="stat-value">{value}</div>
+				{desc && <div class="stat-desc">{desc}</div>}
+			</div>
+		))
+	}
+</div>

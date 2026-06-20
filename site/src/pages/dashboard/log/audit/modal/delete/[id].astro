@@ -3,8 +3,9 @@ import { db } from "@e-kos/database";
 
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
 
 export const partial = true;
@@ -34,21 +35,10 @@ const ACTION_BADGES: Record<string, string> = {
 if (!log) Astro.response.status = 404;
 ---
 
-<dialog class="modal" id="delete_audit_modal">
+<Modal id="delete_audit" title="Hapus Audit Log" icon="line-md:trash">
 	{
 		auditLog ? (
-			<div class="modal-box">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:document" size="size-6" />
-					Hapus audit log berikut?
-				</h3>
-
+			<>
 				<div class="border-base-200 grid grid-cols-2 gap-2 border-b pb-4 text-sm">
 					<span class="font-bold">Pengguna:</span>
 					<span>{auditLog.userName}</span>
@@ -71,57 +61,19 @@ if (!log) Astro.response.status = 404;
 					<span>{formatDate(auditLog.time, "DD MMM YYYY HH:mm:ss")}</span>
 				</div>
 
-				<form
-					hx-post={actions.manage.audit.remove}
-					class="hidden"
-					id="delete_audit_form"
-					hx-indicator="#delete_audit_btn"
-					hx-on--after-request="event.detail.successful && delete_audit_modal.close()"
-					hx-select-oob="#form_result, #audit-table-body"
-					hx-swap="none transition:true"
+				<ModalForm
 					action={actions.manage.audit.remove}
-					method="post"
+					hidden
+					modalId="delete_audit"
+					submitClass="btn-error"
+					submitLabel="Hapus"
+					target="#form_result, #audit-content-wrapper"
 				>
 					<input name="id" type="hidden" value={auditLog.id} />
-				</form>
-
-				<p id="form_error" />
-
-				<div class="modal-action">
-					<form class="flex gap-2" method="dialog">
-						<button class="btn btn-outline btn-sm">Batal</button>
-						<button
-							class="btn btn-error btn-sm"
-							id="delete_audit_btn"
-							type="submit"
-							form="delete_audit_form"
-						>
-							<IconLoader />
-							Hapus
-						</button>
-					</form>
-				</div>
-			</div>
+				</ModalForm>
+			</>
 		) : (
-			<div class="modal-box">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
-						✕
-					</button>
-				</form>
-
-				<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-					<Icon class="text-primary" name="line-md:document" size="size-6" />
-					Hapus Audit Log
-				</h3>
-
-				<p class="py-4">
-					Audit log dengan ID: {Astro.params.id} tidak ditemukan.
-				</p>
-			</div>
+			<NotFound label="Audit Log" />
 		)
 	}
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+</Modal>

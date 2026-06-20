@@ -1,0 +1,87 @@
+---
+import Icon from "~/components/ui/icon.astro";
+
+interface FilterOption {
+	value: string;
+	label: string;
+	checked?: boolean;
+}
+
+interface FilterGroup {
+	title?: string;
+	name: string;
+	options: FilterOption[];
+}
+
+export interface Props {
+	name: string;
+	groups: FilterGroup[];
+	checkbox?: {
+		name: string;
+		label: string;
+		value?: string;
+		checked?: boolean;
+	};
+}
+
+const { name, groups, checkbox } = Astro.props;
+---
+
+<button
+	class="btn btn-sm"
+	popovertarget={`filter-${name}-popover`}
+	style={`anchor-name:--filter-${name}`}
+>
+	<Icon name="line-md:filter" size="size-4" />
+	Filter
+</button>
+<div
+	class="dropdown menu bg-base-100 mt-2 min-w-64 shadow-sm"
+	id={`filter-${name}-popover`}
+	popover
+	style={`position-anchor:--filter-${name}`}
+>
+	{
+		groups.map((group) => (
+			<>
+				{group.title && <li class="menu-title">{group.title}</li>}
+				<div class="mx-2 mb-4 filter">
+					<input
+						hx-get
+						class={`btn btn-sm filter-reset filter-${name}`}
+						name={group.name}
+						type="radio"
+						value="reset"
+					/>
+					{group.options.map((opt) => (
+						<input
+							hx-get
+							class={`btn btn-sm filter-${name}`}
+							name={group.name}
+							type="radio"
+							value={opt.value}
+							aria-label={opt.label}
+							checked={opt.checked}
+						/>
+					))}
+				</div>
+			</>
+		))
+	}
+
+	{
+		checkbox && (
+			<label class="label label-sm mx-2">
+				<input
+					hx-get
+					class={`checkbox checkbox-sm filter-${name}`}
+					name={checkbox.name}
+					type="checkbox"
+					value={checkbox.value ?? "1"}
+					checked={checkbox.checked}
+				/>
+				{checkbox.label}
+			</label>
+		)
+	}
+</div>

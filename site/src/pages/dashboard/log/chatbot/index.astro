@@ -1,332 +1,135 @@
 ---
-import { db } from "@e-kos/database";
-
-import { actions } from "astro:actions";
-import { z } from "astro/zod";
-import { pick } from "es-toolkit";
-
-import Alert from "~/components/alert.astro";
-import Icon from "~/components/icon.astro";
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import Icon from "~/components/ui/icon.astro";
+import SearchInput from "~/components/data/search-input.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate, getCurrentMonthStr, parsePeriod } from "~/lib/date";
+import { formatDate } from "~/lib/date";
+import {
+	chatbotQuerySchema,
+	DIRECTION_BADGES,
+	DIRECTION_ICONS,
+	DIRECTION_LABELS,
+	fetchChatbotLogs,
+} from "./_data";
 
-const defaultFrom = getCurrentMonthStr();
-const defaultTo = getCurrentMonthStr();
+const params = Astro.locals.parseQuery(chatbotQuerySchema);
 
-const params = Astro.locals.parseQuery(
-	z.object({
-		query: z.string().catch(""),
-		direction: z.enum(["incoming", "outgoing"]).optional().catch(undefined),
-		from: z.string().catch(defaultFrom),
-		to: z.string().catch(defaultTo),
-	}),
-);
-
-// If from > to, adjust to follow from
-if (params.from > params.to) {
-	params.to = params.from;
-}
-
-// Parse period
-const { startDate, endDate } = parsePeriod(params.from, params.to);
-
-// Fetch filtered chatbot messages using spread-based conditional where clause
-const logsFromDb = await db.query.chatbotMessages.findMany({
-	where: {
-		...(params.query && {
-			OR: [
-				{ message: { like: `%${params.query}%` } },
-				{
-					tenant: {
-						fullName: { like: `%${params.query}%` },
-					},
-				},
-			],
-		}),
-		...(params.direction && { direction: params.direction }),
-		sentAt: {
-			gte: startDate,
-			lte: endDate,
-		},
-	},
-	with: {
-		tenant: {
-			with: {
-				leases: {
-					where: { isActive: true },
-					with: {
-						room: true,
-					},
-				},
-			},
-		},
-	},
-	orderBy: (chatbotMessages, { desc }) => [desc(chatbotMessages.sentAt)],
-});
-
-const chatbotLogs = logsFromDb.map((log) => {
-	const activeLease = log.tenant?.leases?.[0];
-	return {
-		id: log.id,
-		time: log.sentAt,
-		tenantName: log.tenant?.fullName ?? "-",
-		roomNumber: activeLease?.room?.roomNumber ?? "-",
-		direction: log.direction === "incoming" ? "Masuk" : "Keluar",
-		message: log.message,
-	};
-});
-
-const DIRECTION_BADGES: Record<string, string> = {
-	Masuk: "badge-info",
-	Keluar: "badge-success",
-};
-
-const DIRECTION_ICONS: Record<string, string> = {
-	Masuk: "line-md:arrow-align-left",
-	Keluar: "line-md:arrow-align-right",
-};
-
-const formResult = (():
-	| { success: false; message: string }
-	| { success: true; title: string; description: string }
-	| void => {
-	const removeResult = Astro.getActionResult(actions.manage.chatbot.remove);
-	if (removeResult?.error)
-		return { success: false, message: removeResult.error.message };
-	else if (removeResult?.data) {
-		return {
-			success: true,
-			title: "Hapus Log",
-			description: "Log percakapan chatbot berhasil dihapus dari database!",
-		};
-	}
-})();
+const chatbotLogs = await fetchChatbotLogs(params);
 ---
 
-{
-	formResult?.success === false && (
-		<Alert id="form_error" type="error" description={formResult.message} />
-	)
-}
-
-<DashboardLayout title="Log Chatbot ">
-	<div class="flex flex-col gap-6">
-		{
-			formResult?.success ? (
-				<Alert
-					id="form_result"
-					type="info"
-					{...pick(formResult, ["title", "description"])}
-				/>
-			) : (
-				<p id="form_result" />
-			)
-		}
-
-		<div
-			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+<DashboardLayout
+	title="Log Chatbot"
+	description="Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem Chatbot Indekos Ungu"
+	pageTitle="Log Percakapan Chatbot"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			href={`/dashboard/log/chatbot/report/download${Astro.url.search}`}
+			download
 		>
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold">Log Percakapan Chatbot</h1>
-				<p class="text-base-content/60 text-sm">
-					Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem
-					Chatbot Indekos Ungu
-				</p>
-			</div>
-			<a
-				class="btn btn-outline btn-sm flex items-center gap-1"
-				href={`/dashboard/log/chatbot/report/download${Astro.url.search}`}
-				download
-			>
-				<Icon name="line-md:download" /> PDF
-			</a>
-		</div>
+			<Icon name="line-md:download" /> PDF
+		</a>
+	</Fragment>
 
-		<div class="card bg-base-100 border-base-300 border shadow-sm">
-			<div
-				class="card-body flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-				hx-include=".filter-chatbot"
-				hx-select="#chatbot-content-wrapper"
-				hx-swap="outerHTML transition:true"
-				hx-target="#chatbot-content-wrapper"
-			>
-				<div
-					class="flex w-full items-center gap-3 sm:flex-1"
-					id="filter-period"
-					hx-select-oob="#filter-period"
-				>
-					<Icon
-						class="text-primary shrink-0"
-						name="line-md:calendar"
-						size="size-5"
-					/>
-					<span
-						class="text-base-content/75 hidden text-sm font-semibold md:inline"
-						>Pilih Periode:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-chatbot w-full sm:w-40"
-						name="from"
-						type="month"
-						value={params.from}
-					/>
-					<span class="text-base-content/70 text-sm font-semibold">Sampai:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-chatbot w-full sm:w-40"
-						name="to"
-						type="month"
-						value={params.to}
-						min={params.from}
-					/>
-				</div>
+	<FilterToolbar name="chatbot" from={params.from} to={params.to}>
+		<Fragment slot="actions">
+			<FilterPopover
+				name="chatbot"
+				groups={[
+					{
+						title: "Arah percakapan",
+						name: "direction",
+						options: [
+							{
+								value: "incoming",
+								label: "Masuk",
+								checked: params.direction === "incoming",
+							},
+							{
+								value: "outgoing",
+								label: "Keluar",
+								checked: params.direction === "outgoing",
+							},
+						],
+					},
+				]}
+			/>
+			<SearchInput
+				value={params.query}
+				filterClass="filter-chatbot"
+				placeholder="Cari pesan atau penghuni..."
+			/>
+		</Fragment>
+	</FilterToolbar>
 
-				<div class="flex gap-2">
-					<button
-						class="btn btn-sm btn-outline"
-						popovertarget="filter-chatbot-popover"
-						style="anchor-name:--filter-chatbot"
-					>
-						<Icon name="line-md:filter" size="size-4" />
-						Filter
-					</button>
-					<div
-						class="dropdown menu rounded-box bg-base-100 mt-2 min-w-48 shadow-sm"
-						id="filter-chatbot-popover"
-						popover
-						style="position-anchor:--filter-chatbot"
-					>
-						<li class="menu-title">Arah percakapan</li>
-						<div class="mx-2 mb-4 filter">
-							<input
-								hx-get
-								class="btn btn-sm filter-reset filter-chatbot"
-								name="direction"
-								type="radio"
-								value="all"
-							/>
-							<input
-								hx-get
-								class="btn btn-sm filter-chatbot"
-								name="direction"
-								type="radio"
-								value="incoming"
-								aria-label="Masuk"
-								checked={params.direction === "incoming"}
-							/>
-							<input
-								hx-get
-								class="btn btn-sm filter-chatbot"
-								name="direction"
-								type="radio"
-								value="outgoing"
-								aria-label="Keluar"
-								checked={params.direction === "outgoing"}
-							/>
-						</div>
-					</div>
-
-					<label class="input input-sm w-full sm:max-w-xs">
-						<Icon name="line-md:search" size="size-4" />
-						<input
-							hx-get
-							hx-trigger="input changed delay:300ms"
-							class="filter-chatbot"
-							name="query"
-							type="search"
-							value={params.query}
-							placeholder="Cari pesan atau penghuni..."
-						/>
-					</label>
-				</div>
-			</div>
-		</div>
-
-		<div id="chatbot-content-wrapper">
-			<div class="card bg-base-100 border-base-300 border shadow-sm">
-				<div class="card-body p-0">
-					<div class="overflow-x-auto">
-						<table class="table w-full">
-							<thead>
-								<tr class="border-base-300 border-b">
-									<th class="text-base-content/60 w-48 text-xs font-bold"
-										>Waktu</th
+	<div
+		class="border-base-300 rounded-box overflow-x-auto border shadow-sm"
+		id="chatbot-content-wrapper"
+	>
+		<table class="table-sm table w-full">
+			<thead>
+				<tr>
+					<th class="w-48">Waktu</th>
+					<th class="w-44">Penghuni</th>
+					<th class="w-32">Arah</th>
+					<th>Isi Pesan</th>
+					<th class="w-16 text-right">Aksi</th>
+				</tr>
+			</thead>
+			<tbody id="chatbot-table-body">
+				{
+					chatbotLogs.map(
+						({ id, time, tenantName, roomNumber, direction, message }) => (
+							<tr data-id={id}>
+								<td class="font-mono whitespace-nowrap">
+									{formatDate(time, "DD MMM YYYY HH:mm:ss")}
+								</td>
+								<td>
+									{tenantName}
+									<span class="badge badge-neutral badge-xs font-mono">
+										{roomNumber}
+									</span>
+								</td>
+								<td>
+									<span
+										class:list={[
+											"badge badge-sm flex items-center gap-1 font-bold",
+											DIRECTION_BADGES[
+												direction as keyof typeof DIRECTION_BADGES
+											],
+										]}
 									>
-									<th class="text-base-content/60 w-44 text-xs font-bold"
-										>Penghuni</th
+										<Icon
+											name={
+												DIRECTION_ICONS[
+													direction as keyof typeof DIRECTION_ICONS
+												] as any
+											}
+											size="size-3"
+										/>
+										{
+											DIRECTION_LABELS[
+												direction as keyof typeof DIRECTION_LABELS
+											]
+										}
+									</span>
+								</td>
+								<td class="max-w-lg wrap-break-word">{message}</td>
+								<td class="text-right">
+									<button
+										hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
+										class="btn btn-square btn-ghost btn-xs text-error"
 									>
-									<th class="text-base-content/60 w-32 text-xs font-bold"
-										>Arah</th
-									>
-									<th class="text-base-content/60 text-xs font-bold"
-										>Isi Pesan</th
-									>
-									<th
-										class="text-base-content/60 w-16 text-right text-xs font-bold"
-										>Aksi</th
-									>
-								</tr>
-							</thead>
-							<tbody id="chatbot-table-body">
-								{
-									chatbotLogs.map(
-										({
-											id,
-											time,
-											tenantName,
-											roomNumber,
-											direction,
-											message,
-										}) => (
-											<tr
-												class="border-base-200 hover:bg-base-200/40 border-b align-top transition-colors"
-												data-id={id}
-											>
-												<td class="text-base-content/70 pt-4 font-mono text-xs whitespace-nowrap">
-													{formatDate(time, "DD MMM YYYY HH:mm:ss")}
-												</td>
-												<td class="flex items-center gap-1.5 pt-4 text-sm font-semibold">
-													{tenantName}
-													<span class="badge badge-neutral badge-xs font-mono font-semibold">
-														{roomNumber}
-													</span>
-												</td>
-												<td class="pt-3.5">
-													<span
-														class:list={[
-															"badge badge-sm flex items-center gap-1 font-bold",
-															DIRECTION_BADGES[direction],
-														]}
-													>
-														<Icon
-															name={DIRECTION_ICONS[direction] as any}
-															size="size-3"
-														/>
-														{direction}
-													</span>
-												</td>
-												<td class="text-base-content/85 max-w-lg pt-4 text-sm leading-relaxed font-normal wrap-break-word">
-													{message}
-												</td>
-												<td class="pt-2.5 text-right">
-													<button
-														hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
-														class="btn btn-square btn-ghost btn-xs text-error"
-													>
-														<Icon name="line-md:close" size="size-4" />
-													</button>
-												</td>
-											</tr>
-										),
-									)
-								}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
+										<Icon name="line-md:close" size="size-4" />
+									</button>
+								</td>
+							</tr>
+						),
+					)
+				}
+			</tbody>
+		</table>
 	</div>
 </DashboardLayout>

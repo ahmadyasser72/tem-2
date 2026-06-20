@@ -1,0 +1,16 @@
+---
+interface Props {
+	label: string;
+	helperText?: string;
+}
+
+const { label, helperText } = Astro.props;
+---
+
+<fieldset class="fieldset">
+	<legend class="fieldset-legend text-sm font-semibold">{label}</legend>
+	<slot />
+	{helperText && (
+		<p class="text-base-content/40 mt-1 text-xs italic">{helperText}</p>
+	)}
+</fieldset>

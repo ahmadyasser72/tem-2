@@ -1,102 +1,57 @@
 ---
 import { actions } from "astro:actions";
 
-import IconLoader from "~/components/icon-loader.astro";
-import Icon from "~/components/icon.astro";
+import FormField from "~/components/form/form-field.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
 
 export const partial = true;
 ---
 
-<dialog class="modal" id="add_room_modal">
-	<div class="modal-box border-base-300 border">
-		<form method="dialog">
-			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
-				>✕</button
-			>
-		</form>
-
-		<h3 class="mb-4 flex items-center gap-2 text-xl font-bold">
-			<Icon class="text-primary" name="line-md:home-md-twotone" size="size-6" />
-			Tambah Kamar Baru
-		</h3>
-
-		<form
-			hx-post={actions.manage.rooms.add}
-			class="flex flex-col gap-4"
-			id="add_room_form"
-			hx-indicator="#add_room_btn"
-			hx-on--after-request="event.detail.successful && add_room_modal.close()"
-			hx-select-oob="#form_error, #form_result, #rooms-grid"
-			hx-swap="none transition:true"
-			action={actions.manage.rooms.add}
-			method="post"
+<Modal id="add_room" title="Tambah Kamar Baru" icon="line-md:plus-circle">
+	<ModalForm
+		action={actions.manage.rooms.add}
+		modalId="add_room"
+		submitLabel="Simpan Kamar"
+		target="#form_result, #rooms-content-wrapper"
+	>
+		<FormField label="Nomor Kamar">
+			<input
+				class="input w-full"
+				name="room_number"
+				type="text"
+				placeholder="Contoh: C05, A12..."
+				required
+			/>
+		</FormField>
+		<FormField label="Jenis Kamar">
+			<select class="select w-full" name="room_type" required>
+				<option value="Standar">Standar</option>
+				<option value="Premium">Premium</option>
+			</select>
+		</FormField>
+		<FormField label="Harga Sewa / Bulan (Rp)">
+			<input
+				class="input w-full"
+				name="monthly_price"
+				type="number"
+				placeholder="800000"
+				required
+			/>
+		</FormField>
+		<div
+			class="bg-base-200/40 border-base-200 flex items-center gap-3 rounded-lg border p-3"
 		>
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend text-sm font-semibold"
-					>Nomor Kamar</legend
-				>
-				<input
-					class="input w-full"
-					name="room_number"
-					type="text"
-					placeholder="Contoh: C05, A12..."
-					required
-				/>
-			</fieldset>
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend text-sm font-semibold"
-					>Jenis Kamar</legend
-				>
-				<select class="select w-full" name="room_type" required>
-					<option value="Standar">Standar</option>
-					<option value="Premium">Premium</option>
-				</select>
-			</fieldset>
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend text-sm font-semibold"
-					>Harga Sewa / Bulan (Rp)</legend
-				>
-				<input
-					class="input w-full"
-					name="monthly_price"
-					type="number"
-					placeholder="800000"
-					required
-				/>
-			</fieldset>
-			<div
-				class="bg-base-200/40 border-base-200 flex items-center gap-3 rounded-lg border p-3"
+			<input
+				class="toggle toggle-success"
+				id="kamar-aktif"
+				name="is_active"
+				type="checkbox"
+				checked
+			/>
+			<label class="cursor-pointer text-sm font-semibold" for="kamar-aktif"
+				>Kamar langsung diaktifkan (siap huni)</label
 			>
-				<input
-					class="toggle toggle-success"
-					id="kamar-aktif"
-					name="is_active"
-					type="checkbox"
-					checked
-				/>
-				<label class="cursor-pointer text-sm font-semibold" for="kamar-aktif"
-					>Kamar langsung diaktifkan (siap huni)</label
-				>
-			</div>
-
-			<p class="text-error text-sm" id="form_error"></p>
-		</form>
-		<div class="modal-action">
-			<form class="flex gap-2" method="dialog">
-				<button class="btn btn-outline btn-sm">Batal</button>
-				<button
-					class="btn btn-primary btn-sm"
-					id="add_room_btn"
-					type="submit"
-					form="add_room_form"
-				>
-					<IconLoader />
-					Simpan Kamar
-				</button>
-			</form>
 		</div>
-	</div>
-	<form class="modal-backdrop" method="dialog">
-		<button>close</button>
-	</form>
-</dialog>
+	</ModalForm>
+</Modal>

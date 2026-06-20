@@ -1,335 +1,152 @@
 ---
-import { db } from "@e-kos/database";
-import { NOTIFICATION_TYPES } from "@e-kos/database/schema";
+import { NOTIFICATION_TYPES } from "@e-kos/database";
 
 import { actions } from "astro:actions";
-import { z } from "astro/zod";
-import { pick } from "es-toolkit";
 
-import Alert from "~/components/alert.astro";
-import Icon from "~/components/icon.astro";
+import Alert from "~/components/ui/alert.astro";
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import FormResult from "~/components/form/form-result.astro";
+import Icon from "~/components/ui/icon.astro";
+import SearchInput from "~/components/data/search-input.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate, getCurrentMonthStr, parsePeriod } from "~/lib/date";
+import { formatDate } from "~/lib/date";
+import {
+	fetchNotifications,
+	NOTIFICATION_STATUS_BADGES,
+	NOTIFICATION_TYPE_BADGES,
+	NOTIFICATION_TYPE_LABELS,
+	notificationQuerySchema,
+} from "./_data";
 
-const formResult = (():
-	| { success: false; message: string }
-	| { success: true; title: string; description: string }
-	| void => {
-	const sendResult = Astro.getActionResult(actions.manage.notifications.send);
-	if (sendResult?.error)
-		return { success: false, message: sendResult.error.message };
-	else if (sendResult?.data) {
-		return {
-			success: true,
-			title: "Kirim Notifikasi",
-			description: "Notifikasi berhasil dikirimkan via WhatsApp!",
-		};
-	}
-})();
+const params = Astro.locals.parseQuery(notificationQuerySchema);
 
-const defaultFrom = getCurrentMonthStr();
-const defaultTo = getCurrentMonthStr();
-
-const params = Astro.locals.parseQuery(
-	z.object({
-		query: z.string().catch(""),
-		from: z.string().catch(defaultFrom),
-		to: z.string().catch(defaultTo),
-		type: z
-			.enum(["all", ...NOTIFICATION_TYPES])
-			.optional()
-			.catch(undefined),
-	}),
-);
-
-// If from > to, adjust to follow from
-if (params.from > params.to) {
-	params.to = params.from;
-}
-
-// Parse period
-const { startDate, endDate } = parsePeriod(params.from, params.to);
-
-// Fetch filtered notifications using spread-based conditional where clause and chatbotMessage relation
-const notificationsFromDb = await db.query.notifications.findMany({
-	where: {
-		createdAt: { gte: startDate, lte: endDate },
-		...(params.query && {
-			tenant: {
-				fullName: { like: `%${params.query}%` },
-			},
-		}),
-		...(params.type && params.type !== "all" && { type: params.type }),
-	},
-	with: {
-		tenant: {
-			with: {
-				leases: {
-					where: { isActive: true },
-					with: {
-						room: true,
-					},
-				},
-			},
-		},
-		invoice: true,
-		chatbotMessage: true,
-	},
-	orderBy: { id: "desc" },
+const filteredNotifications = await fetchNotifications(params, {
+	useQuery: true,
 });
-
-const filteredNotifications = notificationsFromDb.map((n) => {
-	const activeLease = n.tenant?.leases?.[0];
-	return {
-		id: n.id,
-		time: n.chatbotMessage?.sentAt ?? null,
-		tenantName: n.tenant?.fullName ?? "-",
-		roomNumber: activeLease?.room?.roomNumber ?? "-",
-		invoiceNumber: n.invoiceId
-			? `INV-${n.invoiceId.toString().padStart(6, "0")}`
-			: "-",
-		type: n.type,
-		status: n.status,
-	};
-});
-
-const TYPE_BADGES = {
-	reminder: "badge-warning",
-	payment_success: "badge-success",
-	custom: "badge-info",
-};
-
-const STATUS_BADGES = {
-	pending: "badge-neutral",
-	sent: "badge-success",
-	failed: "badge-error",
-};
-
-const TYPE_LABELS = {
-	reminder: "Pengingat",
-	payment_success: "Pembayaran",
-	custom: "Umum",
-};
 ---
 
-{
-	formResult?.success === false && (
-		<Alert id="form_error" type="error" description={formResult.message} />
-	)
-}
-
-<DashboardLayout title="Manajemen Notifikasi ">
-	<div class="flex flex-col gap-6">
+<FormResult
+	actionResults={[
 		{
-			formResult?.success ? (
-				<Alert
-					id="form_result"
-					type="info"
-					{...pick(formResult, ["title", "description"])}
-				/>
-			) : (
-				<p id="form_result" />
-			)
-		}
+			action: actions.manage.notifications.send,
+			title: "Kirim Notifikasi",
+			getDescription: () => "Notifikasi berhasil dikirimkan via WhatsApp!",
+		},
+	]}
+/>
 
-		<div
-			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+<DashboardLayout
+	title="Manajemen Notifikasi"
+	description="Riwayat dan pengiriman notifikasi (tagihan, pengingat, komplain) via WhatsApp Chatbot"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			href={`/dashboard/report/notifications/report/download${Astro.url.search}`}
+			download
 		>
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold">Manajemen Notifikasi</h1>
-				<p class="text-base-content/60 text-sm">
-					Riwayat dan pengiriman notifikasi (tagihan, pengingat, komplain) via
-					WhatsApp Chatbot
-				</p>
-			</div>
-			<div class="flex items-center gap-2">
-				<a
-					class="btn btn-outline btn-sm flex items-center gap-1"
-					href={`/dashboard/report/notifications/report/download${Astro.url.search}`}
-					download
-				>
-					<Icon name="line-md:download" /> PDF
-				</a>
-				<button
-					class="btn btn-primary btn-sm"
-					onclick="const modal = document.getElementById('modal-kirim-notifikasi'); if(modal instanceof HTMLDialogElement) modal.showModal();"
-				>
-					<Icon name="line-md:plus" size="size-5" />
-					Kirim Notifikasi
-				</button>
-			</div>
-		</div>
+			<Icon name="line-md:download" /> PDF
+		</a>
+	</Fragment>
+	<Alert
+		type="info"
+		title="Sistem Otomatisasi Aktif"
+		description="Sistem mengirimkan pesan pengingat tagihan (WhatsApp) otomatis setiap hari pukul 07.00 WIB untuk penyewa yang memiliki tagihan belum lunas mendekati H-3 jatuh tempo."
+	/>
 
-		<Alert
-			type="info"
-			title="Sistem Otomatisasi Aktif"
-			description="Sistem mengirimkan pesan pengingat tagihan (WhatsApp) otomatis setiap hari pukul 07.00 WIB untuk penyewa yang memiliki tagihan belum lunas mendekati H-3 jatuh tempo."
-		/>
+	<FilterToolbar name="notifications" from={params.from} to={params.to}>
+		<Fragment slot="actions">
+			<FilterPopover
+				name="notifications"
+				groups={[
+					{
+						title: "Tipe Notifikasi",
+						name: "type",
+						options: NOTIFICATION_TYPES.map((type) => ({
+							value: type,
+							label:
+								type === "reminder"
+									? "Pengingat"
+									: type === "payment_success"
+										? "Pembayaran Berhasil"
+										: "Pesan Khusus",
+							checked: params.type === type,
+						})),
+					},
+				]}
+			/>
+			<SearchInput
+				value={params.query}
+				filterClass="filter-notifications"
+				placeholder="Cari nama penghuni..."
+			/>
+		</Fragment>
+	</FilterToolbar>
 
-		<!-- Toolbar Card (Standalone) -->
-		<div class="card bg-base-100 border-base-300 border shadow-sm">
-			<div
-				class="card-body flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-				hx-include=".filter-notifications"
-				hx-select="#notifications-content-wrapper"
-				hx-swap="outerHTML transition:true"
-				hx-target="#notifications-content-wrapper"
-			>
-				<div class="flex w-full items-center gap-3 sm:flex-1">
-					<Icon
-						class="text-primary shrink-0"
-						name="line-md:calendar"
-						size="size-5"
-					/>
-					<span
-						class="text-base-content/75 hidden text-sm font-semibold md:inline"
-						>Pilih Periode:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-notifications w-full sm:w-40"
-						name="from"
-						type="month"
-						value={params.from}
-					/>
-					<span class="text-base-content/70 text-sm font-semibold">Sampai:</span
-					>
-					<input
-						hx-get
-						class="input input-sm filter-notifications w-full sm:w-40"
-						name="to"
-						type="month"
-						value={params.to}
-						min={params.from}
-					/>
-				</div>
-				<div class="flex items-center gap-2">
-					<button
-						class="btn btn-sm btn-outline"
-						popovertarget="filter-notifications-popover"
-						style="anchor-name:--filter-notifications"
-					>
-						<Icon name="line-md:filter" size="size-4" /> Filter
-					</button>
-					<div
-						class="dropdown menu rounded-box bg-base-100 mt-2 min-w-64 shadow-sm"
-						id="filter-notifications-popover"
-						popover
-						style="position-anchor:--filter-notifications"
-					>
-						<li class="menu-title">Tipe</li>
-						<div class="filter">
-							<input
-								hx-get
-								class="btn btn-sm filter-reset filter-notifications"
-								name="type"
-								type="radio"
-								value="all"
-							/>
-
-							{
-								NOTIFICATION_TYPES.map((type) => (
-									<input
-										hx-get
-										class="btn btn-sm filter-notifications"
-										name="type"
-										type="radio"
-										value={type}
-										aria-label={TYPE_LABELS[type]}
-										checked={params.type === type}
-									/>
-								))
-							}
-						</div>
-					</div>
-
-					<label class="input input-sm w-full sm:max-w-xs">
-						<Icon name="line-md:search" size="size-4" />
-						<input
-							hx-get
-							hx-trigger="input changed delay:300ms"
-							class="filter-notifications"
-							name="query"
-							type="search"
-							value={params.query}
-							placeholder="Cari penghuni..."
-						/>
-					</label>
-				</div>
-			</div>
-		</div>
-
-		<!-- Content Wrapper for HTMX -->
-		<div
-			class="card bg-base-100 border-base-300 border shadow-sm"
-			id="notifications-content-wrapper"
-		>
-			<div class="card-body p-0">
-				<div class="overflow-x-auto">
-					<table class="table w-full">
-						<thead>
-							<tr class="border-base-300 border-b">
-								<th class="text-base-content/60 text-xs font-bold"
-									>Waktu Kirim</th
-								>
-								<th class="text-base-content/60 text-xs font-bold">Penghuni</th>
-								<th class="text-base-content/60 text-xs font-bold">Invoice</th>
-								<th class="text-base-content/60 text-xs font-bold">Tipe</th>
-								<th class="text-base-content/60 text-xs font-bold">Status</th>
+	<!-- Content Wrapper for HTMX -->
+	<div
+		class="border-base-300 rounded-box overflow-x-auto border shadow-sm"
+		id="notifications-content-wrapper"
+	>
+		<table class="table-sm table w-full">
+			<thead>
+				<tr>
+					<th>Waktu Kirim</th>
+					<th>Penghuni</th>
+					<th>Invoice</th>
+					<th>Tipe</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody id="notifications-table-body">
+				{
+					filteredNotifications.map(
+						({ time, tenantName, roomNumber, invoiceNumber, type, status }) => (
+							<tr>
+								<td class="font-mono text-xs">
+									{formatDate(time, "DD MMM YYYY HH:mm")}
+								</td>
+								<td class="flex items-center gap-2 text-sm font-semibold">
+									{tenantName}
+									<span class="badge badge-neutral badge-xs font-mono">
+										{roomNumber}
+									</span>
+								</td>
+								<td class="font-mono text-xs font-semibold">{invoiceNumber}</td>
+								<td>
+									<span
+										class:list={[
+											"badge badge-sm font-bold",
+											NOTIFICATION_TYPE_BADGES[
+												type as keyof typeof NOTIFICATION_TYPE_BADGES
+											],
+										]}
+									>
+										{
+											NOTIFICATION_TYPE_LABELS[
+												type as keyof typeof NOTIFICATION_TYPE_LABELS
+											]
+										}
+									</span>
+								</td>
+								<td>
+									<span
+										class:list={[
+											"badge badge-sm font-bold",
+											NOTIFICATION_STATUS_BADGES[
+												status as keyof typeof NOTIFICATION_STATUS_BADGES
+											],
+										]}
+									>
+										{status}
+									</span>
+								</td>
 							</tr>
-						</thead>
-						<tbody id="notifications-table-body">
-							{
-								filteredNotifications.map(
-									({
-										time,
-										tenantName,
-										roomNumber,
-										invoiceNumber,
-										type,
-										status,
-									}) => (
-										<tr class="border-base-200 hover:bg-base-200/40 border-b transition-colors">
-											<td class="text-base-content/70 font-mono text-xs">
-												{formatDate(time, "DD MMM YYYY HH:mm")}
-											</td>
-											<td class="flex items-center gap-2 text-sm font-semibold">
-												{tenantName}
-												<span class="badge badge-neutral badge-xs font-mono font-semibold">
-													{roomNumber}
-												</span>
-											</td>
-											<td class="text-primary font-mono text-xs font-semibold">
-												{invoiceNumber}
-											</td>
-											<td>
-												<span
-													class:list={[
-														"badge badge-sm font-bold",
-														TYPE_BADGES[type],
-													]}
-												>
-													{type}
-												</span>
-											</td>
-											<td>
-												<span
-													class:list={[
-														"badge badge-sm font-bold",
-														STATUS_BADGES[status],
-													]}
-												>
-													{status}
-												</span>
-											</td>
-										</tr>
-									),
-								)
-							}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
+						),
+					)
+				}
+			</tbody>
+		</table>
 	</div>
 </DashboardLayout>

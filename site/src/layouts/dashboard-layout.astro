@@ -1,13 +1,18 @@
 ---
 import { actions } from "astro:actions";
 
-import Icon from "~/components/icon.astro";
+import Icon from "~/components/ui/icon.astro";
 import type { Props as BaseProps } from "./base-layout.astro";
 import BaseLayout from "./base-layout.astro";
 import NavbarMenu from "./components/navbar-menu.astro";
 import UserDropdown from "./components/user-dropdown.astro";
 
-type Props = BaseProps;
+interface Props extends BaseProps {
+	pageTitle?: string;
+	description?: string;
+}
+
+const { pageTitle = Astro.props.title, description } = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login");
@@ -37,7 +42,26 @@ if (logoutResult && !logoutResult.error) {
 
 				<div class="px-4">Indekos Ungu</div>
 			</nav>
-			<div class="p-4"><slot /></div>
+			<div class="p-4">
+				<div class="flex flex-col gap-6">
+					{
+						pageTitle && (
+							<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+								<div class="flex flex-col gap-1">
+									<h1 class="text-3xl font-bold">{pageTitle}</h1>
+									{description && (
+										<p class="text-base-content/60 text-sm">{description}</p>
+									)}
+								</div>
+								<div class="flex items-center gap-2">
+									<slot name="page-action" />
+								</div>
+							</div>
+						)
+					}
+					<slot />
+				</div>
+			</div>
 		</div>
 
 		<div class="drawer-side">

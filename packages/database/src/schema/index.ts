@@ -16,6 +16,7 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;
 export const COMPLAINT_STATUS = ["open", "in_progress", "resolved"] as const;
+export const AUDIT_ACTIONS = ["CREATE", "UPDATE", "DELETE"] as const;
 
 export const users = sqliteTable("users", {
 	id: integer("id").primaryKey({ autoIncrement: true }),

@@ -1,17 +1,24 @@
 ---
-import dayjs from "~/lib/date";
+import { db } from "@e-kos/database";
+
+import dayjs, { formatDate } from "~/lib/date";
 
 import "~/styles/report.css";
 
 export interface Props {
 	title: string;
 	subtitle?: string;
-	createdBy: string;
-	knownBy: string;
 }
 
-const { title, subtitle, createdBy, knownBy } = Astro.props;
+const { title, subtitle } = Astro.props;
 const today = dayjs().format("DD MMMM YYYY");
+
+const createdBy = Astro.url.searchParams.get("createdBy") ?? "Staff";
+const owner = await db.query.users.findFirst({
+	where: { role: "owner" },
+	columns: { displayName: true },
+});
+const knownBy = owner?.displayName ?? "Pemilik Kos";
 ---
 
 <!doctype html>
@@ -64,6 +71,11 @@ const today = dayjs().format("DD MMMM YYYY");
 					</p>
 				)
 			}
+		</div>
+
+		<!-- Dicetak -->
+		<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
+			Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
 		</div>
 
 		<!-- Konten -->

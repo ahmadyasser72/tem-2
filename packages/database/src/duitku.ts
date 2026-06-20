@@ -85,6 +85,13 @@ export function verifyCallbackSignature(
 	return calculated === signature;
 }
 
+// ─── Payment URL ───────────────────────────────────────────────────
+/** Derive payment redirect URL from Duitku reference. */
+export function getPaymentUrlFromReference(reference: string): string {
+	const appUrl = config().baseUrl.replace("api", "app");
+	return `${appUrl}/redirect_checkout?reference=${reference}`;
+}
+
 // ─── Create Invoice ────────────────────────────────────────────────
 export async function createInvoice(
 	params: CreateInvoiceParams,

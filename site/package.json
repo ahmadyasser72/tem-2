@@ -25,6 +25,7 @@
 		"fastify": "5.8.5",
 		"htmx.org": "2.0.10",
 		"iconify-icon": "3.0.2",
+		"pino": "10.3.1",
 		"puppeteer-core": "^25.1.0",
 		"tailwindcss": "4.3.1"
 	},

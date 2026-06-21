@@ -7,6 +7,7 @@ import {
 } from "@e-kos/database/schema";
 
 import { makeWASocket } from "baileys";
+import pino from "pino";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -69,6 +70,8 @@ export async function main() {
 
 	const sock = makeWASocket({
 		auth: state,
+		logger: pino(pino.destination("../../logs/bot.log")),
+		shouldSyncHistoryMessage: () => false,
 	});
 
 	sock.ev.on("creds.update", saveCreds);

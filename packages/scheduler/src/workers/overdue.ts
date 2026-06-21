@@ -1,5 +1,10 @@
 import { and, db, eq, sql } from "@e-kos/database";
-import { auditLogs, invoices, users } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	invoices,
+	users,
+} from "@e-kos/database/schema";
 
 export async function runOverdueCheck(
 	systemUser: typeof users.$inferSelect,
@@ -30,7 +35,11 @@ export async function runOverdueCheck(
 			userId: systemUser.id,
 			action: "UPDATE",
 			tableName: "invoices",
-			details: `Cron marked ${filtered.length} invoice(s) as overdue (IDs: ${ids.join(", ")})`,
+			details: auditDetail.cron(
+				`Cron marked ${filtered.length} invoice(s) as overdue`,
+				"invoices",
+				ids,
+			),
 		});
 	}
 

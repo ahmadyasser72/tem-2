@@ -1,5 +1,10 @@
 import { db } from "@e-kos/database";
-import { chatbotMessages, notifications, auditLogs } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	chatbotMessages,
+	notifications,
+} from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -50,7 +55,11 @@ export const send = defineAction({
 			action: "CREATE",
 			tableName: "notifications",
 			recordId: inserted.id,
-			details: `Mengirim notifikasi khusus ke tenant ID ${input.tenant_id}: ${input.message}`,
+			details: auditDetail.notification(
+				`Mengirim notifikasi khusus ke tenant ID ${input.tenant_id}: ${input.message}`,
+				"admin_panel",
+				input.tenant_id,
+			),
 		});
 
 		return inserted;

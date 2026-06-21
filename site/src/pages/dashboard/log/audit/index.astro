@@ -3,12 +3,13 @@ import { actions } from "astro:actions";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
 import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import SearchInput from "~/components/data/search-input.astro";
 import FormResult from "~/components/form/form-result.astro";
 import Icon from "~/components/ui/icon.astro";
-import SearchInput from "~/components/data/search-input.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
 import { ACTION_BADGES, auditQuerySchema, fetchAuditLogs } from "./_data";
+import DetailColumn from "./_detail-column.astro";
 
 const params = Astro.locals.parseQuery(auditQuerySchema);
 
@@ -95,6 +96,7 @@ const auditLogs = await fetchAuditLogs(params);
 					<th class="w-32">Jenis Aksi</th>
 					<th>Tabel Target</th>
 					<th>ID Record</th>
+					<th class="w-28">Detail</th>
 					<th class="w-16 text-right">Aksi</th>
 				</tr>
 			</thead>
@@ -117,30 +119,14 @@ const auditLogs = await fetchAuditLogs(params);
 									</div>
 								</td>
 								<td>
-									{details ? (
-										<div
-											class="tooltip tooltip-right cursor-help"
-											data-tip={details}
-										>
-											<span
-												class:list={[
-													"badge badge-xs font-bold underline decoration-dotted underline-offset-2",
-													ACTION_BADGES[action as keyof typeof ACTION_BADGES],
-												]}
-											>
-												{action}
-											</span>
-										</div>
-									) : (
-										<span
-											class:list={[
-												"badge badge-xs font-bold",
-												ACTION_BADGES[action as keyof typeof ACTION_BADGES],
-											]}
-										>
-											{action}
-										</span>
-									)}
+									<span
+										class:list={[
+											"badge badge-xs font-bold",
+											ACTION_BADGES[action as keyof typeof ACTION_BADGES],
+										]}
+									>
+										{action}
+									</span>
 								</td>
 								<td class="font-mono">{table}</td>
 								<td class="font-mono">
@@ -148,6 +134,7 @@ const auditLogs = await fetchAuditLogs(params);
 										{recordId}
 									</span>
 								</td>
+								<DetailColumn {details} />
 								<td class="text-right">
 									<button
 										hx-get={`/dashboard/log/audit/modal/delete/${id}`}

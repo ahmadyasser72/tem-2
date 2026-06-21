@@ -1,5 +1,5 @@
 import { db, eq } from "@e-kos/database";
-import { auditLogs, complaints } from "@e-kos/database/schema";
+import { auditDetail, auditLogs, complaints } from "@e-kos/database/schema";
 
 import type { WASocket } from "baileys";
 
@@ -59,9 +59,13 @@ export async function pollResolvedComplaints(
 
 			await db.insert(auditLogs).values({
 				userId: botUserId,
-				action: "INSERT",
+				action: "CREATE",
 				tableName: "notifications",
-				details: `Bot memberitahu tenant #${tenant.id} bahwa komplain #${c.id} selesai diproses`,
+				details: auditDetail.notification(
+					`Bot memberitahu tenant #${tenant.id} bahwa komplain #${c.id} selesai diproses`,
+					"whatsapp",
+					tenant.id,
+				),
 			});
 
 			console.log(

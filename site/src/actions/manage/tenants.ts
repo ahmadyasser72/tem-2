@@ -1,8 +1,14 @@
 import { and, db, eq } from "@e-kos/database";
-import { auditLogs, leases, tenants } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	leases,
+	tenants,
+} from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
+import { toCamelCaseKeys } from "es-toolkit/object";
 
 export const add = defineAction({
 	accept: "form",
@@ -81,7 +87,10 @@ export const add = defineAction({
 			action: "CREATE",
 			tableName: "tenants",
 			recordId: insertedTenant.id,
-			details: `Mendaftarkan tenant ${input.full_name} (${input.phone_number}) di kamar ID ${input.room_id}`,
+			details: auditDetail.create(
+				`Mendaftarkan tenant ${input.full_name} (${input.phone_number}) di kamar ID ${input.room_id}`,
+				toCamelCaseKeys(input),
+			),
 		});
 
 		return insertedTenant;
@@ -93,7 +102,7 @@ export const terminate = defineAction({
 	input: z.object({ id: z.coerce.number() }),
 	handler: async (input, context) => {
 		const activeLease = await db.query.leases.findFirst({
-			columns: { id: true },
+			columns: { id: true, startDate: true, endDate: true, isActive: true },
 			where: { tenantId: input.id, isActive: true },
 		});
 		if (!activeLease?.id) {
@@ -114,7 +123,11 @@ export const terminate = defineAction({
 			action: "UPDATE",
 			tableName: "leases",
 			recordId: activeLease.id,
-			details: `Mengakhiri kontrak sewa tenant ID ${input.id}`,
+			details: auditDetail.update(
+				`Mengakhiri kontrak sewa tenant ID ${input.id}`,
+				activeLease,
+				{ ...activeLease, isActive: false, endDate: new Date() },
+			),
 		});
 
 		return { id: input.id };
@@ -127,11 +140,19 @@ export const edit = defineAction({
 		id: z.coerce.number(),
 		full_name: z.string(),
 		phone_number: z.string(),
-		origin_region: z.string().optional(),
+		origin_region: z
+			.string()
+			.optional()
+			.transform((s) => s ?? null),
 	}),
 	handler: async (input, context) => {
 		const target = await db.query.tenants.findFirst({
-			columns: { id: true },
+			columns: {
+				id: true,
+				fullName: true,
+				phoneNumber: true,
+				originRegion: true,
+			},
 			where: { id: input.id },
 		});
 		if (!target)
@@ -170,7 +191,11 @@ export const edit = defineAction({
 			action: "UPDATE",
 			tableName: "tenants",
 			recordId: updated.id,
-			details: `Mengubah data penghuni ${input.full_name} (${phoneNumber})`,
+			details: auditDetail.update(
+				`Mengubah data penghuni ${input.full_name} (${phoneNumber})`,
+				target,
+				toCamelCaseKeys(input),
+			),
 		});
 
 		return updated;
@@ -237,7 +262,10 @@ export const register = defineAction({
 			action: "CREATE",
 			tableName: "leases",
 			recordId: input.id,
-			details: `Mendaftarkan ulang tenant ${target.fullName} ke kamar ID ${input.room_id}`,
+			details: auditDetail.create(
+				`Mendaftarkan ulang tenant ${target.fullName} ke kamar ID ${input.room_id}`,
+				toCamelCaseKeys(input),
+			),
 		});
 
 		return { id: input.id };
@@ -262,21 +290,24 @@ export const move = defineAction({
 				message: "Penghuni tidak ditemukan.",
 			});
 
+		const oldLease = await db.query.leases.findFirst({
+			columns: {
+				id: true,
+				roomId: true,
+				startDate: true,
+				endDate: true,
+				isActive: true,
+			},
+			where: { tenantId: input.id, isActive: true },
+		});
+		if (!oldLease) {
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Penghuni tidak memiliki kontrak sewa aktif.",
+			});
+		}
+
 		db.transaction((tx) => {
-			// Terminate old active lease
-			const oldLease = tx
-				.select({ id: leases.id })
-				.from(leases)
-				.where(and(eq(leases.tenantId, input.id), eq(leases.isActive, true)))
-				.get();
-
-			if (!oldLease) {
-				throw new ActionError({
-					code: "BAD_REQUEST",
-					message: "Penghuni tidak memiliki kontrak sewa aktif.",
-				});
-			}
-
 			// Check if target room is available
 			const roomTaken = tx
 				.select({ id: leases.id })
@@ -313,7 +344,16 @@ export const move = defineAction({
 			action: "UPDATE",
 			tableName: "leases",
 			recordId: input.id,
-			details: `Memindahkan tenant ${target.fullName} ke kamar ID ${input.room_id}`,
+			details: auditDetail.update(
+				`Memindahkan tenant ${target.fullName} dari kamar ${oldLease.roomId} ke kamar ${input.room_id}`,
+				oldLease,
+				{
+					...oldLease,
+					roomId: input.room_id,
+					startDate: new Date(input.start_date),
+					endDate: null,
+				},
+			),
 		});
 
 		return { id: input.id };

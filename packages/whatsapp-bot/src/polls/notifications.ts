@@ -1,5 +1,5 @@
 import { db, eq } from "@e-kos/database";
-import { auditLogs, notifications } from "@e-kos/database/schema";
+import { auditDetail, auditLogs, notifications } from "@e-kos/database/schema";
 
 import type { WASocket } from "baileys";
 
@@ -88,14 +88,14 @@ export async function pollNotifications(sock: WASocket, botUserId: number) {
 
 			const actionDesc =
 				n.type === "payment_success"
-					? `Bot mengirim konfirmasi pembayaran sukses ke tenant #${tenant.id} (${tenant.phoneNumber})`
-					: `Bot mengirim pengingat pembayaran ke tenant #${tenant.id} (${tenant.phoneNumber})`;
+					? `Bot mengirim konfirmasi pembayaran sukses ke tenant #${tenant.id}`
+					: `Bot mengirim pengingat pembayaran ke tenant #${tenant.id}`;
 
 			await db.insert(auditLogs).values({
 				userId: botUserId,
-				action: "INSERT",
+				action: "CREATE",
 				tableName: "notifications",
-				details: actionDesc,
+				details: auditDetail.notification(actionDesc, "whatsapp", tenant.id),
 			});
 		} catch (err) {
 			console.error("[Bot] Send notification failed:", err);

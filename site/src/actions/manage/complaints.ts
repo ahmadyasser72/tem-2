@@ -1,14 +1,18 @@
 import { db, eq } from "@e-kos/database";
-import { complaints, auditLogs } from "@e-kos/database/schema";
+import { auditDetail, auditLogs, complaints } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
+import { omit } from "es-toolkit";
 
 export const resolve = defineAction({
 	accept: "form",
 	input: z.object({
 		id: z.coerce.number(),
-		resolveNotes: z.string().transform((val) => val.trim() || null).optional(),
+		resolveNotes: z
+			.string()
+			.optional()
+			.transform((s) => s?.trim() ?? null),
 	}),
 	handler: async (input, context) => {
 		const user = await context.session?.get("user");
@@ -19,11 +23,11 @@ export const resolve = defineAction({
 			});
 		}
 
-		const exists = await db.query.complaints.findFirst({
-			columns: { id: true },
+		const complaint = await db.query.complaints.findFirst({
+			columns: { id: true, status: true, resolveNotes: true, resolvedBy: true },
 			where: { id: input.id },
 		});
-		if (!exists?.id) {
+		if (!complaint?.id) {
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Komplain tidak ditemukan.",
@@ -45,7 +49,15 @@ export const resolve = defineAction({
 			action: "UPDATE",
 			tableName: "complaints",
 			recordId: updated.id,
-			details: `Menyelesaikan komplain dengan catatan: ${input.resolveNotes || "-"}`,
+			details: auditDetail.update(
+				`Menyelesaikan komplain dengan catatan: ${input.resolveNotes || "-"}`,
+				omit(complaint, ["id"]),
+				{
+					status: "resolved",
+					resolveNotes: input.resolveNotes,
+					resolvedBy: user.id,
+				},
+			),
 		});
 
 		return updated;

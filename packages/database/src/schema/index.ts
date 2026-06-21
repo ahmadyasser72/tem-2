@@ -6,6 +6,8 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import type { AuditDetails } from "./audit-helpers";
+
 export const USER_ROLES = ["admin", "staff", "owner", "system"] as const;
 export const INVOICE_STATUS = ["unpaid", "paid", "overdue"] as const;
 export const CHATBOT_DIRECTIONS = ["incoming", "outgoing"] as const;
@@ -16,7 +18,13 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;
 export const COMPLAINT_STATUS = ["open", "in_progress", "resolved"] as const;
-export const AUDIT_ACTIONS = ["CREATE", "UPDATE", "DELETE"] as const;
+export const AUDIT_ACTIONS = [
+	"CREATE",
+	"UPDATE",
+	"DELETE",
+	"REJECT",
+	"LOGIN",
+] as const;
 
 export const users = sqliteTable("users", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -112,10 +120,10 @@ export const notifications = sqliteTable("notifications", {
 export const auditLogs = sqliteTable("audit_logs", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	userId: integer("user_id").references(() => users.id),
-	action: text("action").notNull(),
+	action: text("action", { enum: AUDIT_ACTIONS }).notNull(),
 	tableName: text("table_name").notNull(),
 	recordId: integer("record_id"),
-	details: text("details"),
+	details: text("details", { mode: "json" }).$type<AuditDetails>(),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),
@@ -142,3 +150,7 @@ export const botAuth = sqliteTable("bot_auth", {
 	key: text("key").primaryKey(),
 	value: text("value").notNull(),
 });
+
+export { auditDetail } from "./audit-helpers";
+export type { AuditDetails } from "./audit-helpers";
+export { CRON_TABLES } from "./audit-helpers";

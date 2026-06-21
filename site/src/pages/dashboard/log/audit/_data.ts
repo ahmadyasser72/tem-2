@@ -1,4 +1,5 @@
 import { AUDIT_ACTIONS, db } from "@e-kos/database";
+import type { AuditDetails } from "@e-kos/database/schema";
 
 import { z } from "astro/zod";
 
@@ -20,7 +21,7 @@ export type AuditLogRow = {
 	action: string;
 	table: string;
 	recordId: number | null;
-	details: string | null;
+	details: AuditDetails | string | null;
 };
 
 export async function fetchAuditLogs(
@@ -51,22 +52,32 @@ export async function fetchAuditLogs(
 		orderBy: { createdAt: "desc" },
 	});
 
-	return logs.map((log) => ({
-		id: log.id,
-		time: log.createdAt,
-		username: log.user?.username ?? "Sistem",
-		displayName: log.user?.displayName ?? log.user?.username ?? "Sistem",
-		action: log.action,
-		table: log.tableName,
-		recordId: log.recordId,
-		details: log.details,
-	}));
+	return logs.map((log) => {
+		const rawDetails = log.details as unknown;
+		const details =
+			typeof rawDetails === "string"
+				? rawDetails
+				: (rawDetails as AuditDetails | null);
+
+		return {
+			id: log.id,
+			time: log.createdAt,
+			username: log.user?.username ?? "Sistem",
+			displayName: log.user?.displayName ?? log.user?.username ?? "Sistem",
+			action: log.action,
+			table: log.tableName,
+			recordId: log.recordId,
+			details,
+		};
+	});
 }
 
 export const ACTION_BADGES: Record<(typeof AUDIT_ACTIONS)[number], string> = {
 	CREATE: "badge-success text-white",
 	UPDATE: "badge-warning text-white",
 	DELETE: "badge-error text-white",
+	REJECT: "badge-ghost",
+	LOGIN: "badge-info text-white",
 };
 
 export const AUDIT_ACTION_LABELS: Record<
@@ -76,4 +87,6 @@ export const AUDIT_ACTION_LABELS: Record<
 	CREATE: "Membuat",
 	UPDATE: "Mengubah",
 	DELETE: "Menghapus",
+	REJECT: "Menolak",
+	LOGIN: "Login",
 };

@@ -1,8 +1,9 @@
 import { db, eq } from "@e-kos/database";
-import { auditLogs, rooms } from "@e-kos/database/schema";
+import { auditDetail, auditLogs, rooms } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
+import { toCamelCaseKeys } from "es-toolkit/object";
 
 export const add = defineAction({
 	accept: "form",
@@ -39,7 +40,10 @@ export const add = defineAction({
 			action: "CREATE",
 			tableName: "rooms",
 			recordId: inserted.id,
-			details: `Menambah kamar ${input.room_number} (${input.room_type || "-"})`,
+			details: auditDetail.create(
+				`Menambah kamar ${input.room_number} (${input.room_type || "-"})`,
+				toCamelCaseKeys(input),
+			),
 		});
 
 		return inserted;
@@ -66,6 +70,23 @@ export const edit = defineAction({
 				message: "Nomor kamar sudah terdaftar.",
 			});
 
+		const oldRoom = await db.query.rooms.findFirst({
+			columns: {
+				id: true,
+				roomNumber: true,
+				roomType: true,
+				monthlyPrice: true,
+				isActive: true,
+			},
+			where: { id: input.id },
+		});
+		if (!oldRoom) {
+			throw new ActionError({
+				code: "NOT_FOUND",
+				message: "Kamar tidak ditemukan.",
+			});
+		}
+
 		const [updated] = await db
 			.update(rooms)
 			.set({
@@ -83,7 +104,11 @@ export const edit = defineAction({
 			action: "UPDATE",
 			tableName: "rooms",
 			recordId: updated.id,
-			details: `Mengubah kamar ${input.room_number} (${input.room_type || "-"})`,
+			details: auditDetail.update(
+				`Mengubah kamar ${input.room_number} (${input.room_type || "-"})`,
+				oldRoom,
+				toCamelCaseKeys(input),
+			),
 		});
 
 		return updated;
@@ -95,7 +120,13 @@ export const _delete = defineAction({
 	input: z.object({ id: z.coerce.number() }),
 	handler: async (input, context) => {
 		const target = await db.query.rooms.findFirst({
-			columns: { id: true },
+			columns: {
+				id: true,
+				roomNumber: true,
+				roomType: true,
+				monthlyPrice: true,
+				isActive: true,
+			},
 			where: { id: input.id },
 		});
 		if (!target)
@@ -115,7 +146,10 @@ export const _delete = defineAction({
 			action: "DELETE",
 			tableName: "rooms",
 			recordId: deleted.id,
-			details: `Menghapus kamar dengan ID: ${deleted.id}`,
+			details: auditDetail.delete(
+				`Menghapus kamar ${target.roomNumber} (${target.roomType || "-"})`,
+				target,
+			),
 		});
 
 		return deleted;

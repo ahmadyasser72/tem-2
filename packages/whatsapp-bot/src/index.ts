@@ -1,5 +1,10 @@
 import { db } from "@e-kos/database";
-import { auditLogs, chatbotMessages, tenants } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	chatbotMessages,
+	tenants,
+} from "@e-kos/database/schema";
 
 import { DisconnectReason, makeWASocket } from "baileys";
 
@@ -23,7 +28,6 @@ const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
 let lastSendTime = 0;
-let botUserId: number;
 
 async function sendWithRateLimit(
 	sock: ReturnType<typeof makeWASocket>,
@@ -53,7 +57,7 @@ export async function main() {
 		process.exit(1);
 	}
 
-	botUserId = botUser.id;
+	const botUserId = botUser.id;
 
 	const { state, saveCreds } = await useSqliteAuthState();
 
@@ -117,7 +121,10 @@ export async function main() {
 					userId: botUserId,
 					action: "REJECT",
 					tableName: "chatbot_messages",
-					details: `Menolak pesan dari nomor tidak terdaftar: ${phone}`,
+					details: auditDetail.reject(
+						`Menolak pesan dari nomor tidak terdaftar: ${phone}`,
+						"unregistered_number",
+					),
 				});
 
 				continue;
@@ -146,25 +153,13 @@ export async function main() {
 					if (!data) return;
 
 					// Proses perintah
-					const responseText = await processCommand(
-						data.tenant,
-						data.text,
-						botUserId,
-					);
+					const responseText = await processCommand(data.tenant, data.text);
 
 					// Simpan pesan keluar
 					await db.insert(chatbotMessages).values({
 						tenantId: data.tenant.id,
 						direction: "outgoing",
 						message: responseText,
-					});
-
-					// Catat interaksi ke audit log
-					await db.insert(auditLogs).values({
-						userId: botUserId,
-						action: "INSERT",
-						tableName: "chatbot_messages",
-						details: `Bot merespons pesan dari tenant #${data.tenant.id} (${data.tenant.phoneNumber}): "${data.text.slice(0, 80)}"`,
 					});
 
 					// Kirim respons (rate limited: maks 1 pesan/detik)
@@ -187,7 +182,6 @@ export async function main() {
 async function processCommand(
 	tenant: typeof tenants.$inferSelect,
 	text: string,
-	botUserId: number,
 ): Promise<string> {
 	const lower = text.toLowerCase().trim();
 
@@ -203,7 +197,7 @@ async function processCommand(
 	}
 
 	if (lower === "komplain" || lower.startsWith("komplain ")) {
-		return submitComplaint(tenant, text, botUserId);
+		return submitComplaint(tenant, text);
 	}
 
 	if (lower === "tagihan") {

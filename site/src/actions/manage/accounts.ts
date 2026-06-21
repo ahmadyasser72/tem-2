@@ -1,8 +1,10 @@
 import { db, eq } from "@e-kos/database";
-import { users, auditLogs } from "@e-kos/database/schema";
+import { auditDetail, auditLogs, users } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
+import { omit } from "es-toolkit";
+import { toCamelCaseKeys } from "es-toolkit/object";
 
 import { hashPassword, ROLES } from "~/lib/auth";
 
@@ -41,7 +43,10 @@ export const add = defineAction({
 			action: "CREATE",
 			tableName: "users",
 			recordId: inserted.id,
-			details: `Membuat akun user: ${input.username} dengan role: ${input.role}`,
+			details: auditDetail.create(
+				`Membuat akun user: ${input.username} dengan role: ${input.role}`,
+				toCamelCaseKeys(omit(input, ["password"])),
+			),
 		});
 
 		return inserted;
@@ -68,6 +73,17 @@ export const edit = defineAction({
 				message: "Username tidak tersedia.",
 			});
 
+		const existingUser = await db.query.users.findFirst({
+			columns: { id: true, username: true, role: true, displayName: true },
+			where: { id: input.id },
+		});
+		if (!existingUser) {
+			throw new ActionError({
+				code: "NOT_FOUND",
+				message: "Akun tidak ditemukan.",
+			});
+		}
+
 		const [updated] = await db
 			.update(users)
 			.set({
@@ -85,7 +101,11 @@ export const edit = defineAction({
 			action: "UPDATE",
 			tableName: "users",
 			recordId: updated.id,
-			details: `Mengubah akun user: ${input.username} dengan role: ${input.role}`,
+			details: auditDetail.update(
+				`Mengubah akun user: ${input.username} dengan role: ${input.role}`,
+				existingUser,
+				toCamelCaseKeys(omit(input, ["password"])),
+			),
 		});
 
 		return updated;
@@ -96,11 +116,11 @@ export const _delete = defineAction({
 	accept: "form",
 	input: z.object({ id: z.coerce.number() }),
 	handler: async (input, context) => {
-		const exists = await db.query.users.findFirst({
-			columns: { id: true },
+		const target = await db.query.users.findFirst({
+			columns: { id: true, username: true, displayName: true, role: true },
 			where: { id: input.id },
 		});
-		if (!exists?.id)
+		if (!target)
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Akun tidak ditemukan.",
@@ -117,7 +137,10 @@ export const _delete = defineAction({
 			action: "DELETE",
 			tableName: "users",
 			recordId: deleted.id,
-			details: `Menghapus akun user dengan ID: ${deleted.id}`,
+			details: auditDetail.delete(
+				`Menghapus akun user: ${target.username} (${target.role})`,
+				target,
+			),
 		});
 
 		return deleted;

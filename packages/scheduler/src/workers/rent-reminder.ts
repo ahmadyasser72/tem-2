@@ -1,5 +1,10 @@
 import { db } from "@e-kos/database";
-import { auditLogs, notifications, users } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	notifications,
+	users,
+} from "@e-kos/database/schema";
 
 export async function runRentReminder(
 	systemUser: typeof users.$inferSelect,
@@ -22,27 +27,34 @@ export async function runRentReminder(
 		},
 	});
 
-	let count = 0;
-
+	const ids = [] as number[];
 	for (const inv of dueInvoices) {
 		if (!inv.lease?.tenant) continue;
 
-		await db.insert(notifications).values({
-			tenantId: inv.lease.tenant.id,
-			invoiceId: inv.id,
-			type: "reminder",
-			status: "pending",
-		});
+		const [inserted] = await db
+			.insert(notifications)
+			.values({
+				tenantId: inv.lease.tenant.id,
+				invoiceId: inv.id,
+				type: "reminder",
+				status: "pending",
+			})
+			.returning({ id: notifications.id });
 
-		count++;
+		ids.push(inserted.id);
 	}
 
+	const count = ids.length;
 	if (count > 0) {
 		await db.insert(auditLogs).values({
 			userId: systemUser.id,
-			action: "INSERT",
+			action: "CREATE",
 			tableName: "notifications",
-			details: `Cron created ${count} payment reminder notification(s)`,
+			details: auditDetail.cron(
+				`Cron created ${count} payment reminder notification(s)`,
+				"notifications",
+				ids,
+			),
 		});
 	}
 

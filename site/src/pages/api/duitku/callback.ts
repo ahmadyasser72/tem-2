@@ -1,6 +1,11 @@
 import { db, eq } from "@e-kos/database";
 import { config, verifyCallbackSignature } from "@e-kos/database/duitku";
-import { auditLogs, invoices, notifications } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	invoices,
+	notifications,
+} from "@e-kos/database/schema";
 
 import type { APIRoute } from "astro";
 
@@ -104,7 +109,11 @@ export const POST: APIRoute = async ({ request }) => {
 						action: "UPDATE",
 						tableName: "invoices",
 						recordId: invoiceId,
-						details: `Duitku callback: Pembayaran sukses (Ref: ${reference ?? invoice.duitkuReference}). Kamar: ${invoice.lease?.room?.roomNumber ?? "-"}, Tenant: ${invoice.lease?.tenant?.fullName ?? "-"}, Amount: ${parsedAmount}`,
+						details: auditDetail.payment(
+							`Duitku callback: Pembayaran sukses (Ref: ${reference ?? invoice.duitkuReference}). Kamar: ${invoice.lease?.room?.roomNumber ?? "-"}, Tenant: ${invoice.lease?.tenant?.fullName ?? "-"}, Amount: ${parsedAmount}`,
+							parsedAmount,
+							reference ?? invoice.duitkuReference,
+						),
 					})
 					.run();
 			});

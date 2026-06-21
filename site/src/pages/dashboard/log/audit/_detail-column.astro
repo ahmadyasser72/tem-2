@@ -1,0 +1,47 @@
+---
+import type { AuditDetails } from "@e-kos/database/schema";
+
+import { formatCurrency } from "~/lib/currency";
+
+interface Props {
+	details: AuditDetails | string | null;
+}
+
+const { details } = Astro.props;
+
+function tooltipText(d: AuditDetails | string | null): string | null {
+	if (typeof d !== "object" || !d) return null;
+	switch (d.type) {
+		case "cron":
+			return `${d.table}: ${d.ids.length} item`;
+		case "bot":
+			return `Sumber: ${d.source}`;
+		case "reject":
+			return d.reason ?? null;
+		case "payment": {
+			const parts: string[] = [];
+			if (d.amount != null) parts.push(formatCurrency(d.amount));
+			if (d.reference) parts.push(d.reference);
+			return parts.join(" | ") || null;
+		}
+		default:
+			return null;
+	}
+}
+
+const tip = tooltipText(details);
+const displayText =
+	typeof details === "string" ? details : (details?.description ?? "—");
+---
+
+<td class="max-w-xs truncate">
+	{
+		tip ? (
+			<span class="tooltip tooltip-right" data-tip={tip}>
+				{displayText}
+			</span>
+		) : (
+			<span>{displayText}</span>
+		)
+	}
+</td>

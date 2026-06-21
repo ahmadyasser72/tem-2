@@ -4,16 +4,16 @@ import {
 	DuitkuError,
 	getPaymentUrlFromReference,
 } from "@e-kos/database/duitku";
-import { auditLogs, invoices, notifications } from "@e-kos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	invoices,
+	notifications,
+} from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 import { isError } from "es-toolkit/predicate";
-
-// ─── Helper to strip trailing slash ─────────────────────────────
-function stripTrailingSlash(url: string): string {
-	return url.endsWith("/") ? url.slice(0, -1) : url;
-}
 
 // ─── Generate Payment Link ──────────────────────────────────────
 export const generatePaymentLink = defineAction({
@@ -95,9 +95,7 @@ export const generatePaymentLink = defineAction({
 		// 4. Generate payment link baru
 		const merchantOrderId = `INV-${invoice.id.toString().padStart(6, "0")}`;
 		const roomNumber = room?.roomNumber ?? "-";
-		const baseUrl = stripTrailingSlash(
-			process.env.SITE_BASE_URL ?? "http://localhost:4321",
-		);
+		const baseUrl = new URL(context.url.origin);
 
 		try {
 			const result = await duitkuCreateInvoice({
@@ -117,8 +115,8 @@ export const generatePaymentLink = defineAction({
 					firstName: tenant.fullName,
 					phoneNumber: tenant.phoneNumber,
 				},
-				returnUrl: `${baseUrl}/api/duitku/redirect`,
-				callbackUrl: `${baseUrl}/api/duitku/callback`,
+				returnUrl: new URL("/api/duitku/redirect", baseUrl).href,
+				callbackUrl: new URL("/api/duitku/callback", baseUrl).href,
 				expiryPeriod: 1440, // 24 jam
 				paymentMethod: "",
 			});
@@ -136,7 +134,11 @@ export const generatePaymentLink = defineAction({
 				action: "UPDATE",
 				tableName: "invoices",
 				recordId: invoiceId,
-				details: `Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - Rp ${invoice.amount.toLocaleString("id-ID")}`,
+				details: auditDetail.payment(
+					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - Rp ${invoice.amount.toLocaleString("id-ID")}`,
+					invoice.amount,
+					result.reference,
+				),
 			});
 
 			return {
@@ -214,7 +216,11 @@ export const markAsPaid = defineAction({
 			action: "UPDATE",
 			tableName: "invoices",
 			recordId: invoiceId,
-			details: `Manual: Menandai invoice #${invoiceId} sebagai lunas`,
+			details: auditDetail.payment(
+				`Manual: Menandai invoice #${invoiceId} sebagai lunas`,
+				invoice.amount,
+				"manual",
+			),
 		});
 
 		return { success: true };

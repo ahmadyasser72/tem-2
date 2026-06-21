@@ -11,7 +11,7 @@ import type { APIRoute } from "astro";
 
 export const POST: APIRoute = async ({ request }) => {
 	const formData = await request.formData();
-	const params = Object.fromEntries(formData) as Record<string, string>;
+	const params = Object.fromEntries(formData.entries());
 
 	const {
 		merchantCode,

@@ -37,6 +37,8 @@ async function ensureUser(
 			username,
 			existing.id,
 		);
+
+		return;
 	}
 
 	const [user] = await db

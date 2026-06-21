@@ -6,7 +6,7 @@ import {
 	tenants,
 } from "@e-kos/database/schema";
 
-import { DisconnectReason, makeWASocket } from "baileys";
+import { makeWASocket } from "baileys";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -63,9 +63,7 @@ export async function main() {
 
 	// Cek apakah sudah login WhatsApp
 	if (!state.creds.me) {
-		console.error(
-			"[Bot] WhatsApp belum login. Jalankan 'bun login' atau 'bun run login' dulu.",
-		);
+		console.error("[Bot] WhatsApp belum login.");
 		process.exit(1);
 	}
 
@@ -75,13 +73,8 @@ export async function main() {
 
 	sock.ev.on("creds.update", saveCreds);
 
-	sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
-		if (connection === "close") {
-			const shouldReconnect =
-				(lastDisconnect?.error as any)?.output?.statusCode !==
-				DisconnectReason.loggedOut;
-			if (shouldReconnect) main();
-		} else if (connection === "open") {
+	sock.ev.on("connection.update", ({ connection }) => {
+		if (connection === "open") {
 			console.log("[Bot] WhatsApp connected");
 		}
 	});

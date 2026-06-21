@@ -14,6 +14,7 @@
 		"build": "pacwich run build @e-kos/site",
 		"start": "pacwich run start",
 		"wa:login": "bun --cwd=packages/whatsapp-bot run login",
+		"wa:logout": "bun --cwd=packages/whatsapp-bot run logout",
 		"scheduler:trigger": "bun --cwd=packages/scheduler run trigger",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",

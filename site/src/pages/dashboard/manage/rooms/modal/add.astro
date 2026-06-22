@@ -4,6 +4,7 @@ import { actions } from "astro:actions";
 import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
+import { ROOM_TYPE_LABELS, ROOM_TYPES } from "../_data";
 
 export const partial = true;
 ---
@@ -26,8 +27,11 @@ export const partial = true;
 		</FormField>
 		<FormField label="Jenis Kamar">
 			<select class="select w-full" name="room_type" required>
-				<option value="Standar">Standar</option>
-				<option value="Premium">Premium</option>
+				{
+					ROOM_TYPES.map((t) => (
+						<option value={t}>{ROOM_TYPE_LABELS[t]}</option>
+					))
+				}
 			</select>
 		</FormField>
 		<FormField label="Harga Sewa / Bulan (Rp)">

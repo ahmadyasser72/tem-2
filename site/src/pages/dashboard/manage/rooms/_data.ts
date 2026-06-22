@@ -1,4 +1,5 @@
 import { db } from "@e-kos/database";
+import { ROOM_TYPES } from "@e-kos/database/schema";
 
 import { z } from "astro/zod";
 import { sumBy } from "es-toolkit";
@@ -6,12 +7,13 @@ import { sumBy } from "es-toolkit";
 import { querySchema } from "~/lib/query";
 
 export const ROOM_STATUS = ["occupied", "vacant", "inactive"] as const;
-export const ROOM_TYPES = ["Standar", "Premium"] as const;
+
+export { ROOM_TYPES };
 
 export type RoomRow = {
 	id: number;
 	roomNumber: string;
-	roomType: string;
+	roomType: (typeof ROOM_TYPES)[number];
 	monthlyPrice: number;
 	isActive: boolean;
 	tenantName: string | null;
@@ -20,7 +22,7 @@ export type RoomRow = {
 function mapRoomFromDb(room: {
 	id: number;
 	roomNumber: string;
-	roomType: string | null;
+	roomType: (typeof ROOM_TYPES)[number];
 	monthlyPrice: number;
 	isActive: boolean;
 	leases: Array<{
@@ -32,7 +34,7 @@ function mapRoomFromDb(room: {
 	return {
 		id: room.id,
 		roomNumber: room.roomNumber,
-		roomType: room.roomType ?? "Standar",
+		roomType: room.roomType,
 		monthlyPrice: room.monthlyPrice,
 		isActive: room.isActive,
 		tenantName: activeLease?.tenant?.fullName ?? null,
@@ -141,6 +143,11 @@ export const reportRoomQuerySchema = z.object({
 	status: z.enum(ROOM_STATUS).optional().catch(undefined),
 	type: z.enum(ROOM_TYPES).optional().catch(undefined),
 });
+
+export const ROOM_TYPE_LABELS: Record<(typeof ROOM_TYPES)[number], string> = {
+	standard: "Standar",
+	premium: "Premium",
+};
 
 export const ROOM_STATUS_LABELS: Record<(typeof ROOM_STATUS)[number], string> =
 	{

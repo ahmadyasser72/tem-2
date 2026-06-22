@@ -12,6 +12,7 @@ import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
+import { ROOM_TYPE_LABELS } from "../../../rooms/_data";
 
 export const partial = true;
 
@@ -63,7 +64,11 @@ if (!tenant || !activeLease) Astro.response.status = 404;
 					<span class="font-mono font-bold">
 						{activeLease.room?.roomNumber ?? "-"}
 						<span class="text-base-content/50 text-xs">
-							({activeLease.room?.roomType ?? "-"})
+							(
+							{activeLease.room?.roomType
+								? ROOM_TYPE_LABELS[activeLease.room.roomType]
+								: "-"}
+							)
 						</span>
 					</span>
 					<span class="font-bold">Mulai Sewa:</span>
@@ -85,7 +90,8 @@ if (!tenant || !activeLease) Astro.response.status = 404;
 							</option>
 							{availableRooms.map(({ id, roomNumber, roomType }) => (
 								<option value={id}>
-									{roomNumber} – {roomType} (Tersedia)
+									{roomNumber} – {ROOM_TYPE_LABELS[roomType] ?? roomType}{" "}
+									(Tersedia)
 								</option>
 							))}
 						</select>

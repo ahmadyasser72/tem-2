@@ -28,7 +28,7 @@ export async function tenantInfo(
 		"",
 		"*Info Kamar*",
 		`📍 No. Kamar: ${activeLease.room.roomNumber}`,
-		`🏠 Tipe: ${activeLease.room.roomType ?? "-"}`,
+		`🏠 Tipe: ${activeLease.room.roomType}`,
 		`💰 Sewa: Rp ${activeLease.room.monthlyPrice.toLocaleString()}/bulan`,
 		`📅 Mulai: ${activeLease.startDate.toLocaleDateString()}`,
 		`📅 Selesai: ${endDate}`,

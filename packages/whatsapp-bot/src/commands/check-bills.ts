@@ -32,7 +32,7 @@ export async function checkBills(
 	lines.push("*💰 Info Tagihan*");
 	lines.push("");
 	lines.push(`📍 Kamar: ${activeLease.room.roomNumber}`);
-	lines.push(`🏠 Tipe: ${activeLease.room.roomType ?? "-"}`);
+	lines.push(`🏠 Tipe: ${activeLease.room.roomType}`);
 	lines.push(
 		`💰 Sewa/bulan: Rp ${activeLease.room.monthlyPrice.toLocaleString()}`,
 	);

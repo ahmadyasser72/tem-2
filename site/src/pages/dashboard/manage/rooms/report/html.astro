@@ -6,6 +6,7 @@ import {
 	fetchAllRooms,
 	reportRoomQuerySchema,
 	ROOM_STATUS_LABELS,
+	ROOM_TYPE_LABELS,
 } from "../_data";
 
 const params = Astro.locals.parseQuery(reportRoomQuerySchema);
@@ -35,7 +36,7 @@ if (params.status) {
 	filterParts.push(`Status: ${ROOM_STATUS_LABELS[params.status]}`);
 }
 if (params.type) {
-	filterParts.push(`Tipe: ${params.type}`);
+	filterParts.push(`Tipe: ${ROOM_TYPE_LABELS[params.type]}`);
 }
 const subtitle =
 	filterParts.length > 0 ? filterParts.join(" | ") : "Semua kamar";
@@ -119,7 +120,7 @@ const subtitle =
 									<td style="font-family: 'Courier New', monospace;">
 										{roomNumber}
 									</td>
-									<td>{roomType}</td>
+									<td>{ROOM_TYPE_LABELS[roomType]}</td>
 									<td style="font-family: 'Courier New', monospace; text-align: right;">
 										{formatCurrency(monthlyPrice)}
 									</td>

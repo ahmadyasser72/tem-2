@@ -1,12 +1,12 @@
 ---
 import { actions } from "astro:actions";
 
-import ActionsMenu from "~/components/ui/actions-menu.astro";
 import FilterPopover from "~/components/data/filter-popover.astro";
-import FormResult from "~/components/form/form-result.astro";
-import Icon from "~/components/ui/icon.astro";
 import SearchInput from "~/components/data/search-input.astro";
 import Stats from "~/components/data/stats.astro";
+import FormResult from "~/components/form/form-result.astro";
+import ActionsMenu from "~/components/ui/actions-menu.astro";
+import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
 import {
@@ -14,6 +14,8 @@ import {
 	getAllRoomsStats,
 	ROOM_STATUS_BADGES,
 	ROOM_STATUS_LABELS,
+	ROOM_TYPE_LABELS,
+	ROOM_TYPES,
 	roomQuerySchema,
 } from "./_data";
 
@@ -95,18 +97,11 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 				{
 					title: "Tipe Kamar",
 					name: "type",
-					options: [
-						{
-							value: "Standar",
-							label: "Standar",
-							checked: params.type === "Standar",
-						},
-						{
-							value: "Premium",
-							label: "Premium",
-							checked: params.type === "Premium",
-						},
-					],
+					options: ROOM_TYPES.map((t) => ({
+						value: t,
+						label: ROOM_TYPE_LABELS[t],
+						checked: params.type === t,
+					})),
 				},
 			]}
 		/>

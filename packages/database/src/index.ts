@@ -13,6 +13,7 @@ export const {
 	NOTIFICATION_STATUS,
 	COMPLAINT_STATUS,
 	AUDIT_ACTIONS,
+	ROOM_TYPES,
 } = schema;
 
 export const DB_PATH =

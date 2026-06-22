@@ -7,6 +7,7 @@ import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
+import { ROOM_TYPE_LABELS, ROOM_TYPES } from "../../_data";
 
 export const partial = true;
 
@@ -48,12 +49,11 @@ if (!room) Astro.response.status = 404;
 					</FormField>
 					<FormField label="Jenis Kamar">
 						<select class="select w-full" name="room_type" required>
-							<option value="Standar" selected={room.roomType === "Standar"}>
-								Standar
-							</option>
-							<option value="Premium" selected={room.roomType === "Premium"}>
-								Premium
-							</option>
+							{ROOM_TYPES.map((t) => (
+								<option value={t} selected={room.roomType === t}>
+									{ROOM_TYPE_LABELS[t]}
+								</option>
+							))}
 						</select>
 					</FormField>
 					<FormField label="Harga Sewa / Bulan (Rp)">

@@ -1,4 +1,4 @@
-import { db, eq } from "@e-kos/database";
+import { db, eq, ROOM_TYPES } from "@e-kos/database";
 import { auditDetail, auditLogs, rooms } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
@@ -9,7 +9,7 @@ export const add = defineAction({
 	accept: "form",
 	input: z.object({
 		room_number: z.string(),
-		room_type: z.string(),
+		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
 		is_active: z.stringbool().optional().default(false),
 	}),
@@ -41,7 +41,7 @@ export const add = defineAction({
 			tableName: "rooms",
 			recordId: inserted.id,
 			details: auditDetail.create(
-				`Menambah kamar ${input.room_number} (${input.room_type || "-"})`,
+				`Menambah kamar ${input.room_number} (${input.room_type})`,
 				toCamelCaseKeys(input),
 			),
 		});
@@ -55,7 +55,7 @@ export const edit = defineAction({
 	input: z.object({
 		id: z.coerce.number(),
 		room_number: z.string(),
-		room_type: z.string(),
+		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
 		is_active: z.stringbool().optional().default(false),
 	}),
@@ -105,7 +105,7 @@ export const edit = defineAction({
 			tableName: "rooms",
 			recordId: updated.id,
 			details: auditDetail.update(
-				`Mengubah kamar ${input.room_number} (${input.room_type || "-"})`,
+				`Mengubah kamar ${input.room_number} (${input.room_type})`,
 				oldRoom,
 				toCamelCaseKeys(input),
 			),
@@ -147,7 +147,7 @@ export const _delete = defineAction({
 			tableName: "rooms",
 			recordId: deleted.id,
 			details: auditDetail.delete(
-				`Menghapus kamar ${target.roomNumber} (${target.roomType || "-"})`,
+				`Menghapus kamar ${target.roomNumber} (${target.roomType})`,
 				target,
 			),
 		});

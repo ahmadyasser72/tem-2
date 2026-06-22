@@ -7,6 +7,7 @@ import { actions } from "astro:actions";
 import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
+import { ROOM_TYPE_LABELS } from "../../rooms/_data";
 
 export const partial = true;
 
@@ -78,7 +79,7 @@ const emptyRooms = allRooms.filter(
 				{
 					emptyRooms.map(({ id, roomNumber, roomType }) => (
 						<option value={id}>
-							{roomNumber} – {roomType} (Tersedia)
+							{roomNumber} – {ROOM_TYPE_LABELS[roomType] ?? roomType} (Tersedia)
 						</option>
 					))
 				}

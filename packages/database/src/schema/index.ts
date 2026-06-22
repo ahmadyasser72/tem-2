@@ -18,6 +18,8 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;
 export const COMPLAINT_STATUS = ["open", "in_progress", "resolved"] as const;
+export const ROOM_TYPES = ["standard", "premium"] as const;
+
 export const AUDIT_ACTIONS = [
 	"CREATE",
 	"UPDATE",
@@ -48,7 +50,9 @@ export const tenants = sqliteTable("tenants", {
 export const rooms = sqliteTable("rooms", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	roomNumber: text("room_number").notNull().unique(),
-	roomType: text("room_type"),
+	roomType: text("room_type", { enum: ROOM_TYPES })
+		.notNull()
+		.default("standard"),
 	monthlyPrice: integer("monthly_price").notNull(),
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });

@@ -24,7 +24,7 @@ async function login() {
 			}
 
 			if (connection === "open") {
-				console.log("\n[Login] WhatsApp berhasil terhubung!");
+				console.log("\nWhatsApp berhasil terhubung!");
 				process.exit(0);
 			}
 

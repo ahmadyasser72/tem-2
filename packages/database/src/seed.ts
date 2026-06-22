@@ -19,7 +19,7 @@ async function ensureUser(
 	if (existing) {
 		if (!passwordOverride) {
 			console.log(
-				"[Seed] User '%s' already exists (id=%d), skipping",
+				"User '%s' already exists (id=%d), skipping",
 				username,
 				existing.id,
 			);
@@ -32,11 +32,7 @@ async function ensureUser(
 			.set({ passwordHash })
 			.where(eq(users.id, existing.id));
 
-		console.log(
-			"[Seed] User '%s' password updated (id=%d)",
-			username,
-			existing.id,
-		);
+		console.log("User '%s' password updated (id=%d)", username, existing.id);
 
 		return;
 	}
@@ -46,7 +42,7 @@ async function ensureUser(
 		.values({ username, passwordHash, displayName, role })
 		.returning({ id: users.id });
 
-	console.log("[Seed] User '%s' created (id=%d)", username, user.id);
+	console.log("User '%s' created (id=%d)", username, user.id);
 }
 
 async function main() {

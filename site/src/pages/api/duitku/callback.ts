@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 	// ─── Validasi keberadaan parameter ───────────────────────────
 	if (!merchantCode || !amount || !merchantOrderId || !signature) {
-		console.error("[Duitku Callback] Missing required parameters");
+		console.error("Missing required parameters");
 		return new Response(null, { status: 400 });
 	}
 
@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
 			apiKey,
 		)
 	) {
-		console.error("[Duitku Callback] Invalid signature");
+		console.error("Invalid signature");
 		return new Response(null, { status: 400 });
 	}
 
@@ -51,10 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
 	const invoiceId = Number.parseInt(invoiceIdStr, 10);
 
 	if (Number.isNaN(invoiceId)) {
-		console.error(
-			"[Duitku Callback] Invalid merchantOrderId format:",
-			merchantOrderId,
-		);
+		console.error("Invalid merchantOrderId format:", merchantOrderId);
 		return new Response(null, { status: 200 }); // Return 200 so Duitku doesn't retry
 	}
 
@@ -64,16 +61,13 @@ export const POST: APIRoute = async ({ request }) => {
 	});
 
 	if (!invoice) {
-		console.error("[Duitku Callback] Invoice not found:", invoiceId);
+		console.error("Invoice not found:", invoiceId);
 		return new Response(null, { status: 200 }); // Acknowledge to Duitku
 	}
 
 	// ─── Idempotency check ───────────────────────────────────────
 	if (invoice.callbackPayload) {
-		console.log(
-			"[Duitku Callback] Duplicate callback, skipping (invoice #%d)",
-			invoiceId,
-		);
+		console.log("Duplicate callback, skipping (invoice #%d)", invoiceId);
 		return new Response(null, { status: 200 });
 	}
 
@@ -118,13 +112,13 @@ export const POST: APIRoute = async ({ request }) => {
 					.run();
 			});
 
-			console.log("[Duitku Callback] Invoice #%d marked as paid", invoiceId);
+			console.log("Invoice #%d marked as paid", invoiceId);
 		} catch (err) {
-			console.error("[Duitku Callback] Failed to update invoice:", err);
+			console.error("Failed to update invoice:", err);
 			return new Response(null, { status: 500 });
 		}
 	} else {
-		console.log("[Duitku Callback] Non-success resultCode:", resultCode);
+		console.log("Non-success resultCode:", resultCode);
 	}
 
 	return new Response(null, { status: 200 });

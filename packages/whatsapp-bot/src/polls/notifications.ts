@@ -98,7 +98,7 @@ export async function pollNotifications(sock: WASocket, botUserId: number) {
 				details: auditDetail.notification(actionDesc, "whatsapp", tenant.id),
 			});
 		} catch (err) {
-			console.error("[Bot] Send notification failed:", err);
+			console.error("Send notification failed:", err);
 			await db
 				.update(notifications)
 				.set({ status: "failed" })

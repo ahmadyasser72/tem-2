@@ -9,9 +9,7 @@ export async function main() {
 	});
 
 	if (!systemUser) {
-		console.error(
-			"[Scheduler] System user not found. Run `bun run db:seed` first.",
-		);
+		console.error("System user not found. Run `bun run db:seed` first.");
 		process.exit(1);
 	}
 
@@ -23,5 +21,5 @@ export async function main() {
 	// 00:00 UTC = 08:00 WITA
 	Bun.cron("0 0 * * *", () => runRentReminder(systemUser));
 
-	console.log("[Scheduler] Cron jobs registered");
+	console.log("Cron jobs registered");
 }

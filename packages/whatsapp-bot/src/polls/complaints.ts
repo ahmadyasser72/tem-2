@@ -69,13 +69,10 @@ export async function pollResolvedComplaints(
 			});
 
 			console.log(
-				`[Bot] Complaint #${c.id} resolved notified to ${tenant.phoneNumber}`,
+				`Complaint #${c.id} resolved notified to ${tenant.phoneNumber}`,
 			);
 		} catch (err) {
-			console.error(
-				`[Bot] Complaint #${c.id} resolved notification failed:`,
-				err,
-			);
+			console.error(`Complaint #${c.id} resolved notification failed:`, err);
 		}
 	}
 }

@@ -58,5 +58,5 @@ export async function runRentReminder(
 		});
 	}
 
-	console.log("[Cron] %d reminders created", count);
+	console.log("%d reminders created", count);
 }

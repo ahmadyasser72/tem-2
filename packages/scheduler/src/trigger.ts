@@ -29,9 +29,7 @@ async function main() {
 	});
 
 	if (!systemUser) {
-		console.error(
-			"[Scheduler] System user not found. Run `bun run db:seed` first.",
-		);
+		console.error("System user not found. Run `bun run db:seed` first.");
 		process.exit(1);
 	}
 

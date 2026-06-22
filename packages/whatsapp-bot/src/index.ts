@@ -52,9 +52,7 @@ export async function main() {
 	});
 
 	if (!botUser) {
-		console.error(
-			"[Bot] User 'bot-wa' not found. Run `bun run db:seed` first.",
-		);
+		console.error("User 'bot-wa' not found. Run `bun run db:seed` first.");
 		process.exit(1);
 	}
 
@@ -64,7 +62,7 @@ export async function main() {
 
 	// Cek apakah sudah login WhatsApp
 	if (!state.creds.me) {
-		console.error("[Bot] WhatsApp belum login.");
+		console.error("WhatsApp belum login.");
 		process.exit(1);
 	}
 
@@ -78,7 +76,7 @@ export async function main() {
 
 	sock.ev.on("connection.update", ({ connection }) => {
 		if (connection === "open") {
-			console.log("[Bot] WhatsApp connected");
+			console.log("WhatsApp connected");
 		}
 	});
 
@@ -171,7 +169,7 @@ export async function main() {
 		await pollResolvedComplaints(sock, botUserId);
 	}, 30_000);
 
-	console.log("[Bot] WhatsApp bot started");
+	console.log("WhatsApp bot started");
 }
 
 // ─── Command processor ──────────────────────────────────────

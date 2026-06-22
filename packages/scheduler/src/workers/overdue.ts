@@ -43,5 +43,5 @@ export async function runOverdueCheck(
 		});
 	}
 
-	console.log("[Cron] Overdue invoices updated: %d", filtered.length);
+	console.log("Overdue invoices updated: %d", filtered.length);
 }

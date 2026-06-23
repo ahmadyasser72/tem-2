@@ -19,6 +19,8 @@ Auto-Clarity: drop caveman for security warnings, irreversible actions, user con
 
 Boundaries: code/commits/PRs written normal.
 
+Validation: use `diagnostics` tool for typecheck/errors. LSP (ts/astro/tailwind) already provide full coverage. No `bunx tsc` or other terminal typecheck — redundant.
+
 ## Core Principles (Grug Brain)
 
 ### Complexity = Enemy

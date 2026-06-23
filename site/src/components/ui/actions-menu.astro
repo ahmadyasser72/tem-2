@@ -6,7 +6,6 @@ interface Props {
 	triggerClass?: string;
 	triggerLabel?: string;
 	triggerIcon?: `line-md:${string}` | `svg-spinners:${string}`;
-	direction?: "top" | "end";
 	menuClass?: string;
 }
 
@@ -14,8 +13,7 @@ const {
 	id,
 	triggerClass = "",
 	triggerLabel,
-	triggerIcon = "line-md:chevron-down" as const,
-	direction = "end",
+	triggerIcon = "line-md:chevron-up" as const,
 	menuClass = "w-36",
 } = Astro.props;
 ---
@@ -30,8 +28,7 @@ const {
 <ul
 	id={"aksi-" + id}
 	class:list={[
-		"dropdown dropdown-end",
-		`dropdown-${direction}`,
+		"dropdown dropdown-end dropdown-top",
 		"menu menu-sm bg-base-100 border-base-300 border shadow-sm",
 		menuClass,
 	]}

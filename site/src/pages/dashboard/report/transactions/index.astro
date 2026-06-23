@@ -12,6 +12,7 @@ import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { INVOICE_STATUS_BADGES, INVOICE_STATUS_LABELS } from "~/lib/badges";
 import { formatDate } from "~/lib/date";
 import { createActionResult } from "~/lib/form-result";
+import { formatCurrency } from "~/lib/transforms";
 import {
 	fetchTransactions,
 	getTransactionStats,
@@ -31,7 +32,7 @@ const paidPercent =
 const summaryStats = [
 	{
 		title: "Total Pemasukan",
-		value: `Rp ${totalRevenue.toLocaleString("id-ID")}`,
+		value: formatCurrency(totalRevenue),
 		desc: `${params.from} s/d ${params.to}`,
 		icon: "line-md:edit-filled",
 	},
@@ -44,7 +45,7 @@ const summaryStats = [
 	{
 		title: "Pembayaran Tertunggak",
 		value: `${unpaidCount} Invoice`,
-		desc: `Rp ${outstandingAmount.toLocaleString("id-ID")} belum dibayar`,
+		desc: `${formatCurrency(outstandingAmount)} belum dibayar`,
 		icon: "line-md:close-circle",
 	},
 ];
@@ -171,7 +172,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 											{roomNumber}
 										</span>
 									</td>
-									<td class="font-mono">Rp {amount.toLocaleString("id-ID")}</td>
+									<td class="font-mono">{formatCurrency(amount)}</td>
 									<td class="font-mono text-xs">{formatDate(dueDate)}</td>
 									<td>
 										<span

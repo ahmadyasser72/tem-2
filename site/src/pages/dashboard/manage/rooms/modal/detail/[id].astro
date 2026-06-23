@@ -5,6 +5,7 @@ import DetailModal from "~/components/modal/detail-modal.astro";
 import Icon from "~/components/ui/icon.astro";
 import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
+import { formatCurrency } from "~/lib/transforms";
 import { ROOM_TYPE_LABELS } from "../../_data";
 
 export const partial = true;
@@ -49,7 +50,7 @@ if (!room) Astro.response.status = 404;
 
 					<span class="text-base-content/60 font-semibold">Harga/Bulan:</span>
 					<span class="font-mono font-bold">
-						Rp {room.monthlyPrice.toLocaleString("id-ID")}
+						{formatCurrency(room.monthlyPrice)}
 					</span>
 
 					<span class="text-base-content/60 font-semibold">Status:</span>

@@ -9,6 +9,7 @@ import ActionsMenu from "~/components/ui/actions-menu.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
+import { formatCurrency } from "~/lib/transforms";
 import {
 	fetchFilteredRooms,
 	getAllRoomsStats,
@@ -126,7 +127,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 						: tenantName
 							? "occupied"
 							: "vacant";
-					const price = "Rp " + monthlyPrice.toLocaleString("id-ID");
+					const price = formatCurrency(monthlyPrice);
 					return (
 						<div class="card bg-base-100 border-base-300 border shadow-sm transition-all hover:shadow-md">
 							<div class="card-body gap-3 p-5">

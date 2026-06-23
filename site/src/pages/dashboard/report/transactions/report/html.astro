@@ -3,8 +3,8 @@ import { sumBy } from "es-toolkit";
 
 import ReportLayout from "~/layouts/report-layout.astro";
 import { INVOICE_STATUS_LABELS } from "~/lib/badges";
-import { formatCurrency } from "~/lib/currency";
 import { formatDate } from "~/lib/date";
+import { formatCurrency } from "~/lib/transforms";
 import { fetchTransactions, transactionQuerySchema } from "../_data";
 
 const params = Astro.locals.parseQuery(transactionQuerySchema);

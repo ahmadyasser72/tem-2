@@ -2,9 +2,8 @@
 import { db } from "@e-kos/database";
 
 import BaseLayout from "~/layouts/base-layout.astro";
-import { formatCurrency } from "~/lib/currency";
 import { formatDate } from "~/lib/date";
-import { formatInvoiceNumber } from "~/lib/transforms";
+import { formatCurrency, formatInvoiceNumber } from "~/lib/transforms";
 
 const invoiceId = Number(Astro.params.id);
 const resultCode = Astro.url.searchParams.get("resultCode") ?? "";

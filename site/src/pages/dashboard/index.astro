@@ -7,6 +7,7 @@ import Stats from "~/components/data/stats.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
+import { formatCurrency } from "~/lib/transforms";
 
 const now = new Date();
 
@@ -137,7 +138,7 @@ const stats = [
 	},
 	{
 		title: "Tagihan Belum Bayar",
-		value: `Rp ${totalUnpaidAmount.toLocaleString("id-ID")}`,
+		value: formatCurrency(totalUnpaidAmount),
 		desc: `${totalUnpaidCount} tagihan belum lunas`,
 		icon: "line-md:document-list",
 	},
@@ -213,9 +214,7 @@ const COMPLAINT_BADGES: Record<string, string> = {
 													{room}
 												</span>
 											</td>
-											<td class="font-mono">
-												Rp {amount.toLocaleString("id-ID")}
-											</td>
+											<td class="font-mono">{formatCurrency(amount)}</td>
 											<td class="font-mono">{formatDate(dueDate)}</td>
 											<td>
 												<span

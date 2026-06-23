@@ -6,6 +6,7 @@ import { actions } from "astro:actions";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
+import { formatCurrency } from "~/lib/transforms";
 import { ROOM_TYPE_LABELS } from "../../_data";
 
 export const partial = true;
@@ -34,7 +35,7 @@ if (!room) Astro.response.status = 404;
 					<span class="font-bold">Jenis Kamar:</span>
 					<span>{ROOM_TYPE_LABELS[room.roomType] ?? room.roomType}</span>
 					<span class="font-bold">Harga/Bulan:</span>
-					<span>Rp {room.monthlyPrice.toLocaleString("id-ID")}</span>
+					<span>{formatCurrency(room.monthlyPrice)}</span>
 					<span class="font-bold">Status:</span>
 					<span
 						class:list={[

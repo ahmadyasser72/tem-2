@@ -1,10 +1,13 @@
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 import "dayjs/locale/id";
 
 dayjs.locale("id");
-
-// register required dayjs plugins here
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault("Asia/Makassar");
 
 export function formatDate(
 	date: Date | string | number | null | undefined,
@@ -15,16 +18,16 @@ export function formatDate(
 }
 
 export function getCurrentMonthStr(): string {
-	const now = new Date();
-	return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+	return dayjs().format("YYYY-MM");
 }
 
 export function parsePeriod(from: string, to: string) {
-	// Parse start and end month
-	const [fromYear, fromMonth] = from.split("-").map(Number);
-	const [toYear, toMonth] = to.split("-").map(Number);
-	const startDate = new Date(fromYear, fromMonth - 1, 1);
-	const endDate = new Date(toYear, toMonth, 0, 23, 59, 59, 999);
+	const startDate = dayjs(from + "-01")
+		.startOf("month")
+		.toDate();
+	const endDate = dayjs(to + "-01")
+		.endOf("month")
+		.toDate();
 
 	return { startDate, endDate };
 }

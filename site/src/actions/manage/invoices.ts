@@ -15,6 +15,8 @@ import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 import { isError } from "es-toolkit/predicate";
 
+import { formatCurrency } from "~/lib/transforms";
+
 // ─── Generate Payment Link ──────────────────────────────────────
 export const generatePaymentLink = defineAction({
 	accept: "form",
@@ -135,7 +137,7 @@ export const generatePaymentLink = defineAction({
 				tableName: "invoices",
 				recordId: invoiceId,
 				details: auditDetail.payment(
-					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - Rp ${invoice.amount.toLocaleString("id-ID")}`,
+					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - ${formatCurrency(invoice.amount)}`,
 					invoice.amount,
 					result.reference,
 				),

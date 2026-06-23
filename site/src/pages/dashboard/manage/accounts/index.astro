@@ -7,6 +7,7 @@ import FormResult from "~/components/form/form-result.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { ROLE_BADGES } from "~/lib/badges";
+import { formatDate } from "~/lib/date";
 import { createActionResult } from "~/lib/form-result";
 import { accountsQuerySchema, fetchAccounts } from "./_data";
 
@@ -128,7 +129,9 @@ const accounts = await fetchAccounts(params);
 									{role}
 								</span>
 							</td>
-							<td class="text-base-content/70 text-xs">{lastAccessed}</td>
+							<td class="text-base-content/70 text-xs">
+								{formatDate(lastAccessed)}
+							</td>
 							<td class="text-right">
 								<div class="flex justify-end gap-1.5">
 									{role !== "admin" && (

@@ -28,7 +28,7 @@ const allRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
 	with: {
 		leases: {
-			columns: {},
+			columns: { id: true },
 			where: { isActive: true },
 		},
 	},

@@ -1,11 +1,11 @@
 ---
 import { actions } from "astro:actions";
 
-import ActionsMenu from "~/components/ui/actions-menu.astro";
 import FilterPopover from "~/components/data/filter-popover.astro";
-import FormResult from "~/components/form/form-result.astro";
-import Icon from "~/components/ui/icon.astro";
 import SearchInput from "~/components/data/search-input.astro";
+import FormResult from "~/components/form/form-result.astro";
+import ActionsMenu from "~/components/ui/actions-menu.astro";
+import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
 import { createActionResult } from "~/lib/form-result";
@@ -157,9 +157,7 @@ const filteredTenants = await fetchTenants(params);
 											target="_blank"
 										>
 											<Icon name="line-md:phone-call-twotone" size="size-3.5" />
-											{phoneNumber.startsWith("62")
-												? "+" + phoneNumber
-												: phoneNumber}
+											+{phoneNumber}
 										</a>
 									</td>
 									<td>
@@ -201,20 +199,8 @@ const filteredTenants = await fetchTenants(params);
 													<li>
 														<button
 															hx-get={
-																"/dashboard/manage/tenants/modal/move/" + id
-															}
-															class="flex items-center gap-2"
-														>
-															<Icon name="line-md:arrow-right-circle" />
-															Pindah Kamar
-														</button>
-													</li>
-													<li>
-														<button
-															hx-get={
 																"/dashboard/manage/tenants/modal/edit/" + id
 															}
-															class="flex items-center gap-2"
 														>
 															<Icon name="line-md:edit" />
 															Edit
@@ -223,24 +209,53 @@ const filteredTenants = await fetchTenants(params);
 													<li>
 														<button
 															hx-get={
+																"/dashboard/manage/tenants/modal/move/" + id
+															}
+														>
+															<Icon name="line-md:arrow-right-circle" />
+															Pindah Kamar
+														</button>
+													</li>
+													<li>
+														<button
+															hx-get={
 																"/dashboard/manage/tenants/modal/terminate/" +
 																id
 															}
-															class="text-error flex items-center gap-2"
+															class="text-error"
 														>
 															<Icon name="line-md:close" /> Berhenti Menginap
 														</button>
 													</li>
 												</ActionsMenu>
 											) : (
-												<button
-													hx-get={
-														"/dashboard/manage/tenants/modal/register/" + id
-													}
-													class="btn btn-outline btn-success btn-xs flex items-center gap-1"
+												<ActionsMenu
+													id={id}
+													direction="top"
+													menuClass="w-52"
+													triggerLabel="Aksi"
 												>
-													<Icon name="line-md:plus" /> Sewa Baru
-												</button>
+													<li>
+														<button
+															hx-get={
+																"/dashboard/manage/tenants/modal/edit/" + id
+															}
+														>
+															<Icon name="line-md:edit" />
+															Edit
+														</button>
+													</li>
+													<li>
+														<button
+															hx-get={
+																"/dashboard/manage/tenants/modal/register/" + id
+															}
+															class="text-success"
+														>
+															<Icon name="line-md:plus" /> Sewa Baru
+														</button>
+													</li>
+												</ActionsMenu>
 											)}
 										</div>
 									</td>

@@ -41,7 +41,7 @@ if (!tenant) Astro.response.status = 404;
 					<span class="font-bold">{tenant.fullName}</span>
 
 					<span class="text-base-content/60 font-semibold">No. HP:</span>
-					<span class="font-mono">{tenant.phoneNumber ?? "-"}</span>
+					<span class="font-mono">+{tenant.phoneNumber ?? "-"}</span>
 
 					<span class="text-base-content/60 font-semibold">Daerah Asal:</span>
 					<span>{tenant.originRegion ?? "-"}</span>

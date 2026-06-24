@@ -62,8 +62,6 @@ beforeAll(async () => {
 		})
 		.returning({ id: leases.id });
 
-	leaseId = lease.id;
-
 	// Invoice due within 3 days from ref date
 	await db.insert(invoices).values({
 		leaseId: lease.id,

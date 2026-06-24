@@ -8,12 +8,14 @@ import pinoPretty from "pino-pretty";
 
 import { handler as ssrHandler } from "./dist/server/entry.mjs";
 
+const logDir = process.env.LOG_PATH ?? "./logs";
+
 const app = Fastify({
 	loggerInstance: pino(
 		{ name: "site" },
 		pino.multistream([
 			{ level: "info", stream: pinoPretty() },
-			{ level: "info", stream: pino.destination("../logs/site.log") },
+			{ level: "info", stream: pino.destination(`${logDir}/site.log`) },
 		]),
 	),
 });

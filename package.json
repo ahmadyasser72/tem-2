@@ -14,7 +14,7 @@
 		"dev": "pacwich run dev",
 		"prebuild": "bun --cwd=packages/database --sequential db:push db:seed && bun wa:login",
 		"build": "pacwich run build @e-kos/site",
-		"start": "pacwich run start",
+		"start": "LOG_PATH=$(pwd)/logs pacwich run start",
 		"wa:login": "bun --cwd=packages/whatsapp-bot run login",
 		"wa:logout": "bun --cwd=packages/whatsapp-bot run logout",
 		"scheduler:trigger": "bun --cwd=packages/scheduler run trigger",

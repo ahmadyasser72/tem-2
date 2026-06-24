@@ -68,13 +68,15 @@ export const main = async () => {
 		process.exit(1);
 	}
 
+	const logDir = process.env.LOG_PATH ?? "./logs";
+
 	const sock = makeWASocket({
 		auth: state,
 		logger: pino(
 			{ name: "whatsapp-bot" },
 			pino.multistream([
 				{ level: "info", stream: pinoPretty() },
-				{ level: "info", stream: pino.destination("../../logs/bot.log") },
+				{ level: "info", stream: pino.destination(`${logDir}/bot.log`) },
 			]),
 		),
 		shouldSyncHistoryMessage: () => false,

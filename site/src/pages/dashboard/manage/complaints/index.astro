@@ -45,7 +45,7 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 	<Fragment slot="page-action">
 		<a
 			class="btn btn-outline btn-sm"
-			href={"/dashboard/manage/complaints/report/download" + Astro.url.search}
+			href={`/dashboard/manage/complaints/report/download${Astro.url.search}`}
 			download
 		>
 			<Icon name="line-md:download" /> PDF

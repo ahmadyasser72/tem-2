@@ -20,13 +20,13 @@ const {
 
 <button
 	class:list={["btn btn-outline btn-xs", triggerClass]}
-	popovertarget={"aksi-" + id}
+	popovertarget={`aksi-${id}`}
 >
 	<Icon name={triggerIcon} size="size-3.5" />
 	{triggerLabel && <span>{triggerLabel}</span>}
 </button>
 <ul
-	id={"aksi-" + id}
+	id={`aksi-${id}`}
 	class:list={[
 		"dropdown dropdown-end dropdown-top",
 		"menu menu-sm bg-base-100 border-base-300 border shadow-sm",

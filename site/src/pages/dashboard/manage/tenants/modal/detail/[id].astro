@@ -27,7 +27,7 @@ const tenantLeases = tenant
 		})
 	: [];
 
-const activeLease = tenantLeases.find((l) => l.isActive) ?? null;
+const activeLease = tenantLeases.find((lease) => lease.isActive) ?? null;
 
 if (!tenant) Astro.response.status = 404;
 ---
@@ -83,7 +83,7 @@ if (!tenant) Astro.response.status = 404;
 					) : (
 						<div class="divide-base-200 max-h-48 divide-y overflow-y-auto">
 							{tenantLeases
-								.filter((l) => !l.isActive)
+								.filter((lease) => !lease.isActive)
 								.map((lease) => (
 									<div class="flex items-center justify-between py-2.5 text-xs">
 										<div class="flex flex-col gap-0.5">

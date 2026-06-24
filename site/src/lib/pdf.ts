@@ -5,12 +5,6 @@ import { CHROMIUM_PATH } from "astro:env/server";
 import type { Browser } from "puppeteer-core";
 import puppeteer from "puppeteer-core";
 
-interface GeneratePdfOptions {
-	url: string;
-}
-
-// ── Browser singleton ──────────────────────────────────────────────────────
-
 let browserInstance: Browser | null = null;
 let browserPromise: Promise<Browser> | null = null;
 
@@ -24,7 +18,7 @@ if (import.meta.hot) {
 	allBrowsers = new Set();
 }
 
-async function getBrowser(): Promise<Browser> {
+const getBrowser = async (): Promise<Browser> => {
 	if (browserInstance?.connected) return browserInstance;
 	if (browserPromise) return browserPromise;
 
@@ -38,9 +32,11 @@ async function getBrowser(): Promise<Browser> {
 			args: ["--no-sandbox", "--headless=new"],
 		})
 		.then((b) => {
+			console.log("pdf: browser launched");
 			browserInstance = b;
 			allBrowsers.add(b);
 			b.on("disconnected", () => {
+				console.log("pdf: browser disconnected");
 				browserInstance = null;
 				browserPromise = null;
 				allBrowsers.delete(b);
@@ -49,12 +45,15 @@ async function getBrowser(): Promise<Browser> {
 		});
 
 	return await browserPromise;
-}
+};
 
-// ── HMR cleanup — close all browsers before module reload ──────────────────
+// HMR cleanup — close all browsers before module reload
 
 if (import.meta.hot) {
 	import.meta.hot.dispose(() => {
+		console.log("pdf: HMR cleanup — disposing browsers", {
+			count: allBrowsers.size,
+		});
 		browserPromise = null;
 		browserInstance = null;
 		for (const b of allBrowsers) {
@@ -64,11 +63,11 @@ if (import.meta.hot) {
 	});
 }
 
-// ── Shared auth token for puppeteer ────────────────────────────────────────
+// Shared auth token for puppeteer
 
 let pdfToken: string | null = null;
 
-export function getPDFToken(): string {
+export const getPDFToken = (): string => {
 	// Dev: HMR resets modules constantly, pakai token tetap biar middleware cocok
 	if (import.meta.env.DEV) return "dev-pdf-token";
 
@@ -76,18 +75,16 @@ export function getPDFToken(): string {
 		// 48-char hex — practically unguessable
 		const bytes = new Uint8Array(24);
 		crypto.getRandomValues(bytes);
-		pdfToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
-			"",
-		);
+		pdfToken = Array.from(bytes, (byte) =>
+			byte.toString(16).padStart(2, "0"),
+		).join("");
 	}
 	return pdfToken;
-}
+};
 
-// ── Generate PDF ───────────────────────────────────────────────────────────
+// Generate PDF
 
-export async function generatePDF(opts: GeneratePdfOptions): Promise<Buffer> {
-	const { url } = opts;
-
+export const generatePDF = async (url: string): Promise<Buffer> => {
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 
@@ -100,21 +97,25 @@ export async function generatePDF(opts: GeneratePdfOptions): Promise<Buffer> {
 			preferCSSPageSize: true,
 		});
 
+		console.log("pdf: generated successfully", { url });
 		return Buffer.from(pdf);
+	} catch (err) {
+		console.error("pdf: generation failed", {
+			url,
+			error: err instanceof Error ? err.message : err,
+		});
+		throw err;
 	} finally {
 		await page.close();
 	}
-}
+};
 
-// ── Reusable download handler ──────────────────────────────────────────────
+// Reusable download handler
 
-type PathResolver = string | ((reqUrl: URL) => string);
-type FilenameResolver = string | ((reqUrl: URL) => string);
-
-export function makeDownloadHandler(
-	path: PathResolver,
-	filename: FilenameResolver = "laporan",
-): APIRoute {
+export const makeDownloadHandler = (
+	path: string | ((reqUrl: URL) => string),
+	filename: string | ((reqUrl: URL) => string) = "laporan",
+): APIRoute => {
 	return async ({ url: reqUrl, locals }) => {
 		const search = reqUrl.searchParams;
 		const baseName =
@@ -130,7 +131,7 @@ export function makeDownloadHandler(
 		const renderPath = typeof path === "function" ? path(reqUrl) : path;
 		const pageUrl = `${reqUrl.origin}${renderPath}?${search.toString()}`;
 
-		const pdfBuffer = await generatePDF({ url: pageUrl });
+		const pdfBuffer = await generatePDF(pageUrl);
 
 		return new Response(pdfBuffer as unknown as BodyInit, {
 			headers: {
@@ -140,4 +141,4 @@ export function makeDownloadHandler(
 			},
 		});
 	};
-}
+};

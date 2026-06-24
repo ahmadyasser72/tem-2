@@ -4,14 +4,14 @@ import { botAuth } from "@e-kos/database/schema";
 import { BufferJSON, initAuthCreds, proto } from "baileys";
 import type { AuthenticationState, SignalDataTypeMap } from "baileys";
 
-function fixKey(key: string) {
+const fixKey = (key: string) => {
 	return key.replace(/\//g, "__").replace(/:/g, "-");
-}
+};
 
-export async function useSqliteAuthState(): Promise<{
+export const useSqliteAuthState = async (): Promise<{
 	state: AuthenticationState;
 	saveCreds: () => Promise<void>;
-}> {
+}> => {
 	const credRow = await db.query.botAuth.findFirst({
 		where: { key: "creds" },
 	});
@@ -91,4 +91,4 @@ export async function useSqliteAuthState(): Promise<{
 				});
 		},
 	};
-}
+};

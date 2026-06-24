@@ -8,10 +8,13 @@ import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
 import { formatCurrency } from "~/lib/transforms";
+import {
+	COMPLAINT_STATUS_BADGES,
+	COMPLAINT_STATUS_LABELS,
+} from "~/pages/dashboard/manage/complaints/_data";
 
 const now = new Date();
 
-// 1. Rooms Stats
 const allRooms = await db.query.rooms.findMany({
 	with: {
 		leases: {
@@ -27,7 +30,6 @@ const vacantRooms = sumBy(allRooms, ({ isActive, leases }) =>
 	isActive && leases.length === 0 ? 1 : 0,
 );
 
-// 2. Tenants Stats
 const allTenants = await db.query.tenants.findMany({
 	with: {
 		leases: {
@@ -52,7 +54,6 @@ const leasesEndingThisMonth = allTenants.reduce((count, tenant) => {
 	return count;
 }, 0);
 
-// 3. Invoices Stats & Pending Bills
 const unpaidInvoices = await db.query.invoices.findMany({
 	where: { status: "unpaid" },
 	with: {
@@ -83,7 +84,6 @@ const pendingBills = unpaidInvoices.slice(0, 5).map((inv) => {
 	};
 });
 
-// 4. Complaints Stats & Recent Complaints
 const complaintsFromDb = await db.query.complaints.findMany({
 	with: {
 		tenant: {
@@ -105,21 +105,17 @@ const activeComplaintsCount = sumBy(complaintsFromDb, ({ status }) =>
 	status !== "resolved" ? 1 : 0,
 );
 
-const recentComplaints = complaintsFromDb.map((c) => {
-	const activeLease = c.tenant?.leases?.[0];
-	const statusMap = {
-		open: "Terbuka",
-		in_progress: "Proses",
-		resolved: "Selesai",
-	};
+const recentComplaints = complaintsFromDb.map((complaint) => {
+	const activeLease = complaint.tenant?.leases?.[0];
 	return {
-		title: c.description,
+		title: complaint.description,
 		room: activeLease?.room?.roomNumber
 			? `Kamar ${activeLease.room.roomNumber}`
 			: "Umum",
-		tenant: c.tenant?.fullName ?? "-",
-		date: c.createdAt,
-		status: statusMap[c.status] || "Terbuka",
+		tenant: complaint.tenant?.fullName ?? "-",
+		date: complaint.createdAt,
+		status: COMPLAINT_STATUS_LABELS[complaint.status] ?? "Terbuka",
+		badge: COMPLAINT_STATUS_BADGES[complaint.status] ?? "badge-neutral",
 	};
 });
 
@@ -160,12 +156,6 @@ const getStatusBadge = (status: string) => {
 		return "badge-info";
 	}
 	return "badge-neutral";
-};
-
-const COMPLAINT_BADGES: Record<string, string> = {
-	Terbuka: "badge-error",
-	Proses: "badge-warning",
-	Selesai: "badge-success",
 };
 ---
 
@@ -253,30 +243,27 @@ const COMPLAINT_BADGES: Record<string, string> = {
 				</div>
 				<div class="divide-base-200 divide-y">
 					{
-						recentComplaints.map(({ title, room, tenant, date, status }) => (
-							<div class="hover:bg-base-200/20 flex items-start justify-between rounded-lg px-2 py-3.5 transition-colors first:pt-0 last:pb-0">
-								<div class="flex flex-col gap-1">
-									<span class="text-base-content text-sm font-bold">
-										{title}
-									</span>
-									<div class="text-base-content/60 flex flex-wrap items-center gap-2 text-xs">
-										<span class="badge badge-ghost badge-sm">{room}</span>
-										<span>•</span>
-										<span>{tenant}</span>
-										<span>•</span>
-										<span>{formatDate(date)}</span>
+						recentComplaints.map(
+							({ title, room, tenant, date, status, badge }) => (
+								<div class="hover:bg-base-200/20 flex items-start justify-between rounded-lg px-2 py-3.5 transition-colors first:pt-0 last:pb-0">
+									<div class="flex flex-col gap-1">
+										<span class="text-base-content text-sm font-bold">
+											{title}
+										</span>
+										<div class="text-base-content/60 flex flex-wrap items-center gap-2 text-xs">
+											<span class="badge badge-ghost badge-sm">{room}</span>
+											<span>•</span>
+											<span>{tenant}</span>
+											<span>•</span>
+											<span>{formatDate(date)}</span>
+										</div>
 									</div>
+									<span class:list={["badge badge-sm font-bold", badge]}>
+										{status}
+									</span>
 								</div>
-								<span
-									class:list={[
-										"badge badge-sm font-bold",
-										COMPLAINT_BADGES[status],
-									]}
-								>
-									{status}
-								</span>
-							</div>
-						))
+							),
+						)
 					}
 				</div>
 			</div>

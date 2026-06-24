@@ -6,10 +6,12 @@ import {
 	users,
 } from "@e-kos/database/schema";
 
-export async function runRentReminder(
+import { logger } from "../logger";
+
+export const runRentReminder = async (
 	systemUser: typeof users.$inferSelect,
 	now?: Date,
-) {
+) => {
 	const ref = now ?? new Date();
 	const threeDaysLater = new Date(ref.getTime() + 3 * 24 * 60 * 60 * 1000);
 
@@ -27,22 +29,23 @@ export async function runRentReminder(
 		},
 	});
 
-	const ids = [] as number[];
-	for (const inv of dueInvoices) {
-		if (!inv.lease?.tenant) continue;
+	const rows = dueInvoices
+		.filter((inv) => inv.lease?.tenant)
+		.map((inv) => ({
+			tenantId: inv.lease!.tenant!.id,
+			invoiceId: inv.id,
+			type: "reminder" as const,
+			status: "pending" as const,
+		}));
 
-		const [inserted] = await db
-			.insert(notifications)
-			.values({
-				tenantId: inv.lease.tenant.id,
-				invoiceId: inv.id,
-				type: "reminder",
-				status: "pending",
-			})
-			.returning({ id: notifications.id });
-
-		ids.push(inserted.id);
-	}
+	const ids = (
+		rows.length > 0
+			? await db
+					.insert(notifications)
+					.values(rows)
+					.returning({ id: notifications.id })
+			: []
+	).map((r) => r.id);
 
 	const count = ids.length;
 	if (count > 0) {
@@ -58,5 +61,5 @@ export async function runRentReminder(
 		});
 	}
 
-	console.log("%d reminders created", count);
-}
+	logger.info({ count }, "Reminders created");
+};

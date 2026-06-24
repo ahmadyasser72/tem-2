@@ -2,7 +2,7 @@ import { db, INVOICE_STATUS } from "@e-kos/database";
 import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
 
 import { z } from "astro/zod";
-import { sumBy } from "es-toolkit";
+import { sumBy, uniqBy } from "es-toolkit";
 
 import { parseDateRange } from "~/lib/date";
 import { periodFields, querySchema } from "~/lib/query";
@@ -79,11 +79,6 @@ function buildCarryoverWhere(
 	return where;
 }
 
-function getPaymentUrl(reference: string | null): string | null {
-	if (!reference) return null;
-	return getPaymentUrlFromReference(reference);
-}
-
 function mapInvoice(inv: {
 	id: number;
 	amount: number;
@@ -105,7 +100,9 @@ function mapInvoice(inv: {
 		status: inv.status,
 		gatewayRef: inv.duitkuReference ?? "-",
 		duitkuReference: inv.duitkuReference,
-		paymentUrl: getPaymentUrl(inv.duitkuReference),
+		paymentUrl: inv.duitkuReference
+			? getPaymentUrlFromReference(inv.duitkuReference)
+			: null,
 	};
 }
 
@@ -118,7 +115,7 @@ export async function fetchTransactions(
 	// Main query: invoices within the period
 	const where = buildTransactionWhere(params, extra);
 
-	const invoices = await db.query.invoices.findMany({
+	let invoices = await db.query.invoices.findMany({
 		where,
 		with: {
 			lease: {
@@ -141,26 +138,24 @@ export async function fetchTransactions(
 		});
 
 		// Merge, deduplicate by id (safety — date ranges are disjoint)
-		const seen = new Set(invoices.map((i) => i.id));
-		for (const inv of carryover) {
-			if (!seen.has(inv.id)) {
-				invoices.push(inv);
-				seen.add(inv.id);
-			}
-		}
+		invoices = uniqBy([...invoices, ...carryover], (inv) => inv.id);
 	}
 
 	return invoices.map(mapInvoice);
 }
 
 export function getTransactionStats(transactions: TransactionRow[]) {
-	const paid = transactions.filter((t) => t.status === "paid");
-	const unpaid = transactions.filter((t) => t.status !== "paid");
+	const paid = transactions.filter(
+		(transaction) => transaction.status === "paid",
+	);
+	const unpaid = transactions.filter(
+		(transaction) => transaction.status !== "paid",
+	);
 
 	return {
-		totalRevenue: sumBy(paid, (t) => t.amount),
+		totalRevenue: sumBy(paid, (transaction) => transaction.amount),
 		paidCount: paid.length,
 		unpaidCount: unpaid.length,
-		outstandingAmount: sumBy(unpaid, (t) => t.amount),
+		outstandingAmount: sumBy(unpaid, (transaction) => transaction.amount),
 	};
 }

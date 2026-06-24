@@ -11,24 +11,26 @@ import {
 
 const params = Astro.locals.parseQuery(reportRoomQuerySchema);
 
-// 1. Query all rooms
 const allRooms = await fetchAllRooms();
 
-// 2. Apply filters
-const filteredRooms = allRooms.filter((r) => {
-	if (params.status === "inactive" && r.isActive) return false;
-	if (params.status === "occupied" && (!r.isActive || !r.tenantName))
+const filteredRooms = allRooms.filter((room) => {
+	if (params.status === "inactive" && room.isActive) return false;
+	if (params.status === "occupied" && (!room.isActive || !room.tenantName))
 		return false;
-	if (params.status === "vacant" && (!r.isActive || r.tenantName)) return false;
-	if (params.type && r.roomType !== params.type) return false;
+	if (params.status === "vacant" && (!room.isActive || room.tenantName))
+		return false;
+	if (params.type && room.roomType !== params.type) return false;
 	return true;
 });
 
-// 3. Stats
 const totalKamar = allRooms.length;
-const terisi = allRooms.filter((r) => r.isActive && r.tenantName).length;
-const tersedia = allRooms.filter((r) => r.isActive && !r.tenantName).length;
-const nonaktif = allRooms.filter((r) => !r.isActive).length;
+const terisi = allRooms.filter(
+	(room) => room.isActive && room.tenantName,
+).length;
+const tersedia = allRooms.filter(
+	(room) => room.isActive && !room.tenantName,
+).length;
+const nonaktif = allRooms.filter((room) => !room.isActive).length;
 
 // Subtitle
 const filterParts: string[] = [];

@@ -9,19 +9,17 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault("Asia/Makassar");
 
-export function formatDate(
+export const formatDate = (
 	date: Date | string | number | null | undefined,
 	formatStr = "DD MMM YYYY",
-): string {
+): string => {
 	if (!date) return "-";
 	return dayjs(date).format(formatStr);
-}
+};
 
-export function getCurrentMonthStr(): string {
-	return dayjs().format("YYYY-MM");
-}
+export const getCurrentMonthStr = (): string => dayjs().format("YYYY-MM");
 
-export function parsePeriod(from: string, to: string) {
+export const parsePeriod = (from: string, to: string) => {
 	const startDate = dayjs(from + "-01")
 		.startOf("month")
 		.toDate();
@@ -30,28 +28,23 @@ export function parsePeriod(from: string, to: string) {
 		.toDate();
 
 	return { startDate, endDate };
-}
+};
 
-export function normalizePeriodRange(
+export const normalizePeriodRange = (
 	from: string,
 	to: string,
-): { from: string; to: string } {
+): { from: string; to: string } => {
 	if (from > to) {
 		return { from, to: from };
 	}
 	return { from, to };
-}
+};
 
-export function getPeriodDefaults(): { from: string; to: string } {
-	const current = getCurrentMonthStr();
-	return { from: current, to: current };
-}
-
-export function parseDateRange(
+export const parseDateRange = (
 	from?: string | null,
 	to?: string | null,
 	mode: "month" | "day" = "month",
-): { startDate?: Date; endDate?: Date } {
+): { startDate?: Date; endDate?: Date } => {
 	if (!from && !to) {
 		return {};
 	}
@@ -76,6 +69,6 @@ export function parseDateRange(
 	}
 
 	return { startDate, endDate };
-}
+};
 
 export default dayjs;

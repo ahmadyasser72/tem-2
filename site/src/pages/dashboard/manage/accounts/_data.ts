@@ -17,9 +17,9 @@ export type AccountRow = {
 	role: string;
 };
 
-export async function fetchAccounts(
+export const fetchAccounts = async (
 	params: z.infer<typeof accountsQuerySchema>,
-): Promise<AccountRow[]> {
+): Promise<AccountRow[]> => {
 	const accounts = await db.query.users.findMany({
 		columns: {
 			id: true,
@@ -40,4 +40,4 @@ export async function fetchAccounts(
 		},
 	});
 	return accounts;
-}
+};

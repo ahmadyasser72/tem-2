@@ -9,6 +9,8 @@
 	],
 	"scripts": {
 		"check": "pacwich run check",
+		"pretest": "DATABASE_PATH=$(pwd)/test.db.sqlite bun --cwd=packages/database --sequential db:push db:seed",
+		"test": "DATABASE_PATH=$(pwd)/test.db.sqlite bun test --sequential",
 		"dev": "pacwich run dev",
 		"prebuild": "bun --cwd=packages/database --sequential db:push db:seed && bun wa:login",
 		"build": "pacwich run build @e-kos/site",

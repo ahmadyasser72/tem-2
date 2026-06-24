@@ -4,11 +4,18 @@ import fastifyMiddie from "@fastify/middie";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import pino from "pino";
+import pinoPretty from "pino-pretty";
 
 import { handler as ssrHandler } from "./dist/server/entry.mjs";
 
 const app = Fastify({
-	loggerInstance: pino(pino.destination("../logs/site.log")),
+	loggerInstance: pino(
+		{ name: "site" },
+		pino.multistream([
+			{ level: "info", stream: pinoPretty() },
+			{ level: "info", stream: pino.destination("../logs/site.log") },
+		]),
+	),
 });
 
 await app

@@ -65,7 +65,7 @@ if (!room) Astro.response.status = 404;
 
 					<span class="text-base-content/60 font-semibold">Penghuni:</span>
 					<span>
-						{roomLeases.find((l) => l.isActive)?.tenant?.fullName ?? (
+						{roomLeases.find((lease) => lease.isActive)?.tenant?.fullName ?? (
 							<span class="text-base-content/40 italic">Kosong</span>
 						)}
 					</span>

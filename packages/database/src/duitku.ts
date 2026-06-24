@@ -1,13 +1,12 @@
 import { createHmac } from "node:crypto";
 
-// ─── DuitkuConfig ──────────────────────────────────────────────────
 export interface DuitkuConfig {
 	merchantCode: string;
 	apiKey: string;
 	baseUrl: string;
 }
 
-export function config(): DuitkuConfig {
+export const config = (): DuitkuConfig => {
 	const {
 		DUITKU_MERCHANT_CODE,
 		DUITKU_API_KEY,
@@ -22,9 +21,8 @@ export function config(): DuitkuConfig {
 		apiKey: DUITKU_API_KEY,
 		baseUrl: DUITKU_BASE_URL,
 	};
-}
+};
 
-// ─── DuitkuError ───────────────────────────────────────────────────
 export class DuitkuError extends Error {
 	code: string;
 	constructor(code: string, message: string) {
@@ -34,7 +32,6 @@ export class DuitkuError extends Error {
 	}
 }
 
-// ─── Types ─────────────────────────────────────────────────────────
 export interface CreateInvoiceParams {
 	paymentAmount: number;
 	merchantOrderId: string;
@@ -60,42 +57,39 @@ export interface CreateInvoiceResponse {
 	totalAmount: number;
 }
 
-// ─── Signature ─────────────────────────────────────────────────────
-export function generateSignature(
+export const generateSignature = (
 	merchantCode: string,
 	timestamp: string,
 	apiKey: string,
-): string {
+): string => {
 	return createHmac("sha256", apiKey)
 		.update(merchantCode + timestamp)
 		.digest("hex");
-}
+};
 
-export function verifyCallbackSignature(
+export const verifyCallbackSignature = (
 	merchantCode: string,
 	amount: number,
 	merchantOrderId: string,
 	signature: string,
 	apiKey: string,
-): boolean {
+): boolean => {
 	const stringToSign = merchantCode + amount + merchantOrderId;
 	const calculated = createHmac("sha256", apiKey)
 		.update(stringToSign)
 		.digest("hex");
 	return calculated === signature;
-}
+};
 
-// ─── Payment URL ───────────────────────────────────────────────────
 /** Derive payment redirect URL from Duitku reference. */
-export function getPaymentUrlFromReference(reference: string): string {
+export const getPaymentUrlFromReference = (reference: string): string => {
 	const appUrl = config().baseUrl.replace("api", "app");
 	return `${appUrl}/redirect_checkout?reference=${reference}`;
-}
+};
 
-// ─── Create Invoice ────────────────────────────────────────────────
-export async function createInvoice(
+export const createInvoice = async (
 	params: CreateInvoiceParams,
-): Promise<CreateInvoiceResponse> {
+): Promise<CreateInvoiceResponse> => {
 	const { merchantCode, apiKey, baseUrl } = config();
 	const timestamp = Date.now().toString();
 	const signature = generateSignature(merchantCode, timestamp, apiKey);
@@ -158,4 +152,4 @@ export async function createInvoice(
 		currency: String(json.Currency ?? json.currency ?? ""),
 		totalAmount: Number(json.TotalAmount ?? json.totalAmount ?? 0),
 	};
-}
+};

@@ -1,10 +1,10 @@
 import { db } from "@e-kos/database";
 import { complaints, tenants } from "@e-kos/database/schema";
 
-export async function submitComplaint(
+export const submitComplaint = async (
 	tenant: typeof tenants.$inferSelect,
 	text: string,
-): Promise<string> {
+): Promise<string> => {
 	const complaintDesc = text.replace(/^komplain\s*/i, "").trim();
 
 	if (!complaintDesc || complaintDesc.length < 5) {
@@ -51,4 +51,4 @@ export async function submitComplaint(
 		"Kami akan segera memproses laporan Anda.",
 		"Simpan ID laporan untuk referensi.",
 	].join("\n");
-}
+};

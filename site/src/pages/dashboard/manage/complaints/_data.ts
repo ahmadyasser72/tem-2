@@ -5,7 +5,6 @@ import { countBy } from "es-toolkit";
 
 import { parseDateRange } from "~/lib/date";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
-import { getActiveLease } from "~/lib/transforms";
 
 export const complaintQuerySchema = z.object({
 	query: querySchema,
@@ -24,10 +23,10 @@ export type ComplaintRow = {
 	resolveNotes: string | null;
 };
 
-export async function fetchComplaints(
+export const fetchComplaints = async (
 	params: z.infer<typeof complaintQuerySchema>,
 	extra?: { usePeriod?: boolean },
-): Promise<ComplaintRow[]> {
+): Promise<ComplaintRow[]> => {
 	const where: Record<string, unknown> = {};
 
 	if (params.query) {
@@ -67,7 +66,7 @@ export async function fetchComplaints(
 	});
 
 	return complaints.map((complaint) => {
-		const activeLease = getActiveLease(complaint.tenant);
+		const [activeLease] = complaint.tenant?.leases ?? [];
 		return {
 			id: complaint.id,
 			description: complaint.description,
@@ -79,17 +78,17 @@ export async function fetchComplaints(
 			resolveNotes: complaint.resolveNotes,
 		};
 	});
-}
+};
 
-export function getComplaintStats(complaints: ComplaintRow[]) {
-	const counts = countBy(complaints, (c) => c.status);
+export const getComplaintStats = (complaints: ComplaintRow[]) => {
+	const counts = countBy(complaints, (complaint) => complaint.status);
 	return [
 		{ label: "Total Komplain", value: complaints.length },
 		{ label: "Terbuka", value: counts.open ?? 0 },
 		{ label: "Proses", value: counts.in_progress ?? 0 },
 		{ label: "Selesai", value: counts.resolved ?? 0 },
 	];
-}
+};
 
 export const COMPLAINT_STATUS_BADGES: Record<
 	(typeof COMPLAINT_STATUS)[number],

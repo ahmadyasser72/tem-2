@@ -1,5 +1,5 @@
 import { db, eq } from "@e-kos/database";
-import { auditDetail, auditLogs, users } from "@e-kos/database/schema";
+import { auditDetail, users } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -41,12 +41,11 @@ export const login = defineAction({
 				.where(eq(users.id, user.id)),
 		]);
 
-		await db.insert(auditLogs).values({
-			userId: user.id,
-			action: "LOGIN",
-			tableName: "users",
-			recordId: user.id,
-			details: auditDetail.generic(`User ${user.username} berhasil login`),
-		});
+		await context.locals.logAudit(
+			"LOGIN",
+			"users",
+			user.id,
+			auditDetail.generic(`User ${user.username} berhasil login`),
+		);
 	},
 });

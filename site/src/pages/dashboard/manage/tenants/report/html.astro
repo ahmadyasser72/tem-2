@@ -10,9 +10,9 @@ const params = Astro.locals.parseQuery(reportTenantsQuerySchema);
 const allTenants = await fetchAllTenants();
 
 // Apply status filter
-const filteredTenants = allTenants.filter((t) => {
-	if (params.status === "active" && !t.isActive) return false;
-	if (params.status === "completed" && t.isActive) return false;
+const filteredTenants = allTenants.filter((tenant) => {
+	if (params.status === "active" && !tenant.isActive) return false;
+	if (params.status === "completed" && tenant.isActive) return false;
 	return true;
 });
 
@@ -56,11 +56,11 @@ const total = filteredTenants.length;
 								endDate,
 								isActive,
 							},
-							i,
+							idx,
 						) => (
 							<tr>
 								<td style="text-align: center; font-family: 'Courier New', monospace;">
-									{i + 1}
+									{idx + 1}
 								</td>
 								<td>{fullName}</td>
 								<td style="font-family: 'Courier New', monospace;">

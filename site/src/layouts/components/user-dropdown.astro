@@ -2,6 +2,7 @@
 import { actions } from "astro:actions";
 
 import Icon from "~/components/ui/icon.astro";
+import { ROLE_BADGES } from "~/lib/badges";
 
 export interface Props {
 	user: {
@@ -12,12 +13,6 @@ export interface Props {
 }
 
 const { user } = Astro.props;
-
-const ROLE_BADGE: Record<string, string> = {
-	admin: "badge-primary",
-	staff: "badge-secondary",
-	owner: "badge-accent",
-};
 
 const initial = user.name.charAt(0).toUpperCase();
 ---
@@ -37,7 +32,7 @@ const initial = user.name.charAt(0).toUpperCase();
 		<span
 			class:list={[
 				"badge badge-xs uppercase",
-				ROLE_BADGE[user.role] ?? "badge-ghost",
+				ROLE_BADGES[user.role] ?? "badge-ghost",
 			]}>{user.role}</span
 		>
 	</div>

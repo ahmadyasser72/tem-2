@@ -19,7 +19,7 @@ export type RoomRow = {
 	tenantName: string | null;
 };
 
-function mapRoomFromDb(room: {
+const mapRoomFromDb = (room: {
 	id: number;
 	roomNumber: string;
 	roomType: (typeof ROOM_TYPES)[number];
@@ -29,8 +29,8 @@ function mapRoomFromDb(room: {
 		isActive: boolean;
 		tenant: { fullName: string } | null;
 	}>;
-}): RoomRow {
-	const activeLease = room.leases.find((l) => l.isActive);
+}): RoomRow => {
+	const activeLease = room.leases.find((lease) => lease.isActive);
 	return {
 		id: room.id,
 		roomNumber: room.roomNumber,
@@ -39,9 +39,9 @@ function mapRoomFromDb(room: {
 		isActive: room.isActive,
 		tenantName: activeLease?.tenant?.fullName ?? null,
 	};
-}
+};
 
-export async function fetchAllRooms(): Promise<RoomRow[]> {
+export const fetchAllRooms = async (): Promise<RoomRow[]> => {
 	const rooms = await db.query.rooms.findMany({
 		with: {
 			leases: {
@@ -51,11 +51,11 @@ export async function fetchAllRooms(): Promise<RoomRow[]> {
 		},
 	});
 	return rooms.map(mapRoomFromDb);
-}
+};
 
-export async function fetchFilteredRooms(
+export const fetchFilteredRooms = async (
 	params: z.infer<typeof roomQuerySchema>,
-): Promise<RoomRow[]> {
+): Promise<RoomRow[]> => {
 	const dbWhere: Record<string, unknown> = {};
 
 	if (params.query) {
@@ -97,12 +97,16 @@ export async function fetchFilteredRooms(
 		},
 	});
 	return rooms.map(mapRoomFromDb);
-}
+};
 
-export async function getAllRoomsStats(rooms: RoomRow[]) {
-	const occupied = sumBy(rooms, (r) => (r.isActive && r.tenantName ? 1 : 0));
-	const vacant = sumBy(rooms, (r) => (r.isActive && !r.tenantName ? 1 : 0));
-	const inactive = sumBy(rooms, (r) => (!r.isActive ? 1 : 0));
+export const getAllRoomsStats = async (rooms: RoomRow[]) => {
+	const occupied = sumBy(rooms, ({ isActive, tenantName }) =>
+		isActive && tenantName ? 1 : 0,
+	);
+	const vacant = sumBy(rooms, ({ isActive, tenantName }) =>
+		isActive && !tenantName ? 1 : 0,
+	);
+	const inactive = sumBy(rooms, ({ isActive }) => (!isActive ? 1 : 0));
 	return [
 		{
 			title: "Total Kamar",
@@ -125,13 +129,7 @@ export async function getAllRoomsStats(rooms: RoomRow[]) {
 			icon: "line-md:close-circle",
 		},
 	];
-}
-
-export function getRoomStatus(room: RoomRow): string {
-	if (!room.isActive) return "Nonaktif";
-	if (room.tenantName) return "Terisi";
-	return "Kosong";
-}
+};
 
 export const roomQuerySchema = z.object({
 	query: querySchema,

@@ -9,6 +9,7 @@
 		"start": "bun start-server.mjs",
 		"build": "astro build",
 		"check": "astro check",
+		"test": "bun test",
 		"dev": "astro dev"
 	},
 	"dependencies": {
@@ -26,6 +27,7 @@
 		"htmx.org": "2.0.10",
 		"iconify-icon": "3.0.2",
 		"pino": "10.3.1",
+		"pino-pretty": "^13.0.0",
 		"puppeteer-core": "^25.1.0",
 		"tailwindcss": "4.3.1"
 	},

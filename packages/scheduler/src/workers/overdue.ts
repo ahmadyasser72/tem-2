@@ -6,10 +6,12 @@ import {
 	users,
 } from "@e-kos/database/schema";
 
-export async function runOverdueCheck(
+import { logger } from "../logger";
+
+export const runOverdueCheck = async (
 	systemUser: typeof users.$inferSelect,
 	now?: Date,
-) {
+) => {
 	const ref = now ?? new Date();
 	const nowTs = Math.floor(ref.getTime() / 1000);
 
@@ -43,5 +45,5 @@ export async function runOverdueCheck(
 		});
 	}
 
-	console.log("Overdue invoices updated: %d", filtered.length);
-}
+	logger.info({ count: filtered.length }, "Overdue invoices updated");
+};

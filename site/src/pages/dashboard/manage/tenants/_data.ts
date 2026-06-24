@@ -18,7 +18,7 @@ export type TenantRow = {
 	isActive: boolean;
 };
 
-function mapTenantFromDb(tenant: {
+const mapTenantFromDb = (tenant: {
 	id: number;
 	fullName: string;
 	phoneNumber: string;
@@ -30,9 +30,9 @@ function mapTenantFromDb(tenant: {
 			room: { roomNumber: string } | null;
 		} & Record<string, unknown>
 	>;
-}): TenantRow {
+}): TenantRow => {
 	const currentLease =
-		tenant.leases.find((l) => l.isActive) ?? tenant.leases[0];
+		tenant.leases.find((lease) => lease.isActive) ?? tenant.leases[0];
 	return {
 		id: tenant.id,
 		fullName: tenant.fullName,
@@ -42,13 +42,13 @@ function mapTenantFromDb(tenant: {
 		roomNumber: currentLease?.room?.roomNumber ?? "-",
 		startDate: (currentLease?.startDate as Date) ?? null,
 		endDate: (currentLease?.endDate as Date) ?? null,
-		isActive: !!currentLease?.isActive,
+		isActive: Boolean(currentLease?.isActive),
 	};
-}
+};
 
-export async function fetchTenants(
+export const fetchTenants = async (
 	params: z.infer<typeof tenantsQuerySchema>,
-): Promise<TenantRow[]> {
+): Promise<TenantRow[]> => {
 	const where: Record<string, unknown> = {};
 
 	if (params.query) {
@@ -71,16 +71,16 @@ export async function fetchTenants(
 	});
 
 	return tenants.map(mapTenantFromDb);
-}
+};
 
-export async function fetchAllTenants(): Promise<TenantRow[]> {
+export const fetchAllTenants = async (): Promise<TenantRow[]> => {
 	const tenants = await db.query.tenants.findMany({
 		with: {
 			leases: { with: { room: true } },
 		},
 	});
 	return tenants.map(mapTenantFromDb);
-}
+};
 
 export const tenantsQuerySchema = z.object({
 	query: querySchema,
@@ -96,14 +96,6 @@ export const reportTenantsQuerySchema = z.object({
 		.optional()
 		.catch(undefined),
 });
-
-export const TENANT_STATUS_LABELS: Record<
-	(typeof TENANT_STATUS)[number],
-	string
-> = {
-	active: "Aktif",
-	completed: "Selesai",
-};
 
 // Keys are derived display values (not from DB schema)
 // because tenant status is computed from isActive boolean

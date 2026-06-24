@@ -73,9 +73,9 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 						message="Tidak ada data audit log untuk filter yang dipilih."
 					/>
 				) : (
-					rows.map((row, i) => (
+					rows.map((row, idx) => (
 						<tr>
-							<td style="text-align: center; font-size: 10px;">{i + 1}</td>
+							<td style="text-align: center; font-size: 10px;">{idx + 1}</td>
 							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
 								{formatDate(row.time, "DD MMM YYYY HH:mm")}
 							</td>

@@ -1,9 +1,9 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
 
-export async function tenantInfo(
+export const tenantInfo = async (
 	tenant: typeof tenants.$inferSelect,
-): Promise<string> {
+): Promise<string> => {
 	const activeLease = await db.query.leases.findFirst({
 		where: { tenantId: tenant.id, isActive: true },
 		with: { room: true },
@@ -36,4 +36,4 @@ export async function tenantInfo(
 		"",
 		"Ketik *help* untuk bantuan lebih lanjut.",
 	].join("\n");
-}
+};

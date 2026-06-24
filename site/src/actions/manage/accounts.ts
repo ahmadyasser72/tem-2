@@ -1,5 +1,5 @@
 import { db, eq } from "@e-kos/database";
-import { auditDetail, auditLogs, users } from "@e-kos/database/schema";
+import { auditDetail, users } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -21,11 +21,15 @@ export const add = defineAction({
 			columns: { id: true },
 			where: { username: input.username },
 		});
-		if (sameUsername?.id)
+		if (sameUsername?.id) {
+			console.error("accounts.add: username already taken", {
+				username: input.username,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Username tidak tersedia.",
 			});
+		}
 
 		const [inserted] = await db
 			.insert(users)
@@ -37,17 +41,15 @@ export const add = defineAction({
 			})
 			.returning({ id: users.id });
 
-		const user = await context.session?.get("user");
-		await db.insert(auditLogs).values({
-			userId: user?.id ?? null,
-			action: "CREATE",
-			tableName: "users",
-			recordId: inserted.id,
-			details: auditDetail.create(
+		await context.locals.logAudit(
+			"CREATE",
+			"users",
+			inserted.id,
+			auditDetail.create(
 				`Membuat akun user: ${input.username} dengan role: ${input.role}`,
 				toCamelCaseKeys(omit(input, ["password"])),
 			),
-		});
+		);
 
 		return inserted;
 	},
@@ -67,17 +69,22 @@ export const edit = defineAction({
 			columns: { id: true },
 			where: { username: input.username, id: { ne: input.id } },
 		});
-		if (sameUsername?.id)
+		if (sameUsername?.id) {
+			console.error("accounts.edit: username already taken", {
+				username: input.username,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Username tidak tersedia.",
 			});
+		}
 
 		const existingUser = await db.query.users.findFirst({
 			columns: { id: true, username: true, role: true, displayName: true },
 			where: { id: input.id },
 		});
 		if (!existingUser) {
+			console.error("accounts.edit: user not found", { id: input.id });
 			throw new ActionError({
 				code: "NOT_FOUND",
 				message: "Akun tidak ditemukan.",
@@ -95,18 +102,16 @@ export const edit = defineAction({
 			.where(eq(users.id, input.id))
 			.returning({ id: users.id });
 
-		const user = await context.session?.get("user");
-		await db.insert(auditLogs).values({
-			userId: user?.id ?? null,
-			action: "UPDATE",
-			tableName: "users",
-			recordId: updated.id,
-			details: auditDetail.update(
+		await context.locals.logAudit(
+			"UPDATE",
+			"users",
+			updated.id,
+			auditDetail.update(
 				`Mengubah akun user: ${input.username} dengan role: ${input.role}`,
 				existingUser,
 				toCamelCaseKeys(omit(input, ["password"])),
 			),
-		});
+		);
 
 		return updated;
 	},
@@ -115,33 +120,33 @@ export const edit = defineAction({
 export const _delete = defineAction({
 	accept: "form",
 	input: z.object({ id: z.coerce.number() }),
-	handler: async (input, context) => {
+	handler: async ({ id }, context) => {
 		const target = await db.query.users.findFirst({
 			columns: { id: true, username: true, displayName: true, role: true },
-			where: { id: input.id },
+			where: { id },
 		});
-		if (!target)
+		if (!target) {
+			console.error("accounts.delete: user not found", { id });
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Akun tidak ditemukan.",
 			});
+		}
 
 		const [deleted] = await db
 			.delete(users)
-			.where(eq(users.id, input.id))
+			.where(eq(users.id, id))
 			.returning({ id: users.id });
 
-		const user = await context.session?.get("user");
-		await db.insert(auditLogs).values({
-			userId: user?.id ?? null,
-			action: "DELETE",
-			tableName: "users",
-			recordId: deleted.id,
-			details: auditDetail.delete(
+		await context.locals.logAudit(
+			"DELETE",
+			"users",
+			deleted.id,
+			auditDetail.delete(
 				`Menghapus akun user: ${target.username} (${target.role})`,
 				target,
 			),
-		});
+		);
 
 		return deleted;
 	},

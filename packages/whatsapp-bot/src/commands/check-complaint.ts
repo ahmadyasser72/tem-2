@@ -1,10 +1,12 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
 
-export async function checkComplaint(
+import { STATUS_LABEL } from "./status-labels";
+
+export const checkComplaint = async (
 	tenant: typeof tenants.$inferSelect,
 	complaintId: number,
-): Promise<string> {
+): Promise<string> => {
 	const complaint = await db.query.complaints.findFirst({
 		where: { id: complaintId, tenantId: tenant.id },
 	});
@@ -12,12 +14,6 @@ export async function checkComplaint(
 	if (!complaint) {
 		return "Komplain dengan ID tersebut tidak ditemukan.";
 	}
-
-	const STATUS_LABEL: Record<string, string> = {
-		open: "📩 Menunggu ditangani",
-		in_progress: "🔧 Sedang diproses",
-		resolved: "✅ Selesai",
-	};
 
 	let resolverName = "-";
 	if (complaint.resolvedBy) {
@@ -48,4 +44,4 @@ export async function checkComplaint(
 	lines.push("Ketik *komplainku* untuk daftar komplain.");
 
 	return lines.join("\n");
-}
+};

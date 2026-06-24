@@ -5,35 +5,35 @@ export type FormResult =
 	| { success: true; title: string; description: string }
 	| void;
 
-type ActionClientOutput<T extends ActionClient<any, any, any>> =
-	T extends ActionClient<infer TOutput, any, any> ? Awaited<TOutput> : never;
-
-export function createActionResult<TAction extends ActionClient<any, any, any>>(
+export const createActionResult = <TAction extends ActionClient<any, any, any>>(
 	action: TAction,
 	title: string,
-	getDescription: (data: ActionClientOutput<TAction>) => string,
-) {
+	getDescription: (data: any) => string,
+) => {
 	return { action, title, getDescription };
-}
+};
 
-export function checkActionResult<T>(
-	result: { error?: { message?: string }; data?: T },
-	successConfig: {
+export const checkActionResult = <T>(
+	{ error, data }: { error?: { message?: string }; data?: T },
+	{
+		title,
+		getDescription,
+	}: {
 		title: string;
 		getDescription: (data: T) => string;
 	},
-): FormResult {
-	if (result.error?.message) {
-		return { success: false, message: result.error.message };
+): FormResult => {
+	if (error?.message) {
+		return { success: false, message: error.message };
 	}
 
-	if (result.data) {
+	if (data) {
 		return {
 			success: true,
-			title: successConfig.title,
-			description: successConfig.getDescription(result.data),
+			title,
+			description: getDescription(data),
 		};
 	}
 
 	return;
-}
+};

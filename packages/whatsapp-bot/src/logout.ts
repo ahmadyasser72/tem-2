@@ -1,7 +1,7 @@
 import { db } from "@e-kos/database";
 import { botAuth } from "@e-kos/database/schema";
 
-async function logout() {
+const logout = async () => {
 	const rows = await db.delete(botAuth).returning();
 
 	if (rows.length === 0) {
@@ -11,6 +11,6 @@ async function logout() {
 	}
 
 	process.exit(0);
-}
+};
 
 logout();

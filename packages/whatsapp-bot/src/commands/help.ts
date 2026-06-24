@@ -1,4 +1,4 @@
-export function help(): string {
+export const help = (): string => {
 	return [
 		"*🤖 E-Kos Bot Assistant*",
 		"",
@@ -13,4 +13,4 @@ export function help(): string {
 		"",
 		"Ketik perintah yang diinginkan.",
 	].join("\n");
-}
+};

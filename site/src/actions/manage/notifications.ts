@@ -1,7 +1,6 @@
 import { db } from "@e-kos/database";
 import {
 	auditDetail,
-	auditLogs,
 	chatbotMessages,
 	notifications,
 } from "@e-kos/database/schema";
@@ -15,52 +14,51 @@ export const send = defineAction({
 		tenant_id: z.coerce.number(),
 		message: z.string().min(1, "Pesan tidak boleh kosong"),
 	}),
-	handler: async (input, context) => {
+	handler: async ({ tenant_id, message }, context) => {
 		const tenantExists = await db.query.tenants.findFirst({
 			columns: { id: true },
-			where: { id: input.tenant_id },
+			where: { id: tenant_id },
 		});
 		if (!tenantExists) {
+			console.error("notifications.send: tenant not found", {
+				tenant_id,
+			});
 			throw new ActionError({
 				code: "NOT_FOUND",
 				message: "Penghuni tidak ditemukan.",
 			});
 		}
 
-		// Insert chatbot message first
 		const [msg] = await db
 			.insert(chatbotMessages)
 			.values({
-				tenantId: input.tenant_id,
+				tenantId: tenant_id,
 				direction: "outgoing",
-				message: input.message,
+				message,
 				sentAt: new Date(),
 			})
 			.returning({ id: chatbotMessages.id });
 
-		// Insert notification linked to the chatbot message
 		const [inserted] = await db
 			.insert(notifications)
 			.values({
-				tenantId: input.tenant_id,
+				tenantId: tenant_id,
 				chatbotMessageId: msg.id,
 				type: "custom",
 				status: "sent",
 			})
 			.returning({ id: notifications.id });
 
-		const user = await context.session?.get("user");
-		await db.insert(auditLogs).values({
-			userId: user?.id ?? null,
-			action: "CREATE",
-			tableName: "notifications",
-			recordId: inserted.id,
-			details: auditDetail.notification(
-				`Mengirim notifikasi khusus ke tenant ID ${input.tenant_id}: ${input.message}`,
+		await context.locals.logAudit(
+			"CREATE",
+			"notifications",
+			inserted.id,
+			auditDetail.notification(
+				`Mengirim notifikasi khusus ke tenant ID ${tenant_id}: ${message}`,
 				"admin_panel",
-				input.tenant_id,
+				tenant_id,
 			),
-		});
+		);
 
 		return inserted;
 	},

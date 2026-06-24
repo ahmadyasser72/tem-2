@@ -4,12 +4,7 @@ import {
 	DuitkuError,
 	getPaymentUrlFromReference,
 } from "@e-kos/database/duitku";
-import {
-	auditDetail,
-	auditLogs,
-	invoices,
-	notifications,
-} from "@e-kos/database/schema";
+import { auditDetail, invoices, notifications } from "@e-kos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -17,7 +12,6 @@ import { isError } from "es-toolkit/predicate";
 
 import { formatCurrency } from "~/lib/transforms";
 
-// ─── Generate Payment Link ──────────────────────────────────────
 export const generatePaymentLink = defineAction({
 	accept: "form",
 	input: z.object({
@@ -26,7 +20,6 @@ export const generatePaymentLink = defineAction({
 	handler: async (input, context) => {
 		const invoiceId = input.invoice_id;
 
-		// 1. Cari invoice + lease + tenant
 		const invoice = await db.query.invoices.findFirst({
 			where: { id: invoiceId },
 			with: {
@@ -40,14 +33,19 @@ export const generatePaymentLink = defineAction({
 		});
 
 		if (!invoice) {
+			console.error("invoices.generatePaymentLink: invoice not found", {
+				invoiceId,
+			});
 			throw new ActionError({
 				code: "NOT_FOUND",
 				message: "Invoice tidak ditemukan.",
 			});
 		}
 
-		// 2. Jika sudah lunas
 		if (invoice.status === "paid") {
+			console.error("invoices.generatePaymentLink: already paid", {
+				invoiceId,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Invoice sudah lunas.",
@@ -55,6 +53,7 @@ export const generatePaymentLink = defineAction({
 		}
 
 		if (!invoice.lease) {
+			console.error("invoices.generatePaymentLink: no lease", { invoiceId });
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Invoice tidak memiliki data sewa.",
@@ -62,6 +61,9 @@ export const generatePaymentLink = defineAction({
 		}
 
 		if (!invoice.lease.isActive) {
+			console.error("invoices.generatePaymentLink: lease not active", {
+				invoiceId,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Sewa sudah tidak aktif.",
@@ -69,6 +71,9 @@ export const generatePaymentLink = defineAction({
 		}
 
 		if (!invoice.lease.tenant) {
+			console.error("invoices.generatePaymentLink: tenant not found", {
+				invoiceId,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Data penghuni tidak ditemukan.",
@@ -79,13 +84,16 @@ export const generatePaymentLink = defineAction({
 		const room = invoice.lease.room;
 
 		if (!tenant.phoneNumber) {
+			console.error("invoices.generatePaymentLink: tenant has no phone", {
+				invoiceId,
+				tenantId: tenant.id,
+			});
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Nomor HP penghuni tidak terisi.",
 			});
 		}
 
-		// 3. Jika sudah punya duitkuReference → return paymentUrl yang tersimpan
 		if (invoice.duitkuReference) {
 			return {
 				paymentUrl: getPaymentUrlFromReference(invoice.duitkuReference),
@@ -94,7 +102,6 @@ export const generatePaymentLink = defineAction({
 			};
 		}
 
-		// 4. Generate payment link baru
 		const merchantOrderId = `INV-${invoice.id.toString().padStart(6, "0")}`;
 		const roomNumber = room?.roomNumber ?? "-";
 		const baseUrl = new URL(context.url.origin);
@@ -123,25 +130,21 @@ export const generatePaymentLink = defineAction({
 				paymentMethod: "",
 			});
 
-			// 5. Simpan reference
 			await db
 				.update(invoices)
 				.set({ duitkuReference: result.reference })
 				.where(eq(invoices.id, invoiceId));
 
-			// 6. Catat audit log
-			const user = await context.session?.get("user");
-			await db.insert(auditLogs).values({
-				userId: user?.id ?? null,
-				action: "UPDATE",
-				tableName: "invoices",
-				recordId: invoiceId,
-				details: auditDetail.payment(
+			await context.locals.logAudit(
+				"UPDATE",
+				"invoices",
+				invoiceId,
+				auditDetail.payment(
 					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - ${formatCurrency(invoice.amount)}`,
 					invoice.amount,
 					result.reference,
 				),
-			});
+			);
 
 			return {
 				paymentUrl: result.paymentUrl,
@@ -149,6 +152,10 @@ export const generatePaymentLink = defineAction({
 				alreadyExists: false,
 			};
 		} catch (err) {
+			console.error("invoices.generatePaymentLink: failed", {
+				invoiceId,
+				error: err instanceof Error ? err.message : err,
+			});
 			if (err instanceof DuitkuError) {
 				throw new ActionError({
 					code: "BAD_REQUEST",
@@ -169,7 +176,6 @@ export const generatePaymentLink = defineAction({
 	},
 });
 
-// ─── Mark as Paid (manual override) ─────────────────────────────
 export const markAsPaid = defineAction({
 	accept: "form",
 	input: z.object({
@@ -184,6 +190,7 @@ export const markAsPaid = defineAction({
 		});
 
 		if (!invoice) {
+			console.error("invoices.markAsPaid: invoice not found", { invoiceId });
 			throw new ActionError({
 				code: "NOT_FOUND",
 				message: "Invoice tidak ditemukan.",
@@ -191,6 +198,7 @@ export const markAsPaid = defineAction({
 		}
 
 		if (invoice.status === "paid") {
+			console.error("invoices.markAsPaid: already paid", { invoiceId });
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Invoice sudah lunas.",
@@ -202,7 +210,6 @@ export const markAsPaid = defineAction({
 			.set({ status: "paid" })
 			.where(eq(invoices.id, invoiceId));
 
-		// Buat notification untuk tenant
 		if (invoice.lease?.tenant) {
 			await db.insert(notifications).values({
 				tenantId: invoice.lease.tenant.id,
@@ -212,18 +219,16 @@ export const markAsPaid = defineAction({
 			});
 		}
 
-		const user = await context.session?.get("user");
-		await db.insert(auditLogs).values({
-			userId: user?.id ?? null,
-			action: "UPDATE",
-			tableName: "invoices",
-			recordId: invoiceId,
-			details: auditDetail.payment(
+		await context.locals.logAudit(
+			"UPDATE",
+			"invoices",
+			invoiceId,
+			auditDetail.payment(
 				`Manual: Menandai invoice #${invoiceId} sebagai lunas`,
 				invoice.amount,
 				"manual",
 			),
-		});
+		);
 
 		return { success: true };
 	},

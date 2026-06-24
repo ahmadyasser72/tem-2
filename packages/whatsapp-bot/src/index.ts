@@ -8,6 +8,7 @@ import {
 
 import { makeWASocket } from "baileys";
 import pino from "pino";
+import pinoPretty from "pino-pretty";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -30,23 +31,25 @@ const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
 let lastSendTime = 0;
 
-async function sendWithRateLimit(
+const sendWithRateLimit = async (
 	sock: ReturnType<typeof makeWASocket>,
 	jid: string,
 	content: { text: string },
-) {
+) => {
 	const now = Date.now();
 	const elapsed = now - lastSendTime;
 
 	if (elapsed < 1_000) {
-		await new Promise((r) => setTimeout(r, 1_000 - elapsed));
+		const wait = 1_000 - elapsed;
+		console.warn("rate limit: waiting %d ms before next send", wait);
+		await Bun.sleep(wait);
 	}
 
 	await sock.sendMessage(jid, content);
 	lastSendTime = Date.now();
-}
+};
 
-export async function main() {
+export const main = async () => {
 	const botUser = await db.query.users.findFirst({
 		where: { username: "bot-wa" },
 	});
@@ -60,7 +63,6 @@ export async function main() {
 
 	const { state, saveCreds } = await useSqliteAuthState();
 
-	// Cek apakah sudah login WhatsApp
 	if (!state.creds.me) {
 		console.error("WhatsApp belum login.");
 		process.exit(1);
@@ -68,19 +70,29 @@ export async function main() {
 
 	const sock = makeWASocket({
 		auth: state,
-		logger: pino(pino.destination("../../logs/bot.log")),
+		logger: pino(
+			{ name: "whatsapp-bot" },
+			pino.multistream([
+				{ level: "info", stream: pinoPretty() },
+				{ level: "info", stream: pino.destination("../../logs/bot.log") },
+			]),
+		),
 		shouldSyncHistoryMessage: () => false,
 	});
 
 	sock.ev.on("creds.update", saveCreds);
 
-	sock.ev.on("connection.update", ({ connection }) => {
+	sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
 		if (connection === "open") {
 			console.log("WhatsApp connected");
+		} else {
+			console.warn("connection status: %s", connection);
+			if (lastDisconnect?.error) {
+				console.error("disconnect error:", lastDisconnect.error);
+			}
 		}
 	});
 
-	// ─── Handle incoming WhatsApp messages ─────────────────────
 	sock.ev.on("messages.upsert", async ({ messages }) => {
 		for (const message of messages) {
 			if (message.key.fromMe) continue;
@@ -91,7 +103,6 @@ export async function main() {
 			const text = message.message?.conversation?.trim() || "";
 			if (!text) continue;
 
-			// Cari tenant berdasarkan nomor
 			const phone = jid.replace("@s.whatsapp.net", "");
 			const tenant = await db.query.tenants.findFirst({
 				where: { phoneNumber: phone },
@@ -124,7 +135,6 @@ export async function main() {
 				continue;
 			}
 
-			// Simpan pesan masuk segera
 			await db.insert(chatbotMessages).values({
 				tenantId: tenant.id,
 				direction: "incoming",
@@ -146,37 +156,37 @@ export async function main() {
 					pendingMessages.delete(jid);
 					if (!data) return;
 
-					// Proses perintah
-					const responseText = await processCommand(data.tenant, data.text);
+					try {
+						const responseText = await processCommand(data.tenant, data.text);
 
-					// Simpan pesan keluar
-					await db.insert(chatbotMessages).values({
-						tenantId: data.tenant.id,
-						direction: "outgoing",
-						message: responseText,
-					});
+						await db.insert(chatbotMessages).values({
+							tenantId: data.tenant.id,
+							direction: "outgoing",
+							message: responseText,
+						});
 
-					// Kirim respons (rate limited: maks 1 pesan/detik)
-					await sendWithRateLimit(sock, jid, { text: responseText });
+						// Kirim respons (rate limited: maks 1 pesan/detik)
+						await sendWithRateLimit(sock, jid, { text: responseText });
+					} catch (err) {
+						console.error("message processing failed for %s:", jid, err);
+					}
 				}, 5_000),
 			);
 		}
 	});
 
-	// ─── Polling tiap 30 detik ─────────────────────────────────
 	setInterval(async () => {
 		await pollNotifications(sock, botUserId);
 		await pollResolvedComplaints(sock, botUserId);
 	}, 30_000);
 
 	console.log("WhatsApp bot started");
-}
+};
 
-// ─── Command processor ──────────────────────────────────────
-async function processCommand(
+const processCommand = async (
 	tenant: typeof tenants.$inferSelect,
 	text: string,
-): Promise<string> {
+): Promise<string> => {
 	const lower = text.toLowerCase().trim();
 
 	if (lower === "help") {
@@ -207,4 +217,4 @@ async function processCommand(
 	}
 
 	return help();
-}
+};

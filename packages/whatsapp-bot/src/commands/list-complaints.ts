@@ -1,6 +1,8 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
 
+import { STATUS_LABEL } from "./status-labels";
+
 export async function listComplaints(
 	tenant: typeof tenants.$inferSelect,
 ): Promise<string> {
@@ -13,22 +15,16 @@ export async function listComplaints(
 		return "Belum ada komplain yang Anda kirimkan.";
 	}
 
-	const STATUS_LABEL: Record<string, string> = {
-		open: "📩 Menunggu",
-		in_progress: "🔧 Diproses",
-		resolved: "✅ Selesai",
-	};
-
 	const lines: string[] = [];
 	lines.push(`*📋 Daftar Komplain (${latest.length} terbaru)*`);
 	lines.push("");
 
-	for (const c of latest) {
+	for (const complaint of latest) {
 		lines.push("━━━━━━━━━━━━━━━━━━━");
-		lines.push(`🆔 #${c.id}`);
-		lines.push(`📝 ${c.description}`);
-		lines.push(`📅 ${c.createdAt.toLocaleDateString()}`);
-		lines.push(`${STATUS_LABEL[c.status] ?? c.status}`);
+		lines.push(`🆔 #${complaint.id}`);
+		lines.push(`📝 ${complaint.description}`);
+		lines.push(`📅 ${complaint.createdAt.toLocaleDateString()}`);
+		lines.push(`${STATUS_LABEL[complaint.status] ?? complaint.status}`);
 		lines.push("");
 	}
 

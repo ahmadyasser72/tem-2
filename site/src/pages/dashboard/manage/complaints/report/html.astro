@@ -11,26 +11,24 @@ import {
 
 const params = Astro.locals.parseQuery(complaintQuerySchema);
 
-// Stats from all complaints (no filter)
 const allComplaints = await fetchComplaints(params);
 const stats = getComplaintStats(allComplaints);
 
-// Filtered data with period
 const rowsData = await fetchComplaints(params, { usePeriod: true });
 
-const rows = rowsData.map((c, idx) => ({
+const rows = rowsData.map((complaint, idx) => ({
 	no: idx + 1,
-	tenantName: c.tenantName,
-	roomNumber: c.roomNumber,
-	description: c.description,
+	tenantName: complaint.tenantName,
+	roomNumber: complaint.roomNumber,
+	description: complaint.description,
 	statusLabel:
-		COMPLAINT_STATUS_LABELS[c.status as keyof typeof COMPLAINT_STATUS_LABELS] ??
-		c.status,
-	createdAt: c.createdAt,
-	resolvedByUserName: c.resolvedByUserName ?? "-",
+		COMPLAINT_STATUS_LABELS[
+			complaint.status as keyof typeof COMPLAINT_STATUS_LABELS
+		] ?? complaint.status,
+	createdAt: complaint.createdAt,
+	resolvedByUserName: complaint.resolvedByUserName ?? "-",
 }));
 
-// Build subtitle
 const subtitleParts: string[] = [];
 if (params.status) {
 	subtitleParts.push(
@@ -49,12 +47,12 @@ const subtitle =
 		style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"
 	>
 		{
-			stats.map((s) => (
+			stats.map((stat) => (
 				<div style="border:1px solid black;padding:8px 12px;text-align:center;">
 					<p style="font-size:10px;font-weight:400;margin-bottom:4px;">
-						{s.label}
+						{stat.label}
 					</p>
-					<p style="font-size:18px;font-weight:700;">{s.value}</p>
+					<p style="font-size:18px;font-weight:700;">{stat.value}</p>
 				</div>
 			))
 		}

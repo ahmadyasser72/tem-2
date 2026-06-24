@@ -16,8 +16,8 @@ export const {
 	ROOM_TYPES,
 } = schema;
 
+export { eq, and, sql } from "drizzle-orm";
+
 export const DB_PATH =
 	process.env.DATABASE_PATH ?? path.join(import.meta.dirname, "../db.sqlite");
 export const db = drizzle(DB_PATH, { schema, relations });
-
-export * from "drizzle-orm";

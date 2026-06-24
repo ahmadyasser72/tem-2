@@ -22,13 +22,11 @@ export const POST: APIRoute = async ({ request }) => {
 		resultCode,
 	} = params;
 
-	// ─── Validasi keberadaan parameter ───────────────────────────
 	if (!merchantCode || !amount || !merchantOrderId || !signature) {
 		console.error("Missing required parameters");
 		return new Response(null, { status: 400 });
 	}
 
-	// ─── Validasi signature ──────────────────────────────────────
 	const { apiKey } = config();
 	const parsedAmount = Number.parseInt(amount, 10);
 
@@ -45,7 +43,6 @@ export const POST: APIRoute = async ({ request }) => {
 		return new Response(null, { status: 400 });
 	}
 
-	// ─── Cari invoice ────────────────────────────────────────────
 	// merchantOrderId format: INV-XXXXXX
 	const invoiceIdStr = merchantOrderId.replace("INV-", "");
 	const invoiceId = Number.parseInt(invoiceIdStr, 10);
@@ -65,13 +62,11 @@ export const POST: APIRoute = async ({ request }) => {
 		return new Response(null, { status: 200 }); // Acknowledge to Duitku
 	}
 
-	// ─── Idempotency check ───────────────────────────────────────
 	if (invoice.callbackPayload) {
 		console.log("Duplicate callback, skipping (invoice #%d)", invoiceId);
 		return new Response(null, { status: 200 });
 	}
 
-	// ─── Jika resultCode = "00" (Success) ────────────────────────
 	if (resultCode === "00") {
 		const rawPayload = JSON.stringify(params);
 

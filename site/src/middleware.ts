@@ -1,6 +1,9 @@
+import { db } from "@e-kos/database";
+
 import { defineMiddleware } from "astro:middleware";
 import { z } from "astro/zod";
 
+import { logAudit as logAuditHelper } from "~/lib/audit-log";
 import { getPDFToken } from "~/lib/pdf";
 
 export const onRequest = defineMiddleware(
@@ -34,7 +37,11 @@ export const onRequest = defineMiddleware(
 			return schema.parse(query);
 		};
 
-		if (url.pathname.startsWith("/dashboard")) {
+		// Auth guard
+		if (
+			url.pathname.startsWith("/dashboard") ||
+			url.pathname.startsWith("/_actions/manage")
+		) {
 			// Puppeteer PDF bypass — token dari download.ts, tidak perlu session
 			const pdfToken = url.searchParams.get("_pdf_token");
 			if (pdfToken && pdfToken === getPDFToken()) {
@@ -47,10 +54,26 @@ export const onRequest = defineMiddleware(
 			}
 
 			const user = await session?.get("user");
-			if (!user) return redirect(new URL("/login", url).pathname);
+			if (!user) {
+				console.warn("middleware: unauthenticated access", {
+					path: url.pathname,
+				});
+				return redirect(new URL("/login", url).pathname);
+			}
 
 			locals.user = user;
 		}
+
+		// Action helpers
+		locals.logAudit = (action, tableName, recordId, details) =>
+			logAuditHelper(
+				db,
+				locals.user?.id ?? null,
+				action,
+				tableName,
+				recordId,
+				details,
+			);
 
 		return next();
 	},

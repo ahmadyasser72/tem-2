@@ -3,7 +3,7 @@ import qrcode from "qrcode";
 
 import { useSqliteAuthState } from "./auth";
 
-async function login() {
+const login = async () => {
 	const { state, saveCreds } = await useSqliteAuthState();
 
 	if (state.creds.me) return;
@@ -37,6 +37,6 @@ async function login() {
 			}
 		},
 	);
-}
+};
 
 login();

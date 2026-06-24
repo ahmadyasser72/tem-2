@@ -1,11 +1,14 @@
 import { db } from "@e-kos/database";
+import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
 import { tenants } from "@e-kos/database/schema";
 
-export async function checkBills(
-	tenant: typeof tenants.$inferSelect,
-): Promise<string> {
+import { sumBy } from "es-toolkit";
+
+export const checkBills = async ({
+	id,
+}: typeof tenants.$inferSelect): Promise<string> => {
 	const activeLease = await db.query.leases.findFirst({
-		where: { tenantId: tenant.id, isActive: true },
+		where: { tenantId: id, isActive: true },
 		with: {
 			room: true,
 			invoices: {
@@ -19,14 +22,7 @@ export async function checkBills(
 	}
 
 	const unpaid = activeLease.invoices ?? [];
-	const total = unpaid.reduce((sum, inv) => sum + inv.amount, 0);
-
-	function getPaymentUrl(reference: string): string {
-		const baseUrl =
-			process.env.DUITKU_BASE_URL?.replace("api", "app") ??
-			"https://app-sandbox.duitku.com";
-		return `${baseUrl}/redirect_checkout?reference=${reference}`;
-	}
+	const total = sumBy(unpaid, (inv) => inv.amount);
 
 	const lines: string[] = [];
 	lines.push("*💰 Info Tagihan*");
@@ -54,7 +50,9 @@ export async function checkBills(
 			lines.push(`  Jumlah: Rp ${inv.amount.toLocaleString()}`);
 			lines.push(`  Jatuh tempo: ${inv.dueDate.toLocaleDateString()}`);
 			if (invWithRef?.duitkuReference) {
-				lines.push(`  💳 Bayar: ${getPaymentUrl(invWithRef.duitkuReference)}`);
+				lines.push(
+					`  💳 Bayar: ${getPaymentUrlFromReference(invWithRef.duitkuReference)}`,
+				);
 			}
 			lines.push("");
 		}
@@ -68,4 +66,4 @@ export async function checkBills(
 	}
 
 	return lines.join("\n");
-}
+};

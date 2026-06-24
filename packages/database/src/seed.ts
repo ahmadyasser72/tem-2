@@ -3,12 +3,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { db, eq } from "./index";
 import { USER_ROLES, users } from "./schema";
 
-async function ensureUser(
+const ensureUser = async (
 	username: string,
 	displayName: string,
 	role: (typeof USER_ROLES)[number],
 	passwordOverride?: string,
-) {
+) => {
 	const existing = await db.query.users.findFirst({
 		where: { username },
 	});
@@ -43,9 +43,9 @@ async function ensureUser(
 		.returning({ id: users.id });
 
 	console.log("User '%s' created (id=%d)", username, user.id);
-}
+};
 
-async function main() {
+const main = async () => {
 	await ensureUser("system", "System Scheduler", "system");
 	await ensureUser("bot-wa", "WhatsApp Bot", "system");
 	await ensureUser(
@@ -54,6 +54,6 @@ async function main() {
 		"admin",
 		process.env.ADMIN_PASSWORD,
 	);
-}
+};
 
 main();

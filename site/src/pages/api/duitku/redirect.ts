@@ -7,7 +7,6 @@ export const GET: APIRoute = async ({ url, redirect }) => {
 	const reference = url.searchParams.get("reference") ?? "";
 	const amount = url.searchParams.get("amount") ?? "";
 
-	// Ekstrak invoice ID dari merchantOrderId (format: INV-XXXXXX)
 	const invoiceId = merchantOrderId.replace("INV-", "");
 
 	const params = new URLSearchParams();

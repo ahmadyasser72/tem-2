@@ -64,6 +64,8 @@ export const onRequest = defineMiddleware(
 			locals.user = user;
 		}
 
+		locals.canEdit = () => locals.user?.role !== "owner";
+
 		// Action helpers
 		locals.logAudit = (action, tableName, recordId, details) =>
 			logAuditHelper(

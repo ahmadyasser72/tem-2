@@ -136,12 +136,14 @@ const auditLogs = await fetchAuditLogs(params);
 								</td>
 								<DetailColumn {details} />
 								<td class="text-right">
-									<button
-										hx-get={`/dashboard/log/audit/modal/delete/${id}`}
-										class="btn btn-square btn-ghost btn-xs text-error"
-									>
-										<Icon name="line-md:close" size="size-4" />
-									</button>
+									{Astro.locals.canEdit() && (
+										<button
+											hx-get={`/dashboard/log/audit/modal/delete/${id}`}
+											class="btn btn-square btn-ghost btn-xs text-error"
+										>
+											<Icon name="line-md:close" size="size-4" />
+										</button>
+									)}
 								</td>
 							</tr>
 						),

@@ -61,13 +61,17 @@ const filteredTenants = await fetchTenants(params);
 		>
 			<Icon name="line-md:download" /> PDF
 		</a>
-		<button
-			hx-get="/dashboard/manage/tenants/modal/add"
-			class="btn btn-sm btn-primary"
-		>
-			<Icon name="line-md:plus" size="size-5" />
-			Tambah Penghuni
-		</button>
+		{
+			Astro.locals.canEdit() && (
+				<button
+					hx-get="/dashboard/manage/tenants/modal/add"
+					class="btn btn-sm btn-primary"
+				>
+					<Icon name="line-md:plus" size="size-5" />
+					Tambah Penghuni
+				</button>
+			)
+		}
 	</Fragment>
 
 	<div
@@ -189,72 +193,76 @@ const filteredTenants = await fetchTenants(params);
 											>
 												<Icon name="line-md:document-list" /> Detail
 											</button>
-											{isActive ? (
-												<ActionsMenu
-													id={id}
-													menuClass="w-52"
-													triggerLabel="Aksi"
-												>
-													<li>
-														<button
-															hx-get={
-																"/dashboard/manage/tenants/modal/edit/" + id
-															}
-														>
-															<Icon name="line-md:edit" />
-															Edit
-														</button>
-													</li>
-													<li>
-														<button
-															hx-get={
-																"/dashboard/manage/tenants/modal/move/" + id
-															}
-														>
-															<Icon name="line-md:arrow-right-circle" />
-															Pindah Kamar
-														</button>
-													</li>
-													<li>
-														<button
-															hx-get={
-																"/dashboard/manage/tenants/modal/terminate/" +
-																id
-															}
-															class="text-error"
-														>
-															<Icon name="line-md:close" /> Berhenti Menginap
-														</button>
-													</li>
-												</ActionsMenu>
-											) : (
-												<ActionsMenu
-													id={id}
-													menuClass="w-52"
-													triggerLabel="Aksi"
-												>
-													<li>
-														<button
-															hx-get={
-																"/dashboard/manage/tenants/modal/edit/" + id
-															}
-														>
-															<Icon name="line-md:edit" />
-															Edit
-														</button>
-													</li>
-													<li>
-														<button
-															hx-get={
-																"/dashboard/manage/tenants/modal/register/" + id
-															}
-															class="text-success"
-														>
-															<Icon name="line-md:plus" /> Sewa Baru
-														</button>
-													</li>
-												</ActionsMenu>
-											)}
+																						{Astro.locals.canEdit() &&
+																							(isActive ? (
+																								<ActionsMenu
+																									id={id}
+																									menuClass="w-52"
+																									triggerLabel="Aksi"
+																								>
+																									<li>
+																										<button
+																											hx-get={
+																												"/dashboard/manage/tenants/modal/edit/" + id
+																											}
+																										>
+																											<Icon name="line-md:edit" />
+																											Edit
+																										</button>
+																									</li>
+																									<li>
+																										<button
+																											hx-get={
+																												"/dashboard/manage/tenants/modal/move/" + id
+																											}
+																										>
+																											<Icon name="line-md:arrow-right-circle" />
+																											Pindah Kamar
+																										</button>
+																									</li>
+																									<li>
+																										<button
+																											hx-get={
+																												"/dashboard/manage/tenants/modal/terminate/" +
+																												id
+																											}
+																											class="text-error"
+																										>
+																											<Icon name="line-md:close" /> Berhenti
+																											Menginap
+																										</button>
+																									</li>
+																								</ActionsMenu>
+																							) : (
+																								<ActionsMenu
+																									id={id}
+																									menuClass="w-52"
+																									triggerLabel="Aksi"
+																								>
+																									<li>
+																										<button
+																											hx-get={
+																												"/dashboard/manage/tenants/modal/edit/" + id
+																											}
+																										>
+																											<Icon name="line-md:edit" />
+																											Edit
+																										</button>
+																									</li>
+																									<li>
+																										<button
+																											hx-get={
+																												"/dashboard/manage/tenants/modal/register/" +
+																											id
+																											}
+																											class="text-success"
+																										>
+																											<Icon name="line-md:plus" /> Sewa Baru
+																										</button>
+																									</li>
+																								</ActionsMenu>
+																							)}
+																						}
 										</div>
 									</td>
 								</tr>

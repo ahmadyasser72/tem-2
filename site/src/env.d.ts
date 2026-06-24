@@ -18,5 +18,6 @@ declare namespace App {
 			details: import("@e-kos/database/schema").AuditDetails,
 		) => Promise<void>;
 		user?: SessionData["user"];
+		canEdit: () => boolean;
 	}
 }

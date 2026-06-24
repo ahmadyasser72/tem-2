@@ -119,6 +119,10 @@ const recentComplaints = complaintsFromDb.map((complaint) => {
 	};
 });
 
+const user = Astro.locals.user;
+const showTransactionsLink = user?.role !== "admin";
+const showComplaintsLink = user?.role === "staff";
+
 const stats = [
 	{
 		title: "Total Kamar",
@@ -177,10 +181,16 @@ const getStatusBadge = (status: string) => {
 						/>
 						Tagihan Mendekati Jatuh Tempo
 					</h2>
-					<a
-						class="btn btn-outline btn-primary btn-xs"
-						href="/dashboard/report/transactions">Lihat Semua</a
-					>
+					{
+						showTransactionsLink && (
+							<a
+								class="btn btn-outline btn-primary btn-xs"
+								href="/dashboard/report/transactions"
+							>
+								Lihat Semua
+							</a>
+						)
+					}
 				</div>
 				<div class="overflow-x-auto">
 					<table class="table-sm table w-full">
@@ -236,10 +246,16 @@ const getStatusBadge = (status: string) => {
 						/>
 						Komplain Terbaru
 					</h2>
-					<a
-						class="btn btn-outline btn-primary btn-xs"
-						href="/dashboard/manage/complaints">Kelola Komplain</a
-					>
+					{
+						showComplaintsLink && (
+							<a
+								class="btn btn-outline btn-primary btn-xs"
+								href="/dashboard/manage/complaints"
+							>
+								Kelola Komplain
+							</a>
+						)
+					}
 				</div>
 				<div class="divide-base-200 divide-y">
 					{

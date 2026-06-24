@@ -209,20 +209,75 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 													<Icon name="line-md:external-link" size="size-3.5" />{" "}
 													Invoice
 												</a>
-												<ActionsMenu id={id} menuClass="w-36">
-													<li>
+												{Astro.locals.canEdit() && (
+													<ActionsMenu id={id} menuClass="w-36">
+														<li>
+															<button
+																class="flex items-center gap-2"
+																onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
+															>
+																<Icon
+																	name="line-md:clipboard-list"
+																	size="size-3.5"
+																/>
+																Salin
+															</button>
+														</li>
+														<li>
+															<form
+																hx-post={actions.manage.invoices.markAsPaid}
+																class="contents"
+																hx-select="#transactions-content-wrapper"
+																hx-swap="outerHTML transition:true"
+																hx-target="#transactions-content-wrapper"
+																action={actions.manage.invoices.markAsPaid}
+																enctype="multipart/form-data"
+																method="post"
+															>
+																<input
+																	name="invoice_id"
+																	type="hidden"
+																	value={id}
+																/>
+																<button
+																	class="flex items-center gap-2"
+																	type="submit"
+																>
+																	<Icon name="line-md:confirm-circle" />
+																	Tandai Lunas
+																</button>
+															</form>
+														</li>
+													</ActionsMenu>
+												)}
+											</div>
+										) : (
+											<div class="flex items-center gap-1">
+												{Astro.locals.canEdit() && (
+													<form
+														hx-post={
+															actions.manage.invoices.generatePaymentLink
+														}
+														class="contents"
+														hx-select="#transactions-content-wrapper"
+														hx-swap="outerHTML transition:true"
+														hx-target="#transactions-content-wrapper"
+														action={actions.manage.invoices.generatePaymentLink}
+														enctype="multipart/form-data"
+														method="post"
+													>
+														<input name="invoice_id" type="hidden" value={id} />
 														<button
-															class="flex items-center gap-2"
-															onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
+															class="btn btn-outline btn-primary btn-xs w-24"
+															type="submit"
 														>
-															<Icon
-																name="line-md:clipboard-list"
-																size="size-3.5"
-															/>
-															Salin
+															<Icon name="line-md:link" size="size-3.5" />{" "}
+															Generate
 														</button>
-													</li>
-													<li>
+													</form>
+												)}
+												{Astro.locals.canEdit() && (
+													<ActionsMenu id={id} menuClass="w-36">
 														<form
 															hx-post={actions.manage.invoices.markAsPaid}
 															class="contents"
@@ -233,67 +288,20 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 															enctype="multipart/form-data"
 															method="post"
 														>
-															<input
-																name="invoice_id"
-																type="hidden"
-																value={id}
-															/>
-															<button
-																class="flex items-center gap-2"
-																type="submit"
-															>
-																<Icon name="line-md:confirm-circle" />
-																Tandai Lunas
-															</button>
+															<li>
+																<input
+																	name="invoice_id"
+																	type="hidden"
+																	value={id}
+																/>
+																<button type="submit">
+																	<Icon name="line-md:confirm-circle" />
+																	Tandai Lunas
+																</button>
+															</li>
 														</form>
-													</li>
-												</ActionsMenu>
-											</div>
-										) : (
-											<div class="flex items-center gap-1">
-												<form
-													hx-post={actions.manage.invoices.generatePaymentLink}
-													class="contents"
-													hx-select="#transactions-content-wrapper"
-													hx-swap="outerHTML transition:true"
-													hx-target="#transactions-content-wrapper"
-													action={actions.manage.invoices.generatePaymentLink}
-													enctype="multipart/form-data"
-													method="post"
-												>
-													<input name="invoice_id" type="hidden" value={id} />
-													<button
-														class="btn btn-outline btn-primary btn-xs w-24"
-														type="submit"
-													>
-														<Icon name="line-md:link" size="size-3.5" />{" "}
-														Generate
-													</button>
-												</form>
-												<ActionsMenu id={id} menuClass="w-36">
-													<form
-														hx-post={actions.manage.invoices.markAsPaid}
-														class="contents"
-														hx-select="#transactions-content-wrapper"
-														hx-swap="outerHTML transition:true"
-														hx-target="#transactions-content-wrapper"
-														action={actions.manage.invoices.markAsPaid}
-														enctype="multipart/form-data"
-														method="post"
-													>
-														<li>
-															<input
-																name="invoice_id"
-																type="hidden"
-																value={id}
-															/>
-															<button type="submit">
-																<Icon name="line-md:confirm-circle" />
-																Tandai Lunas
-															</button>
-														</li>
-													</form>
-												</ActionsMenu>
+													</ActionsMenu>
+												)}
 											</div>
 										)}
 									</td>

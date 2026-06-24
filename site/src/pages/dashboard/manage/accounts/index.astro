@@ -40,13 +40,17 @@ const accounts = await fetchAccounts(params);
 	description="Kelola kredensial dan hak akses pengguna sistem"
 >
 	<Fragment slot="page-action">
-		<button
-			hx-get="/dashboard/manage/accounts/modal/add"
-			class="btn btn-sm btn-primary"
-		>
-			<Icon name="line-md:plus" size="size-5" />
-			Tambah Akun
-		</button>
+		{
+			Astro.locals.canEdit() && (
+				<button
+					hx-get="/dashboard/manage/accounts/modal/add"
+					class="btn btn-sm btn-primary"
+				>
+					<Icon name="line-md:plus" size="size-5" />
+					Tambah Akun
+				</button>
+			)
+		}
 	</Fragment>
 
 	<div
@@ -134,7 +138,7 @@ const accounts = await fetchAccounts(params);
 							</td>
 							<td class="text-right">
 								<div class="flex justify-end gap-1.5">
-									{role !== "admin" && (
+									{role !== "admin" && Astro.locals.canEdit() && (
 										<>
 											<button
 												hx-get={"/dashboard/manage/accounts/modal/edit/" + id}

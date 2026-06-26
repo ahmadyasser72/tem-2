@@ -102,6 +102,7 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 					roomNumber,
 					resolvedByUserName,
 					resolveNotes,
+					resolvedAt,
 				}) => {
 					const isResolvable = status !== "resolved";
 					return (
@@ -164,6 +165,15 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 												<span class="flex items-center gap-1 font-semibold text-success">
 													<Icon name="line-md:circle-to-confirm-circle-transition" />
 													Ditangani oleh: {resolvedByUserName}
+												</span>
+											</>
+										)}
+										{resolvedAt && (
+											<>
+												<span>•</span>
+												<span class="flex items-center gap-1">
+													<Icon name="line-md:calendar-check" size="size-3.5" />
+													Selesai: {formatDate(resolvedAt)}
 												</span>
 											</>
 										)}

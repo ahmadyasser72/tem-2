@@ -8,7 +8,7 @@ export async function pollResolvedComplaints(
 	botUserId: number,
 ) {
 	const resolved = await db.query.complaints.findMany({
-		where: { status: "resolved", resolvedNotified: false },
+		where: { status: "resolved", resolvedAt: { isNull: true } },
 	});
 
 	for (const complaint of resolved) {
@@ -54,7 +54,7 @@ export async function pollResolvedComplaints(
 
 			await db
 				.update(complaints)
-				.set({ resolvedNotified: true })
+				.set({ resolvedAt: new Date() })
 				.where(eq(complaints.id, complaint.id));
 
 			await db.insert(auditLogs).values({

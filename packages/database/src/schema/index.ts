@@ -146,9 +146,7 @@ export const complaints = sqliteTable("complaints", {
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
 	resolvedBy: integer("resolved_by").references(() => users.id),
 	resolveNotes: text("resolve_notes"),
-	resolvedNotified: integer("resolved_notified", { mode: "boolean" })
-		.notNull()
-		.default(false),
+	resolvedAt: integer("resolved_at", { mode: "timestamp" }),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),

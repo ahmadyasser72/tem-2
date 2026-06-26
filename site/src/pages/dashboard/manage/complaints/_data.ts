@@ -21,6 +21,7 @@ export type ComplaintRow = {
 	roomNumber: string | null;
 	resolvedByUserName: string | null;
 	resolveNotes: string | null;
+	resolvedAt: Date | null;
 };
 
 export const fetchComplaints = async (
@@ -76,6 +77,7 @@ export const fetchComplaints = async (
 			roomNumber: activeLease?.room?.roomNumber ?? null,
 			resolvedByUserName: complaint.resolver?.displayName ?? null,
 			resolveNotes: complaint.resolveNotes,
+			resolvedAt: complaint.resolvedAt,
 		};
 	});
 };

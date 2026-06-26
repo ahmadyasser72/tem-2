@@ -26,6 +26,7 @@ const rows = rowsData.map((complaint, idx) => ({
 			complaint.status as keyof typeof COMPLAINT_STATUS_LABELS
 		] ?? complaint.status,
 	createdAt: complaint.createdAt,
+	resolvedAt: complaint.resolvedAt ?? null,
 	resolvedByUserName: complaint.resolvedByUserName ?? "-",
 }));
 
@@ -95,12 +96,16 @@ const subtitle =
 					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
 					>Ditangani Oleh</th
 				>
+				<th
+					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
+					>Tanggal Selesai</th
+				>
 			</tr>
 		</thead>
 		<tbody>
 			{
 				rows.length === 0 && (
-					<ReportTableEmpty colspan={7} message="Tidak ada data komplain." />
+					<ReportTableEmpty colspan={8} message="Tidak ada data komplain." />
 				)
 			}
 			{
@@ -126,6 +131,9 @@ const subtitle =
 						</td>
 						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
 							{row.resolvedByUserName}
+						</td>
+						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							{row.resolvedAt ? formatDate(row.resolvedAt) : "-"}
 						</td>
 					</tr>
 				))

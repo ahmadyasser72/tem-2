@@ -183,9 +183,7 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 								<div class="flex shrink-0 items-center gap-2 self-end md:self-center">
 									{isResolvable ? (
 										<button
-											hx-get={
-												"/dashboard/manage/complaints/modal/resolve/" + id
-											}
+											hx-get={`/dashboard/manage/complaints/modal/resolve/${id}`}
 											class="btn btn-outline btn-sm btn-success"
 										>
 											<Icon name="line-md:circle-to-confirm-circle-transition" />

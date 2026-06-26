@@ -214,9 +214,7 @@ const filteredTenants = await fetchTenants(params);
 													>
 														<li>
 															<button
-																hx-get={
-																	"/dashboard/manage/tenants/modal/edit/" + id
-																}
+																hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 															>
 																<Icon name="line-md:edit" />
 																Edit
@@ -224,9 +222,7 @@ const filteredTenants = await fetchTenants(params);
 														</li>
 														<li>
 															<button
-																hx-get={
-																	"/dashboard/manage/tenants/modal/move/" + id
-																}
+																hx-get={`/dashboard/manage/tenants/modal/move/${id}`}
 															>
 																<Icon name="line-md:arrow-right-circle" />
 																Pindah Kamar
@@ -252,9 +248,7 @@ const filteredTenants = await fetchTenants(params);
 													>
 														<li>
 															<button
-																hx-get={
-																	"/dashboard/manage/tenants/modal/edit/" + id
-																}
+																hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 															>
 																<Icon name="line-md:edit" />
 																Edit

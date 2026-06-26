@@ -20,12 +20,8 @@ export const formatDate = (
 export const getCurrentMonthStr = (): string => dayjs().format("YYYY-MM");
 
 export const parsePeriod = (from: string, to: string) => {
-	const startDate = dayjs(from + "-01")
-		.startOf("month")
-		.toDate();
-	const endDate = dayjs(to + "-01")
-		.endOf("month")
-		.toDate();
+	const startDate = dayjs(`${from}-01`).startOf("month").toDate();
+	const endDate = dayjs(`${to}-01`).endOf("month").toDate();
 
 	return { startDate, endDate };
 };

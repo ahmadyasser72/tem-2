@@ -36,7 +36,7 @@ if (!tenant) Astro.response.status = 404;
 <DetailModal
 	id="detail_tenant"
 	title={`Detail ${tenant?.fullName ?? ""}`}
-	icon="line-md:account"
+	icon="lucide:user"
 	modalClass="max-w-lg"
 >
 	{
@@ -75,7 +75,7 @@ if (!tenant) Astro.response.status = 404;
 				{pastLeases.length > 0 && (
 					<div class="mt-4">
 						<h4 class="mb-2 flex items-center gap-1.5 text-sm font-bold text-base-content/80">
-							<Icon name="line-md:document-list-twotone" size="size-4" />
+							<Icon name="lucide:file-text" size="size-4" />
 							Riwayat Sewa
 						</h4>
 						<div class="max-h-48 divide-y divide-base-200 overflow-y-auto">

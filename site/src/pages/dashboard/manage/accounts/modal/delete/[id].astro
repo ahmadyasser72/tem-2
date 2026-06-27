@@ -25,12 +25,12 @@ const account = await db.query.users.findFirst({
 if (!account) Astro.response.status = 404;
 ---
 
-<Modal id="delete_account" title="Hapus Akun" icon="line-md:account-delete">
+<Modal id="delete_account" title="Hapus Akun" icon="lucide:user-x">
 	{
 		account ? (
 			account.role === "admin" ? (
 				<div class="alert alert-error" role="alert">
-					<Icon name="line-md:alert" size="size-5" />
+					<Icon name="lucide:triangle-alert" size="size-5" />
 					<span>Akun admin tidak dapat dihapus.</span>
 				</div>
 			) : (

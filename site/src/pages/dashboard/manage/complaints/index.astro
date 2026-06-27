@@ -24,7 +24,7 @@ const filteredComplaints = await fetchComplaints(params);
 const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 	title: s.label,
 	value: String(s.value),
-	icon: "line-md:document-list",
+	icon: "lucide:file-text",
 }));
 ---
 
@@ -48,7 +48,7 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 			href={`/dashboard/manage/complaints/report/download${Astro.url.search}`}
 			download
 		>
-			<Icon name="line-md:download" /> PDF
+			<Icon name="lucide:download" /> PDF
 		</a>
 	</Fragment>
 
@@ -157,13 +157,13 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 										</div>
 									)}
 									<div class="mt-1 flex items-center gap-2 text-xs text-base-content/50">
-										<Icon name="line-md:calendar" size="size-3.5" />
+										<Icon name="lucide:calendar" size="size-3.5" />
 										<span>Dilaporkan pada: {formatDate(createdAt)}</span>
 										{resolvedByUserName && (
 											<>
 												<span>•</span>
 												<span class="flex items-center gap-1 font-semibold text-success">
-													<Icon name="line-md:circle-to-confirm-circle-transition" />
+													<Icon name="lucide:circle-check" />
 													Ditangani oleh: {resolvedByUserName}
 												</span>
 											</>
@@ -172,7 +172,7 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 											<>
 												<span>•</span>
 												<span class="flex items-center gap-1">
-													<Icon name="line-md:calendar-check" size="size-3.5" />
+													<Icon name="lucide:calendar-check" size="size-3.5" />
 													Selesai: {formatDate(resolvedAt)}
 												</span>
 											</>
@@ -186,13 +186,13 @@ const complaintStats = getComplaintStats(filteredComplaints).map((s) => ({
 											hx-get={`/dashboard/manage/complaints/modal/resolve/${id}`}
 											class="btn btn-outline btn-sm btn-success"
 										>
-											<Icon name="line-md:circle-to-confirm-circle-transition" />
+											<Icon name="lucide:circle-check" />
 											Tandai Selesai
 										</button>
 									) : (
 										<span class="flex items-center gap-1 text-xs font-bold text-success">
 											<Icon
-												name="line-md:circle-to-confirm-circle-transition"
+												name="lucide:circle-check"
 												size="size-4"
 											/>
 											Selesai

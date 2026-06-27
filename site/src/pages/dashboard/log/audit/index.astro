@@ -39,7 +39,7 @@ const auditLogs = await fetchAuditLogs(params);
 			href={`/dashboard/log/audit/report/download${Astro.url.search}`}
 			download
 		>
-			<Icon name="line-md:download" /> PDF
+			<Icon name="lucide:download" /> PDF
 		</a>
 	</Fragment>
 
@@ -112,7 +112,7 @@ const auditLogs = await fetchAuditLogs(params);
 									<div class="flex items-center gap-1.5">
 										<Icon
 											class="text-base-content/40"
-											name="line-md:account"
+											name="lucide:user"
 											size="size-4"
 										/>
 										{displayName}
@@ -141,7 +141,7 @@ const auditLogs = await fetchAuditLogs(params);
 											hx-get={`/dashboard/log/audit/modal/delete/${id}`}
 											class="btn btn-square text-error btn-ghost btn-xs"
 										>
-											<Icon name="line-md:close" size="size-4" />
+											<Icon name="lucide:x" size="size-4" />
 										</button>
 									)}
 								</td>

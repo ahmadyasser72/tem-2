@@ -54,7 +54,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 			href={`/dashboard/manage/rooms/report/download${Astro.url.search}`}
 			download
 		>
-			<Icon name="line-md:download" /> PDF
+			<Icon name="lucide:download" /> PDF
 		</a>
 		{
 			Astro.locals.canEdit() && (
@@ -62,7 +62,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 					hx-get="/dashboard/manage/rooms/modal/add"
 					class="btn btn-sm btn-primary"
 				>
-					<Icon name="line-md:plus" size="size-5" />
+					<Icon name="lucide:plus" size="size-5" />
 					Tambah Kamar
 				</button>
 			)
@@ -171,20 +171,20 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 										hx-get={`/dashboard/manage/rooms/modal/detail/${id}`}
 										class="btn flex flex-1 items-center justify-center gap-1 btn-outline btn-xs btn-primary"
 									>
-										<Icon name="line-md:document-list" /> Detail
+										<Icon name="lucide:file-text" /> Detail
 									</button>
 									{Astro.locals.canEdit() && (
 										<ActionsMenu
 											id={id}
 											menuClass="w-52"
-											triggerIcon="line-md:chevron-up"
+											triggerIcon="lucide:chevron-up"
 										>
 											<li>
 												<button
 													hx-get={`/dashboard/manage/rooms/modal/edit/${id}`}
 													class="flex items-center gap-2"
 												>
-													<Icon name="line-md:edit" /> Edit Kamar
+													<Icon name="lucide:pencil" /> Edit Kamar
 												</button>
 											</li>
 											<li>
@@ -192,7 +192,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 													hx-get={`/dashboard/manage/rooms/modal/delete/${id}`}
 													class="flex items-center gap-2 text-error"
 												>
-													<Icon name="line-md:remove" /> Hapus
+													<Icon name="lucide:trash-2" /> Hapus
 												</button>
 											</li>
 										</ActionsMenu>

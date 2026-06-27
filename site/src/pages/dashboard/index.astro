@@ -128,25 +128,25 @@ const stats = [
 		title: "Total Kamar",
 		value: `${totalRooms} Kamar`,
 		desc: `${occupiedRooms} Terisi, ${vacantRooms} Kosong`,
-		icon: "line-md:home-md",
+		icon: "lucide:house",
 	},
 	{
 		title: "Penghuni Aktif",
 		value: `${activeTenantsCount} Orang`,
 		desc: `${leasesEndingThisMonth} sewa berakhir bulan ini`,
-		icon: "line-md:person",
+		icon: "lucide:user",
 	},
 	{
 		title: "Tagihan Belum Bayar",
 		value: formatCurrency(totalUnpaidAmount),
 		desc: `${totalUnpaidCount} tagihan belum lunas`,
-		icon: "line-md:document-list",
+		icon: "lucide:file-text",
 	},
 	{
 		title: "Komplain Terbuka",
 		value: `${activeComplaintsCount} Komplain`,
 		desc: `${complaintsFromDb.filter(({ status }) => status === "open").length} perlu tindakan segera`,
-		icon: "line-md:alert-circle",
+		icon: "lucide:circle-alert",
 	},
 ];
 
@@ -176,7 +176,7 @@ const getStatusBadge = (status: string) => {
 					<h2 class="card-title text-lg font-bold">
 						<Icon
 							class="text-primary"
-							name="line-md:document-list"
+							name="lucide:file-text"
 							size="size-5"
 						/>
 						Tagihan Mendekati Jatuh Tempo
@@ -241,7 +241,7 @@ const getStatusBadge = (status: string) => {
 					<h2 class="card-title text-lg font-bold">
 						<Icon
 							class="text-error"
-							name="line-md:alert-circle"
+							name="lucide:circle-alert"
 							size="size-5"
 						/>
 						Komplain Terbaru

@@ -5,7 +5,7 @@ interface Props {
 	id: string | number;
 	triggerClass?: string;
 	triggerLabel?: string;
-	triggerIcon?: `line-md:${string}` | `svg-spinners:${string}`;
+	triggerIcon?: `lucide:${string}` | `svg-spinners:${string}`;
 	menuClass?: string;
 }
 
@@ -13,7 +13,7 @@ const {
 	id,
 	triggerClass = "",
 	triggerLabel,
-	triggerIcon = "line-md:chevron-up" as const,
+	triggerIcon = "lucide:chevron-up" as const,
 	menuClass = "w-36",
 } = Astro.props;
 ---

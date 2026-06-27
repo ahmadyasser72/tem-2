@@ -25,7 +25,7 @@ const room = await db.query.rooms.findFirst({
 if (!room) Astro.response.status = 404;
 ---
 
-<Modal id="delete_room" title="Hapus Kamar" icon="line-md:close-circle">
+<Modal id="delete_room" title="Hapus Kamar" icon="lucide:x-circle">
 	{
 		room ? (
 			<>

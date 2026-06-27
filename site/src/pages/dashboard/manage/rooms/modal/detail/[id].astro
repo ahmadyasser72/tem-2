@@ -35,7 +35,7 @@ if (!room) Astro.response.status = 404;
 <DetailModal
 	id="detail_room"
 	title={`Detail Kamar ${room?.roomNumber ?? ""}`}
-	icon="line-md:home"
+	icon="lucide:house"
 	modalClass="max-w-lg"
 >
 	{
@@ -73,7 +73,7 @@ if (!room) Astro.response.status = 404;
 
 				<div class="mt-4">
 					<h4 class="mb-2 flex items-center gap-1.5 text-sm font-bold text-base-content/80">
-						<Icon name="line-md:document-list-twotone" size="size-4" />
+						<Icon name="lucide:file-text" size="size-4" />
 						Riwayat Sewa
 					</h4>
 					{roomLeases.length === 0 ? (

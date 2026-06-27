@@ -46,7 +46,7 @@ const accounts = await fetchAccounts(params);
 					hx-get="/dashboard/manage/accounts/modal/add"
 					class="btn btn-sm btn-primary"
 				>
-					<Icon name="line-md:plus" size="size-5" />
+					<Icon name="lucide:plus" size="size-5" />
 					Tambah Akun
 				</button>
 			)
@@ -144,13 +144,13 @@ const accounts = await fetchAccounts(params);
 												hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
 												class="btn btn-outline btn-xs btn-info"
 											>
-												<Icon name="line-md:edit-twotone" /> Edit
+												<Icon name="lucide:pencil" /> Edit
 											</button>
 											<button
 												hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
 												class="btn btn-outline btn-xs btn-error"
 											>
-												<Icon name="line-md:remove" /> Hapus
+												<Icon name="lucide:trash-2" /> Hapus
 											</button>
 										</>
 									)}

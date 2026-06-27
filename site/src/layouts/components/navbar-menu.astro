@@ -3,7 +3,7 @@ import Icon from "~/components/ui/icon.astro";
 
 interface MenuItem {
 	label: string;
-	icon: `line-md:${string}`;
+	icon: `lucide:${string}`;
 	href: `/dashboard${string}`;
 }
 
@@ -15,29 +15,29 @@ const { role = "staff" } = Astro.props;
 
 const ALL = {
 	dashboard: {
-		icon: "line-md:grid-3-filled",
+		icon: "lucide:layout-grid",
 		label: "Dashboard",
 		href: "/dashboard",
 	},
 
 	manajemen: [
 		{
-			icon: "line-md:account",
+			icon: "lucide:user",
 			label: "Manajemen Akun",
 			href: "/dashboard/manage/accounts",
 		},
 		{
-			icon: "line-md:briefcase",
+			icon: "lucide:briefcase",
 			label: "Manajemen Kamar",
 			href: "/dashboard/manage/rooms",
 		},
 		{
-			icon: "line-md:person",
+			icon: "lucide:user",
 			label: "Manajemen Penghuni",
 			href: "/dashboard/manage/tenants",
 		},
 		{
-			icon: "line-md:text-box-multiple",
+			icon: "lucide:file-text",
 			label: "Manajemen Komplain",
 			href: "/dashboard/manage/complaints",
 		},
@@ -45,22 +45,22 @@ const ALL = {
 
 	laporan: [
 		{
-			icon: "line-md:calendar",
+			icon: "lucide:calendar",
 			label: "Laporan Transaksi",
 			href: "/dashboard/report/transactions",
 		},
 		{
-			icon: "line-md:bell",
+			icon: "lucide:bell",
 			label: "Laporan Notifikasi",
 			href: "/dashboard/report/notifications",
 		},
 		{
-			icon: "line-md:chat",
+			icon: "lucide:message-square",
 			label: "Log Chatbot",
 			href: "/dashboard/log/chatbot",
 		},
 		{
-			icon: "line-md:watch",
+			icon: "lucide:clock",
 			label: "Log Audit",
 			href: "/dashboard/log/audit",
 		},

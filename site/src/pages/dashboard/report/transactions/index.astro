@@ -34,19 +34,19 @@ const summaryStats = [
 		title: "Total Pemasukan",
 		value: formatCurrency(totalRevenue),
 		desc: `${params.from} s/d ${params.to}`,
-		icon: "line-md:edit-filled",
+		icon: "lucide:arrow-up-right",
 	},
 	{
 		title: "Sudah Terbayar",
 		value: `${paidCount} Invoice`,
 		desc: `${paidPercent}% dari total tagihan`,
-		icon: "line-md:circle-to-confirm-circle-transition",
+		icon: "lucide:circle-check",
 	},
 	{
 		title: "Pembayaran Tertunggak",
 		value: `${unpaidCount} Invoice`,
 		desc: `${formatCurrency(outstandingAmount)} belum dibayar`,
-		icon: "line-md:close-circle",
+		icon: "lucide:x-circle",
 	},
 ];
 
@@ -92,7 +92,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 			href={`/dashboard/report/transactions/report/download${Astro.url.search}`}
 			download
 		>
-			<Icon name="line-md:download" /> PDF
+			<Icon name="lucide:download" /> PDF
 		</a>
 	</Fragment>
 
@@ -206,7 +206,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 													href={`/invoice/${id}`}
 													target="_blank"
 												>
-													<Icon name="line-md:external-link" size="size-3.5" />{" "}
+													<Icon name="lucide:external-link" size="size-3.5" />{" "}
 													Invoice
 												</a>
 												{Astro.locals.canEdit() && (
@@ -217,7 +217,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 																onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
 															>
 																<Icon
-																	name="line-md:clipboard-list"
+																	name="lucide:clipboard-list"
 																	size="size-3.5"
 																/>
 																Salin
@@ -243,7 +243,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 																	class="flex items-center gap-2"
 																	type="submit"
 																>
-																	<Icon name="line-md:confirm-circle" />
+																	<Icon name="lucide:circle-check" />
 																	Tandai Lunas
 																</button>
 															</form>
@@ -271,7 +271,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 															class="btn w-24 btn-outline btn-xs btn-primary"
 															type="submit"
 														>
-															<Icon name="line-md:link" size="size-3.5" />{" "}
+															<Icon name="lucide:link" size="size-3.5" />{" "}
 															Generate
 														</button>
 													</form>
@@ -295,7 +295,7 @@ const sortedInvoices = [...filteredInvoices].sort((a, b) => {
 																	value={id}
 																/>
 																<button type="submit">
-																	<Icon name="line-md:confirm-circle" />
+																	<Icon name="lucide:circle-check" />
 																	Tandai Lunas
 																</button>
 															</li>

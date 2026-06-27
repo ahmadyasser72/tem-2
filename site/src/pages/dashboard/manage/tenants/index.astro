@@ -59,7 +59,7 @@ const filteredTenants = await fetchTenants(params);
 			href={`/dashboard/manage/tenants/report/download${Astro.url.search}`}
 			download
 		>
-			<Icon name="line-md:download" /> PDF
+			<Icon name="lucide:download" /> PDF
 		</a>
 		{
 			Astro.locals.canEdit() && (
@@ -67,7 +67,7 @@ const filteredTenants = await fetchTenants(params);
 					hx-get="/dashboard/manage/tenants/modal/add"
 					class="btn btn-sm btn-primary"
 				>
-					<Icon name="line-md:plus" size="size-5" />
+					<Icon name="lucide:plus" size="size-5" />
 					Tambah Penghuni
 				</button>
 			)
@@ -168,7 +168,7 @@ const filteredTenants = await fetchTenants(params);
 											href={`https://wa.me/${phoneNumber}`}
 											target="_blank"
 										>
-											<Icon name="line-md:phone-call-twotone" size="size-3.5" />
+											<Icon name="lucide:phone-call" size="size-3.5" />
 											+{phoneNumber}
 										</a>
 									</td>
@@ -203,7 +203,7 @@ const filteredTenants = await fetchTenants(params);
 												hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
 												class="btn flex items-center gap-1 btn-outline btn-xs btn-primary"
 											>
-												<Icon name="line-md:document-list" /> Detail
+												<Icon name="lucide:file-text" /> Detail
 											</button>
 											{Astro.locals.canEdit() &&
 												(isActive ? (
@@ -216,7 +216,7 @@ const filteredTenants = await fetchTenants(params);
 															<button
 																hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 															>
-																<Icon name="line-md:edit" />
+																<Icon name="lucide:pencil" />
 																Edit
 															</button>
 														</li>
@@ -224,7 +224,7 @@ const filteredTenants = await fetchTenants(params);
 															<button
 																hx-get={`/dashboard/manage/tenants/modal/move/${id}`}
 															>
-																<Icon name="line-md:arrow-right-circle" />
+																<Icon name="lucide:arrow-right-circle" />
 																Pindah Kamar
 															</button>
 														</li>
@@ -236,7 +236,7 @@ const filteredTenants = await fetchTenants(params);
 																}
 																class="text-error"
 															>
-																<Icon name="line-md:close" /> Berhenti Menginap
+																<Icon name="lucide:x" /> Berhenti Menginap
 															</button>
 														</li>
 													</ActionsMenu>
@@ -250,7 +250,7 @@ const filteredTenants = await fetchTenants(params);
 															<button
 																hx-get={`/dashboard/manage/tenants/modal/edit/${id}`}
 															>
-																<Icon name="line-md:edit" />
+																<Icon name="lucide:pencil" />
 																Edit
 															</button>
 														</li>
@@ -262,7 +262,7 @@ const filteredTenants = await fetchTenants(params);
 																}
 																class="text-success"
 															>
-																<Icon name="line-md:plus" /> Sewa Baru
+																<Icon name="lucide:plus" /> Sewa Baru
 															</button>
 														</li>
 													</ActionsMenu>

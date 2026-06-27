@@ -111,22 +111,22 @@ export const getAllRoomsStats = async (rooms: RoomRow[]) => {
 		{
 			title: "Total Kamar",
 			value: rooms.length.toString(),
-			icon: "line-md:home-md",
+			icon: "lucide:house",
 		},
 		{
 			title: "Kamar Terisi",
 			value: occupied.toString(),
-			icon: "line-md:circle-to-confirm-circle-transition",
+			icon: "lucide:circle-check",
 		},
 		{
 			title: "Kamar Tersedia",
 			value: vacant.toString(),
-			icon: "line-md:alert-circle",
+			icon: "lucide:circle-alert",
 		},
 		{
 			title: "Kamar Nonaktif",
 			value: inactive.toString(),
-			icon: "line-md:close-circle",
+			icon: "lucide:x-circle",
 		},
 	];
 };

@@ -25,7 +25,7 @@ const room = await db.query.rooms.findFirst({
 if (!room) Astro.response.status = 404;
 ---
 
-<Modal id="edit_room" title="Edit Kamar" icon="line-md:edit">
+<Modal id="edit_room" title="Edit Kamar" icon="lucide:pencil">
 	{
 		room ? (
 			<>

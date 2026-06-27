@@ -91,8 +91,8 @@ export const DIRECTION_ICONS: Record<
 	(typeof CHATBOT_DIRECTIONS)[number],
 	string
 > = {
-	incoming: "line-md:arrow-down-circle",
-	outgoing: "line-md:arrow-up-circle",
+	incoming: "lucide:arrow-down-circle",
+	outgoing: "lucide:arrow-up-circle",
 };
 
 export const DIRECTION_LABELS: Record<

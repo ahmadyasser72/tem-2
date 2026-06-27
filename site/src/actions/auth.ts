@@ -41,6 +41,12 @@ export const login = defineAction({
 				.where(eq(users.id, user.id)),
 		]);
 
+		context.locals.user = {
+			id: user.id,
+			name: user.displayName ?? user.username,
+			role: user.role as App.SessionData["user"]["role"],
+		};
+
 		await context.locals.logAudit(
 			"LOGIN",
 			"users",

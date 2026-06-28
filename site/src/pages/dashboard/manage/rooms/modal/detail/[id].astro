@@ -19,15 +19,16 @@ const room = await db.query.rooms.findFirst({
 		isActive: true,
 	},
 	where: { id: Number(Astro.params.id) },
-});
-
-const roomLeases = room
-	? await db.query.leases.findMany({
-			where: { roomId: room.id },
+	with: {
+		lease: {
+			with: { tenant: true },
+		},
+		leaseHistory: {
 			with: { tenant: true },
 			orderBy: { startDate: "desc" },
-		})
-	: [];
+		},
+	},
+});
 
 if (!room) Astro.response.status = 404;
 ---
@@ -65,10 +66,22 @@ if (!room) Astro.response.status = 404;
 
 					<span class="font-semibold text-base-content/60">Penghuni:</span>
 					<span>
-						{roomLeases.find((lease) => lease.isActive)?.tenant?.fullName ?? (
+						{room.lease?.tenant?.fullName ?? (
 							<span class="text-base-content/40 italic">Kosong</span>
 						)}
 					</span>
+
+					{room.lease && (
+						<>
+							<span />
+							<span class="-mt-2 text-xs text-base-content/60">
+								{formatDate(room.lease.startDate)} s/d{" "}
+								{room.lease.endDate
+									? formatDate(room.lease.endDate)
+									: "sekarang"}
+							</span>
+						</>
+					)}
 				</div>
 
 				<div class="mt-4">
@@ -76,13 +89,13 @@ if (!room) Astro.response.status = 404;
 						<Icon name="lucide:file-text" size="size-4" />
 						Riwayat Sewa
 					</h4>
-					{roomLeases.length === 0 ? (
+					{room.leaseHistory.length === 0 ? (
 						<p class="py-2 text-xs text-base-content/50 italic">
 							Belum ada riwayat sewa.
 						</p>
 					) : (
 						<div class="max-h-48 divide-y divide-base-200 overflow-y-auto">
-							{roomLeases.map((lease) => (
+							{room.leaseHistory.map((lease) => (
 								<div class="flex items-center justify-between py-2.5 text-xs">
 									<div class="flex flex-col gap-0.5">
 										<div class="flex items-center gap-2">

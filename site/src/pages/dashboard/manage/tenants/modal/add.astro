@@ -12,17 +12,10 @@ export const partial = true;
 
 const allRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
-	with: {
-		leases: {
-			columns: { id: true },
-			where: { isActive: true },
-		},
-	},
+	with: { lease: true },
 });
 
-const emptyRooms = allRooms.filter(
-	({ isActive, leases }) => isActive && leases.length === 0,
-);
+const emptyRooms = allRooms.filter(({ isActive, lease }) => isActive && !lease);
 ---
 
 <Modal id="add_tenant" title="Tambah Kontrak Sewa" icon="lucide:user-plus">

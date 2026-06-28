@@ -18,16 +18,11 @@ const tenant = await db.query.tenants.findFirst({
 
 const allRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
-	with: {
-		leases: {
-			columns: { id: true },
-			where: { isActive: true },
-		},
-	},
+	with: { lease: true },
 });
 
 const availableRooms = allRooms.filter(
-	({ isActive, leases }) => isActive && leases.length === 0,
+	({ isActive, lease }) => isActive && !lease,
 );
 
 if (!tenant) Astro.response.status = 404;

@@ -34,8 +34,8 @@ const {
 	method="post"
 >
 	<slot />
-	{!hidden && <p class="text-sm text-error" id="form_error" />}
 </form>
+<p class="text-sm text-error" id="form_error"></p>
 <div class="modal-action">
 	<ModalActions
 		btnId={`${modalId}_btn`}

@@ -42,9 +42,15 @@ export const relations = defineRelations(schema, (r) => ({
 	},
 
 	rooms: {
-		leases: r.many.leases({
+		leaseHistory: r.many.leases({
 			from: r.rooms.id,
 			to: r.leases.roomId,
+			where: { isActive: false },
+		}),
+		lease: r.one.leases({
+			from: r.rooms.id,
+			to: r.leases.roomId,
+			where: { isActive: true },
 		}),
 	},
 
@@ -52,10 +58,12 @@ export const relations = defineRelations(schema, (r) => ({
 		tenant: r.one.tenants({
 			from: r.leases.tenantId,
 			to: r.tenants.id,
+			optional: false,
 		}),
 		room: r.one.rooms({
 			from: r.leases.roomId,
 			to: r.rooms.id,
+			optional: false,
 		}),
 		invoices: r.many.invoices({
 			from: r.leases.id,

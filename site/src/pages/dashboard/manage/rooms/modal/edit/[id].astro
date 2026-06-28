@@ -20,6 +20,7 @@ const room = await db.query.rooms.findFirst({
 		isActive: true,
 	},
 	where: { id: Number(Astro.params.id) },
+	with: { lease: true },
 });
 
 if (!room) Astro.response.status = 404;
@@ -73,6 +74,7 @@ if (!room) Astro.response.status = 404;
 							name="is_active"
 							type="checkbox"
 							checked={room.isActive}
+							disabled={!!room.lease}
 						/>
 						<label
 							class="cursor-pointer text-sm font-semibold"

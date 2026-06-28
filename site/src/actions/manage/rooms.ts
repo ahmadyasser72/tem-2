@@ -133,12 +133,29 @@ export const _delete = defineAction({
 				isActive: true,
 			},
 			where: { id },
+			with: {
+				lease: {
+					with: { tenant: true },
+				},
+			},
 		});
+
 		if (!target) {
 			console.error("rooms.delete: room not found", { id });
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Kamar tidak ditemukan.",
+			});
+		}
+		if (target.lease) {
+			console.error("rooms.delete: room still used", {
+				id,
+				lease: target.lease.id,
+				tenant: target.lease.tenant.id,
+			});
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: `Kamar masih digunakan ${target.lease.tenant.fullName}.`,
 			});
 		}
 

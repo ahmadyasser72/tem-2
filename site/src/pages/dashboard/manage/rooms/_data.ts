@@ -25,27 +25,25 @@ const mapRoomFromDb = (room: {
 	roomType: (typeof ROOM_TYPES)[number];
 	monthlyPrice: number;
 	isActive: boolean;
-	leases: Array<{
+	lease: {
 		isActive: boolean;
-		tenant: { fullName: string } | null;
-	}>;
+		tenant: { fullName: string };
+	} | null;
 }): RoomRow => {
-	const activeLease = room.leases.find((lease) => lease.isActive);
 	return {
 		id: room.id,
 		roomNumber: room.roomNumber,
 		roomType: room.roomType,
 		monthlyPrice: room.monthlyPrice,
 		isActive: room.isActive,
-		tenantName: activeLease?.tenant?.fullName ?? null,
+		tenantName: room.lease?.tenant?.fullName ?? null,
 	};
 };
 
 export const fetchAllRooms = async (): Promise<RoomRow[]> => {
 	const rooms = await db.query.rooms.findMany({
 		with: {
-			leases: {
-				where: { isActive: true },
+			lease: {
 				with: { tenant: true },
 			},
 		},
@@ -56,46 +54,38 @@ export const fetchAllRooms = async (): Promise<RoomRow[]> => {
 export const fetchFilteredRooms = async (
 	params: z.infer<typeof roomQuerySchema>,
 ): Promise<RoomRow[]> => {
-	const dbWhere: Record<string, unknown> = {};
-
-	if (params.query) {
-		dbWhere.OR = [
-			{ roomNumber: { like: `%${params.query}%` } },
-			{ roomType: { like: `%${params.query}%` } },
-			{
-				leases: {
-					isActive: true,
-					tenant: {
-						fullName: { like: `%${params.query}%` },
-					},
-				},
-			},
-		];
-	}
-	if (params.status) {
-		if (params.status === "inactive") dbWhere.isActive = false;
-		if (params.status === "occupied") {
-			dbWhere.isActive = true;
-			dbWhere.leases = { isActive: true };
-		}
-		if (params.status === "vacant") {
-			dbWhere.isActive = true;
-			dbWhere.NOT = { leases: { isActive: true } };
-		}
-	}
-	if (params.type) {
-		dbWhere.roomType = params.type;
-	}
-
 	const rooms = await db.query.rooms.findMany({
-		where: dbWhere,
+		where: {
+			...(params.query && {
+				OR: [
+					{ roomNumber: { like: `%${params.query}%` } },
+					{ roomType: { like: `%${params.query}%` } },
+					{
+						lease: { tenant: { fullName: { like: `%${params.query}%` } } },
+					},
+				],
+			}),
+
+			...(params.status &&
+				((params.status === "occupied" && {
+					isActive: true,
+					lease: { isActive: true },
+				}) ||
+					(params.status === "vacant" && {
+						isActive: true,
+						NOT: { lease: { isActive: true } },
+					}) ||
+					(params.status === "inactive" && { isActive: false }))),
+
+			...(params.type && { roomType: params.type }),
+		},
 		with: {
-			leases: {
-				where: { isActive: true },
+			lease: {
 				with: { tenant: true },
 			},
 		},
 	});
+
 	return rooms.map(mapRoomFromDb);
 };
 

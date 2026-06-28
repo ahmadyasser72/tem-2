@@ -41,6 +41,11 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 			"Edit kamar",
 			(d) => `Berhasil edit kamar! (ID: ${d.id})`,
 		),
+		createActionResult(
+			actions.manage.rooms._delete,
+			"Hapus kamar",
+			(d) => `Berhasil hapus kamar! (ID: ${d.id})`,
+		),
 	]}
 />
 

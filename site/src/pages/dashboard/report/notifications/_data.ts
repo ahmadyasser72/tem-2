@@ -12,89 +12,64 @@ export const notificationQuerySchema = z.object({
 	type: statusSchema(NOTIFICATION_TYPES),
 });
 
-export type NotificationRow = {
-	id: number;
-	time: Date | null;
-	tenantName: string;
-	roomNumber: string;
-	invoiceNumber: string;
-	type: string;
-	status: string;
-};
-
-export async function fetchNotifications(
+export const fetchNotifications = async (
 	params: z.infer<typeof notificationQuerySchema>,
-	extra?: { useQuery?: boolean },
-): Promise<NotificationRow[]> {
+) => {
 	const { startDate, endDate } = parseDateRange(params.from, params.to);
 
-	const where: Record<string, unknown> = {
-		createdAt: { gte: startDate, lte: endDate },
-	};
-
-	if (extra?.useQuery && params.query) {
-		where.tenant = { fullName: { like: `%${params.query}%` } };
-	}
-	if (params.type) {
-		where.type = params.type;
-	}
-
 	const notifications = await db.query.notifications.findMany({
-		where,
+		where: {
+			...(params.query && {
+				OR: [{ tenant: { fullName: { like: `%${params.query}%` } } }],
+			}),
+
+			...(params.type && { type: params.type }),
+
+			createdAt: { gte: startDate, lte: endDate },
+		},
+		columns: {
+			id: true,
+			createdAt: true,
+			type: true,
+			status: true,
+			invoiceId: true,
+		},
 		with: {
 			tenant: {
 				with: {
-					leases: {
-						where: { isActive: true },
+					lease: {
 						with: { room: true },
 					},
 				},
 			},
-			invoice: true,
-			chatbotMessage: true,
 		},
 		orderBy: { id: "desc" },
 	});
 
-	return notifications.map((n) => {
-		const activeLease = n.tenant?.leases?.[0];
-		return {
-			id: n.id,
-			time: n.chatbotMessage?.sentAt ?? null,
-			tenantName: n.tenant?.fullName ?? "-",
-			roomNumber: activeLease?.room?.roomNumber ?? "-",
-			invoiceNumber: n.invoiceId ? formatInvoiceNumber(n.invoiceId) : "-",
-			type: n.type,
-			status: n.status,
-		};
-	});
-}
+	return notifications.map(({ invoiceId, tenant, ...notification }) => ({
+		...notification,
+		tenantName: tenant.fullName,
+		roomNumber: tenant.lease?.room.roomNumber ?? "-",
+		invoiceNumber: invoiceId ? formatInvoiceNumber(invoiceId) : "-",
+	}));
+};
 
-export const NOTIFICATION_TYPE_BADGES: Record<
-	(typeof NOTIFICATION_TYPES)[number],
-	string
-> = {
+export const NOTIFICATION_TYPE_BADGES = {
 	reminder: "badge-warning",
 	payment_success: "badge-success",
 	welcome: "badge-primary",
 	custom: "badge-info",
-};
+} satisfies Record<(typeof NOTIFICATION_TYPES)[number], string>;
 
-export const NOTIFICATION_TYPE_LABELS: Record<
-	(typeof NOTIFICATION_TYPES)[number],
-	string
-> = {
+export const NOTIFICATION_TYPE_LABELS = {
 	reminder: "Pengingat",
 	payment_success: "Pembayaran Berhasil",
 	welcome: "Selamat Datang",
 	custom: "Pesan Khusus",
-};
+} satisfies Record<(typeof NOTIFICATION_TYPES)[number], string>;
 
-export const NOTIFICATION_STATUS_BADGES: Record<
-	(typeof NOTIFICATION_STATUS)[number],
-	string
-> = {
+export const NOTIFICATION_STATUS_BADGES = {
 	pending: "badge-warning",
 	sent: "badge-success",
 	failed: "badge-error",
-};
+} satisfies Record<(typeof NOTIFICATION_STATUS)[number], string>;

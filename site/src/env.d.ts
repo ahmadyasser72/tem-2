@@ -17,7 +17,6 @@ declare namespace App {
 			recordId: number | null,
 			details: import("@e-kos/database/schema").AuditDetails,
 		) => Promise<void>;
-		user?: SessionData["user"];
-		canEdit: () => boolean;
+		user?: SessionData["user"] & { allowEdit?: boolean };
 	}
 }

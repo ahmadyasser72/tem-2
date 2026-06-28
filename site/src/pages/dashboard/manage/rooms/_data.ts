@@ -4,56 +4,13 @@ import { ROOM_TYPES } from "@e-kos/database/schema";
 import { z } from "astro/zod";
 import { sumBy } from "es-toolkit";
 
-import { querySchema } from "~/lib/query";
+import { querySchema, statusSchema } from "~/lib/query";
 
 export const ROOM_STATUS = ["occupied", "vacant", "inactive"] as const;
 
 export { ROOM_TYPES };
 
-export type RoomRow = {
-	id: number;
-	roomNumber: string;
-	roomType: (typeof ROOM_TYPES)[number];
-	monthlyPrice: number;
-	isActive: boolean;
-	tenantName: string | null;
-};
-
-const mapRoomFromDb = (room: {
-	id: number;
-	roomNumber: string;
-	roomType: (typeof ROOM_TYPES)[number];
-	monthlyPrice: number;
-	isActive: boolean;
-	lease: {
-		isActive: boolean;
-		tenant: { fullName: string };
-	} | null;
-}): RoomRow => {
-	return {
-		id: room.id,
-		roomNumber: room.roomNumber,
-		roomType: room.roomType,
-		monthlyPrice: room.monthlyPrice,
-		isActive: room.isActive,
-		tenantName: room.lease?.tenant?.fullName ?? null,
-	};
-};
-
-export const fetchAllRooms = async (): Promise<RoomRow[]> => {
-	const rooms = await db.query.rooms.findMany({
-		with: {
-			lease: {
-				with: { tenant: true },
-			},
-		},
-	});
-	return rooms.map(mapRoomFromDb);
-};
-
-export const fetchFilteredRooms = async (
-	params: z.infer<typeof roomQuerySchema>,
-): Promise<RoomRow[]> => {
+export const fetchRooms = async (params: z.infer<typeof roomQuerySchema>) => {
 	const rooms = await db.query.rooms.findMany({
 		where: {
 			...(params.query && {
@@ -80,16 +37,19 @@ export const fetchFilteredRooms = async (
 			...(params.type && { roomType: params.type }),
 		},
 		with: {
-			lease: {
-				with: { tenant: true },
-			},
+			lease: { with: { tenant: true } },
 		},
 	});
 
-	return rooms.map(mapRoomFromDb);
+	return rooms.map(({ lease, ...room }) => ({
+		...room,
+		tenantName: lease?.tenant?.fullName ?? null,
+	}));
 };
 
-export const getAllRoomsStats = async (rooms: RoomRow[]) => {
+export const getRoomsStats = (
+	rooms: Awaited<ReturnType<typeof fetchRooms>>,
+) => {
 	const occupied = sumBy(rooms, ({ isActive, tenantName }) =>
 		isActive && tenantName ? 1 : 0,
 	);
@@ -100,52 +60,46 @@ export const getAllRoomsStats = async (rooms: RoomRow[]) => {
 	return [
 		{
 			title: "Total Kamar",
-			value: rooms.length.toString(),
-			icon: "lucide:house",
+			value: rooms.length,
+			icon: "lucide:house" as const,
 		},
 		{
 			title: "Kamar Terisi",
-			value: occupied.toString(),
-			icon: "lucide:circle-check",
+			value: occupied,
+			icon: "lucide:circle-check" as const,
 		},
 		{
 			title: "Kamar Tersedia",
-			value: vacant.toString(),
-			icon: "lucide:circle-alert",
+			value: vacant,
+			icon: "lucide:circle-alert" as const,
 		},
 		{
 			title: "Kamar Nonaktif",
-			value: inactive.toString(),
-			icon: "lucide:x-circle",
+			value: inactive,
+			icon: "lucide:x-circle" as const,
 		},
 	];
 };
 
 export const roomQuerySchema = z.object({
 	query: querySchema,
-	status: z.enum(ROOM_STATUS).optional().catch(undefined),
-	type: z.enum(ROOM_TYPES).optional().catch(undefined),
+	status: statusSchema(ROOM_STATUS),
+	type: statusSchema(ROOM_TYPES),
 });
 
-export const reportRoomQuerySchema = z.object({
-	status: z.enum(ROOM_STATUS).optional().catch(undefined),
-	type: z.enum(ROOM_TYPES).optional().catch(undefined),
-});
-
-export const ROOM_TYPE_LABELS: Record<(typeof ROOM_TYPES)[number], string> = {
+export const ROOM_TYPE_LABELS = {
 	standard: "Standar",
 	premium: "Premium",
-};
+} satisfies Record<(typeof ROOM_TYPES)[number], string>;
 
-export const ROOM_STATUS_LABELS: Record<(typeof ROOM_STATUS)[number], string> =
-	{
-		occupied: "Terisi",
-		vacant: "Kosong",
-		inactive: "Nonaktif",
-	};
+export const ROOM_STATUS_LABELS = {
+	occupied: "Terisi",
+	vacant: "Kosong",
+	inactive: "Nonaktif",
+} satisfies Record<(typeof ROOM_STATUS)[number], string>;
 
-export const ROOM_STATUS_BADGES: Record<string, string> = {
+export const ROOM_STATUS_BADGES = {
 	occupied: "badge-success",
 	vacant: "badge-warning",
 	inactive: "badge-neutral",
-};
+} satisfies Record<(typeof ROOM_STATUS)[number], string>;

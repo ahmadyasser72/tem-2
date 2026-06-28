@@ -11,94 +11,52 @@ export const chatbotQuerySchema = z.object({
 	...periodFields,
 });
 
-export type ChatbotLogRow = {
-	id: number;
-	time: Date;
-	tenantName: string;
-	roomNumber: string;
-	direction: string;
-	message: string;
-};
-
 export async function fetchChatbotLogs(
 	params: z.infer<typeof chatbotQuerySchema>,
-	extra?: { tenantId?: number; parseMode?: "month" | "day" },
-): Promise<ChatbotLogRow[]> {
-	const { startDate, endDate } = parseDateRange(
-		params.from,
-		params.to,
-		extra?.parseMode ?? "month",
-	);
-
-	const where: Record<string, unknown> = {};
-
-	if (params.query) {
-		where.OR = [
-			{ message: { like: `%${params.query}%` } },
-			{ tenant: { fullName: { like: `%${params.query}%` } } },
-		];
-	}
-	if (params.direction) {
-		where.direction = params.direction;
-	}
-	if (startDate || endDate) {
-		const sentAtFilter: Record<string, Date> = {};
-		if (startDate) sentAtFilter.gte = startDate;
-		if (endDate) sentAtFilter.lte = endDate;
-		where.sentAt = sentAtFilter;
-	}
-	if (extra?.tenantId != null) {
-		where.tenantId = extra.tenantId;
-	}
+) {
+	const { startDate, endDate } = parseDateRange(params.from, params.to);
 
 	const logs = await db.query.chatbotMessages.findMany({
-		where,
+		where: {
+			...(params.query && {
+				OR: [
+					{ message: { like: `%${params.query}%` } },
+					{ tenant: { fullName: { like: `%${params.query}%` } } },
+				],
+			}),
+
+			...(params.direction && { direction: params.direction }),
+
+			sentAt: { gte: startDate, lte: endDate },
+		},
 		with: {
 			tenant: {
 				with: {
-					leases: {
-						where: { isActive: true },
-						with: { room: true },
-					},
+					lease: { with: { room: true } },
 				},
 			},
 		},
 		orderBy: { sentAt: "desc" },
 	});
 
-	return logs.map((log) => {
-		const activeLease = log.tenant?.leases?.[0];
-		return {
-			id: log.id,
-			time: log.sentAt,
-			tenantName: log.tenant?.fullName ?? "-",
-			roomNumber: activeLease?.room?.roomNumber ?? "-",
-			direction: log.direction,
-			message: log.message,
-		};
-	});
+	return logs.map(({ tenant, ...log }) => ({
+		...log,
+		tenantName: tenant.fullName,
+		roomNumber: tenant.lease?.room?.roomNumber ?? "-",
+	}));
 }
 
-export const DIRECTION_BADGES: Record<
-	(typeof CHATBOT_DIRECTIONS)[number],
-	string
-> = {
+export const DIRECTION_BADGES = {
 	incoming: "badge-info",
 	outgoing: "badge-success",
-};
+} satisfies Record<(typeof CHATBOT_DIRECTIONS)[number], string>;
 
-export const DIRECTION_ICONS: Record<
-	(typeof CHATBOT_DIRECTIONS)[number],
-	string
-> = {
-	incoming: "lucide:arrow-down-circle",
-	outgoing: "lucide:arrow-up-circle",
-};
+export const DIRECTION_ICONS = {
+	incoming: "lucide:arrow-down-circle" as const,
+	outgoing: "lucide:arrow-up-circle" as const,
+} satisfies Record<(typeof CHATBOT_DIRECTIONS)[number], string>;
 
-export const DIRECTION_LABELS: Record<
-	(typeof CHATBOT_DIRECTIONS)[number],
-	string
-> = {
+export const DIRECTION_LABELS = {
 	incoming: "Masuk",
 	outgoing: "Keluar",
-};
+} satisfies Record<(typeof CHATBOT_DIRECTIONS)[number], string>;

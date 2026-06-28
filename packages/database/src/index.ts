@@ -16,7 +16,7 @@ export const {
 	ROOM_TYPES,
 } = schema;
 
-export { eq, and, sql } from "drizzle-orm";
+export { eq, ne, and, sql } from "drizzle-orm";
 
 export { hashPassword, verifyPassword } from "./password";
 

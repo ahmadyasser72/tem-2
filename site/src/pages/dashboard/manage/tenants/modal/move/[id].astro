@@ -15,25 +15,24 @@ export const partial = true;
 const tenant = await db.query.tenants.findFirst({
 	columns: { id: true, fullName: true },
 	where: { id: Number(Astro.params.id) },
+	with: {
+		lease: {
+			with: { room: true },
+		},
+		leaseHistory: {
+			with: { room: true },
+			orderBy: { startDate: "desc" },
+		},
+	},
 });
 
-const activeLease = tenant
-	? await db.query.leases.findFirst({
-			where: { tenantId: tenant.id, isActive: true },
-			with: { room: true },
-		})
-	: null;
-
-const allRooms = await db.query.rooms.findMany({
+const availableRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
 	with: { lease: true },
+	where: { isActive: true, lease: { isActive: false } },
 });
 
-const availableRooms = allRooms.filter(
-	({ isActive, lease }) => isActive && !lease,
-);
-
-if (!tenant || !activeLease) Astro.response.status = 404;
+if (!tenant || !tenant.lease) Astro.response.status = 404;
 ---
 
 <Modal
@@ -42,24 +41,20 @@ if (!tenant || !activeLease) Astro.response.status = 404;
 	icon="lucide:external-link"
 >
 	{
-		tenant && activeLease ? (
+		tenant && tenant.lease ? (
 			<>
 				<div class="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-base-200 p-3 text-sm">
 					<span class="font-bold">Penghuni:</span>
 					<span>{tenant.fullName}</span>
 					<span class="font-bold">Kamar Saat Ini:</span>
 					<span class="font-mono font-bold">
-						{activeLease.room?.roomNumber ?? "-"}
+						{tenant.lease.room.roomNumber}
 						<span class="text-xs text-base-content/50">
-							(
-							{activeLease.room?.roomType
-								? ROOM_TYPE_LABELS[activeLease.room.roomType]
-								: "-"}
-							)
+							({ROOM_TYPE_LABELS[tenant.lease.room.roomType]})
 						</span>
 					</span>
 					<span class="font-bold">Mulai Sewa:</span>
-					<span>{formatDate(activeLease.startDate)}</span>
+					<span>{formatDate(tenant.lease.startDate)}</span>
 				</div>
 
 				<ModalForm
@@ -77,8 +72,7 @@ if (!tenant || !activeLease) Astro.response.status = 404;
 							</option>
 							{availableRooms.map(({ id, roomNumber, roomType }) => (
 								<option value={id}>
-									{roomNumber} – {ROOM_TYPE_LABELS[roomType] ?? roomType}{" "}
-									(Tersedia)
+									{roomNumber} – {ROOM_TYPE_LABELS[roomType]} (Tersedia)
 								</option>
 							))}
 						</select>

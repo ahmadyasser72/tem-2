@@ -2,121 +2,32 @@ import { db, INVOICE_STATUS } from "@e-kos/database";
 import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
 
 import { z } from "astro/zod";
-import { sumBy, uniqBy } from "es-toolkit";
+import { sumBy } from "es-toolkit";
 
 import { parseDateRange } from "~/lib/date";
-import { periodFields, querySchema } from "~/lib/query";
+import { periodFields, querySchema, statusSchema } from "~/lib/query";
 import { formatInvoiceNumber } from "~/lib/transforms";
 
-export const transactionQuerySchema = z.object({
-	query: querySchema,
-	...periodFields,
-	status: z
-		.enum(["all", ...INVOICE_STATUS])
-		.optional()
-		.catch(undefined),
-});
+export { INVOICE_STATUS };
 
-export type TransactionRow = {
-	id: number;
-	invoiceNumber: string;
-	tenantName: string;
-	roomNumber: string;
-	amount: number;
-	dueDate: Date;
-	status: string;
-	gatewayRef: string;
-	duitkuReference: string | null;
-	paymentUrl: string | null;
-};
-
-function buildTransactionWhere(
+export const fetchTransactions = async (
 	params: z.infer<typeof transactionQuerySchema>,
-	extra?: { useQuery?: boolean },
-): Record<string, unknown> {
+) => {
 	const { startDate, endDate } = parseDateRange(params.from, params.to);
 
-	const where: Record<string, unknown> = {
-		dueDate: { gte: startDate, lte: endDate },
-	};
+	const invoices = await db.query.invoices.findMany({
+		where: {
+			...(params.query && {
+				OR: [
+					{ lease: { tenant: { fullName: { like: `%${params.query}%` } } } },
+					{ lease: { room: { roomNumber: { like: `%${params.query}%` } } } },
+				],
+			}),
 
-	if (extra?.useQuery && params.query) {
-		where.OR = [
-			{ lease: { tenant: { fullName: { like: `%${params.query}%` } } } },
-			{ lease: { room: { roomNumber: { like: `%${params.query}%` } } } },
-		];
-	}
-	if (params.status && params.status !== "all") {
-		where.status = params.status;
-	}
+			...(params.status && { status: params.status }),
 
-	return where;
-}
-
-function buildCarryoverWhere(
-	startDate: Date,
-	params: z.infer<typeof transactionQuerySchema>,
-	extra?: { useQuery?: boolean },
-): Record<string, unknown> {
-	const where: Record<string, unknown> = {
-		dueDate: { lt: startDate },
-	};
-
-	// Only unpaid/overdue invoices from before the period
-	if (params.status && params.status !== "all") {
-		where.status = params.status;
-	} else {
-		where.status = { ne: "paid" };
-	}
-
-	if (extra?.useQuery && params.query) {
-		where.OR = [
-			{ lease: { tenant: { fullName: { like: `%${params.query}%` } } } },
-			{ lease: { room: { roomNumber: { like: `%${params.query}%` } } } },
-		];
-	}
-
-	return where;
-}
-
-function mapInvoice(inv: {
-	id: number;
-	amount: number;
-	dueDate: Date;
-	status: string;
-	duitkuReference: string | null;
-	lease: {
-		tenant: { fullName: string } | null;
-		room: { roomNumber: string } | null;
-	} | null;
-}): TransactionRow {
-	return {
-		id: inv.id,
-		invoiceNumber: formatInvoiceNumber(inv.id),
-		tenantName: inv.lease?.tenant?.fullName ?? "-",
-		roomNumber: inv.lease?.room?.roomNumber ?? "-",
-		amount: inv.amount,
-		dueDate: inv.dueDate,
-		status: inv.status,
-		gatewayRef: inv.duitkuReference ?? "-",
-		duitkuReference: inv.duitkuReference,
-		paymentUrl: inv.duitkuReference
-			? getPaymentUrlFromReference(inv.duitkuReference)
-			: null,
-	};
-}
-
-export async function fetchTransactions(
-	params: z.infer<typeof transactionQuerySchema>,
-	extra?: { useQuery?: boolean },
-): Promise<TransactionRow[]> {
-	const { startDate } = parseDateRange(params.from, params.to);
-
-	// Main query: invoices within the period
-	const where = buildTransactionWhere(params, extra);
-
-	let invoices = await db.query.invoices.findMany({
-		where,
+			dueDate: { gte: startDate, lte: endDate },
+		},
 		with: {
 			lease: {
 				with: { tenant: true, room: true },
@@ -124,27 +35,20 @@ export async function fetchTransactions(
 		},
 	});
 
-	// Carry-over: unpaid/overdue invoices from before the period
-	if (startDate && params.status !== "paid") {
-		const carryoverWhere = buildCarryoverWhere(startDate, params, extra);
+	return invoices.map(({ lease, ...invoice }) => ({
+		...invoice,
+		invoiceNumber: formatInvoiceNumber(invoice.id),
+		tenantName: lease.tenant.fullName,
+		roomNumber: lease.room.roomNumber,
+		paymentUrl: invoice.duitkuReference
+			? getPaymentUrlFromReference(invoice.duitkuReference)
+			: null,
+	}));
+};
 
-		const carryover = await db.query.invoices.findMany({
-			where: carryoverWhere,
-			with: {
-				lease: {
-					with: { tenant: true, room: true },
-				},
-			},
-		});
-
-		// Merge, deduplicate by id (safety — date ranges are disjoint)
-		invoices = uniqBy([...invoices, ...carryover], (inv) => inv.id);
-	}
-
-	return invoices.map(mapInvoice);
-}
-
-export function getTransactionStats(transactions: TransactionRow[]) {
+export const getTransactionStats = (
+	transactions: Awaited<ReturnType<typeof fetchTransactions>>,
+) => {
 	const paid = transactions.filter(
 		(transaction) => transaction.status === "paid",
 	);
@@ -158,4 +62,22 @@ export function getTransactionStats(transactions: TransactionRow[]) {
 		unpaidCount: unpaid.length,
 		outstandingAmount: sumBy(unpaid, (transaction) => transaction.amount),
 	};
-}
+};
+
+export const transactionQuerySchema = z.object({
+	query: querySchema,
+	...periodFields,
+	status: statusSchema(INVOICE_STATUS),
+});
+
+export const INVOICE_STATUS_BADGES = {
+	unpaid: "badge-warning",
+	paid: "badge-success",
+	overdue: "badge-error",
+} satisfies Record<(typeof INVOICE_STATUS)[number], string>;
+
+export const INVOICE_STATUS_LABELS = {
+	unpaid: "Belum Bayar",
+	paid: "Lunas",
+	overdue: "Terlambat",
+} satisfies Record<(typeof INVOICE_STATUS)[number], string>;

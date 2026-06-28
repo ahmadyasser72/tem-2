@@ -1,30 +1,37 @@
 ---
-import { sumBy } from "es-toolkit";
-
 import ReportLayout from "~/layouts/report-layout.astro";
-import { INVOICE_STATUS_LABELS } from "~/lib/badges";
 import { formatDate } from "~/lib/date";
 import { formatCurrency } from "~/lib/transforms";
-import { fetchTransactions, transactionQuerySchema } from "../_data";
+import {
+	fetchTransactions,
+	getTransactionStats,
+	INVOICE_STATUS_LABELS,
+	transactionQuerySchema,
+} from "../_data";
 
-const params = Astro.locals.parseQuery(transactionQuerySchema);
+const params = Astro.locals.parseQuery(
+	transactionQuerySchema.omit({ query: true }),
+);
 
-const mapped = await fetchTransactions(params);
+const invoices = await fetchTransactions(params);
+const { totalRevenue, paidCount, unpaidCount, outstandingAmount } =
+	getTransactionStats(invoices);
 
-const paidInvoices = mapped.filter((inv) => inv.status === "paid");
-const unpaidInvoices = mapped.filter((inv) => inv.status !== "paid");
-
-const totalRevenue = sumBy(paidInvoices, (inv) => inv.amount);
-const paidCount = paidInvoices.length;
-const unpaidCount = unpaidInvoices.length;
-const outstandingAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
+const filterParts: string[] = [];
+if (params.status) {
+	filterParts.push(`Status: ${INVOICE_STATUS_LABELS[params.status]}`);
+}
+if (params.from) {
+	filterParts.push(
+		params.from !== params.to
+			? `Periode: ${params.from} s/d ${params.to}`
+			: `Periode: ${params.from}`,
+	);
+}
+const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
-<ReportLayout
-	title="Laporan Transaksi Bulanan"
-	subtitle={`${params.from} s/d ${params.to}`}
->
-	<!-- Stats Cards -->
+<ReportLayout title="Laporan Transaksi Bulanan" subtitle={subtitle}>
 	<div
 		style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;"
 	>
@@ -67,7 +74,6 @@ const outstandingAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
 		</div>
 	</div>
 
-	<!-- Transactions Table -->
 	<table>
 		<thead>
 			<tr>
@@ -82,31 +88,30 @@ const outstandingAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
 		</thead>
 		<tbody>
 			{
-				mapped.map((inv, idx) => (
-					<tr>
-						<td class="text-center">{idx + 1}</td>
-						<td style="font-family: 'Courier New', monospace;">
-							{inv.invoiceNumber}
-						</td>
-						<td>{inv.tenantName}</td>
-						<td style="font-family: 'Courier New', monospace;">
-							{inv.roomNumber}
-						</td>
-						<td style="text-align: right; font-family: 'Courier New', monospace;">
-							{formatCurrency(inv.amount)}
-						</td>
-						<td style="font-family: 'Courier New', monospace;">
-							{formatDate(inv.dueDate)}
-						</td>
-						<td>
-							{
-								INVOICE_STATUS_LABELS[
-									inv.status as keyof typeof INVOICE_STATUS_LABELS
-								]
-							}
-						</td>
-					</tr>
-				))
+				invoices.map(
+					(
+						{ invoiceNumber, tenantName, roomNumber, amount, dueDate, status },
+						idx,
+					) => (
+						<tr>
+							<td class="text-center">{idx + 1}</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{invoiceNumber}
+							</td>
+							<td>{tenantName}</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{roomNumber}
+							</td>
+							<td style="text-align: right; font-family: 'Courier New', monospace;">
+								{formatCurrency(amount)}
+							</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{formatDate(dueDate)}
+							</td>
+							<td>{INVOICE_STATUS_LABELS[status]}</td>
+						</tr>
+					),
+				)
 			}
 		</tbody>
 	</table>

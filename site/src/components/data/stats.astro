@@ -4,9 +4,9 @@ import Icon from "~/components/ui/icon.astro";
 export interface Props {
 	items: Array<{
 		title: string;
-		value: string;
+		value: string | number;
 		desc?: string;
-		icon?: string;
+		icon?: `lucide:${string}`;
 	}>;
 }
 
@@ -15,13 +15,15 @@ const { items } = Astro.props;
 
 <div
 	class="stats w-full stats-vertical border border-base-300 shadow-sm sm:stats-horizontal"
+	id="stats"
+	hx-swap-oob="true"
 >
 	{
 		items.map(({ title, value, desc, icon }) => (
 			<div class="stat text-center sm:text-left">
 				{icon && (
 					<div class="stat-figure">
-						<Icon class="text-secondary" name={icon as any} size="size-12" />
+						<Icon class="text-secondary" name={icon} size="size-12" />
 					</div>
 				)}
 				<div class="stat-title">{title}</div>

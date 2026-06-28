@@ -6,68 +6,27 @@ import type { Browser } from "puppeteer-core";
 import puppeteer from "puppeteer-core";
 
 let browserInstance: Browser | null = null;
-let browserPromise: Promise<Browser> | null = null;
-
-// Persist across HMR via hot.data agar pending launch .then() tetap ter-track
-let allBrowsers: Set<Browser>;
-if (import.meta.hot) {
-	if (!import.meta.hot.data.allBrowsers)
-		import.meta.hot.data.allBrowsers = new Set();
-	allBrowsers = import.meta.hot.data.allBrowsers;
-} else {
-	allBrowsers = new Set();
-}
-
-const getBrowser = async (): Promise<Browser> => {
+const getBrowser = async () => {
 	if (browserInstance?.connected) return browserInstance;
-	if (browserPromise) return browserPromise;
 
-	const chromiumPath = CHROMIUM_PATH;
-	if (!fs.existsSync(chromiumPath))
-		throw new Error(`Chromium not found at ${chromiumPath}`);
+	if (!fs.existsSync(CHROMIUM_PATH))
+		throw new Error(`Chromium not found at ${CHROMIUM_PATH}`);
 
-	browserPromise = puppeteer
-		.launch({
-			executablePath: chromiumPath,
-			args: ["--no-sandbox", "--headless=new"],
-		})
-		.then((b) => {
-			console.log("pdf: browser launched");
-			browserInstance = b;
-			allBrowsers.add(b);
-			b.on("disconnected", () => {
-				console.log("pdf: browser disconnected");
-				browserInstance = null;
-				browserPromise = null;
-				allBrowsers.delete(b);
-			});
-			return b;
-		});
+	browserInstance = await puppeteer.launch({
+		executablePath: CHROMIUM_PATH,
+		args: ["--no-sandbox", "--headless=new"],
+	});
+	console.log("pdf: browser launched");
 
-	return await browserPromise;
+	browserInstance.on("disconnected", () => {
+		console.log("pdf: browser disconnected");
+		browserInstance = null;
+	});
+	return browserInstance;
 };
 
-// HMR cleanup — close all browsers before module reload
-
-if (import.meta.hot) {
-	import.meta.hot.dispose(() => {
-		console.log("pdf: HMR cleanup — disposing browsers", {
-			count: allBrowsers.size,
-		});
-		browserPromise = null;
-		browserInstance = null;
-		for (const b of allBrowsers) {
-			b.close().catch(() => {});
-		}
-		allBrowsers.clear();
-	});
-}
-
-// Shared auth token for puppeteer
-
 let pdfToken: string | null = null;
-
-export const getPDFToken = (): string => {
+export const getPuppeteerToken = () => {
 	// Dev: HMR resets modules constantly, pakai token tetap biar middleware cocok
 	if (import.meta.env.DEV) return "dev-pdf-token";
 
@@ -79,14 +38,14 @@ export const getPDFToken = (): string => {
 			byte.toString(16).padStart(2, "0"),
 		).join("");
 	}
+
 	return pdfToken;
 };
 
-// Generate PDF
-
-export const generatePDF = async (url: string): Promise<Buffer> => {
+const generatePDF = async (url: string) => {
 	const browser = await getBrowser();
 	const page = await browser.newPage();
+	await page.setExtraHTTPHeaders({ "x-puppeteer": getPuppeteerToken() });
 
 	try {
 		await page.goto(url, { waitUntil: "networkidle0", timeout: 30_000 });
@@ -110,34 +69,27 @@ export const generatePDF = async (url: string): Promise<Buffer> => {
 	}
 };
 
-// Reusable download handler
-
 export const makeDownloadHandler = (
-	path: string | ((reqUrl: URL) => string),
-	filename: string | ((reqUrl: URL) => string) = "laporan",
+	path: string | ((url: URL) => string),
+	filename: string | ((url: URL) => string) = "laporan",
 ): APIRoute => {
-	return async ({ url: reqUrl, locals }) => {
-		const search = reqUrl.searchParams;
-		const baseName =
-			typeof filename === "function" ? filename(reqUrl) : filename;
+	return async ({ url, locals }) => {
+		const search = url.searchParams;
+		search.set("user", locals.user!.id.toString());
+
+		const renderPath = typeof path === "function" ? path(url) : path;
+		const pageUrl = `${url.origin}${renderPath}?${search.toString()}`;
+
+		const pdf = await generatePDF(pageUrl);
+		const baseName = typeof filename === "function" ? filename(url) : filename;
 		const dateStr = new Date().toISOString().slice(0, 10);
 		const safeName = `${baseName}_${dateStr}`.replace(/[^a-zA-Z0-9_\-]/g, "_");
-		const createdBy = locals.user?.name ?? "Staff";
 
-		// Pass auth token + user info to the target page
-		search.set("_pdf_token", getPDFToken());
-		search.set("createdBy", createdBy);
-
-		const renderPath = typeof path === "function" ? path(reqUrl) : path;
-		const pageUrl = `${reqUrl.origin}${renderPath}?${search.toString()}`;
-
-		const pdfBuffer = await generatePDF(pageUrl);
-
-		return new Response(pdfBuffer as unknown as BodyInit, {
+		return new Response(pdf, {
 			headers: {
 				"Content-Type": "application/pdf",
 				"Content-Disposition": `attachment; filename="${safeName}.pdf"`,
-				"Content-Length": pdfBuffer.length.toString(),
+				"Content-Length": pdf.length.toString(),
 			},
 		});
 	};

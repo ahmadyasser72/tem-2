@@ -81,10 +81,10 @@ const chatbotLogs = await fetchChatbotLogs(params);
 			<tbody id="chatbot-table-body">
 				{
 					chatbotLogs.map(
-						({ id, time, tenantName, roomNumber, direction, message }) => (
-							<tr data-id={id}>
+						({ id, sentAt, tenantName, roomNumber, direction, message }) => (
+							<tr>
 								<td class="font-mono whitespace-nowrap">
-									{formatDate(time, "DD MMM YYYY HH:mm:ss")}
+									{formatDate(sentAt, "DD MMM YYYY HH:mm:ss")}
 								</td>
 								<td>
 									{tenantName}
@@ -96,34 +96,21 @@ const chatbotLogs = await fetchChatbotLogs(params);
 									<span
 										class:list={[
 											"badge flex items-center gap-1 badge-sm font-bold",
-											DIRECTION_BADGES[
-												direction as keyof typeof DIRECTION_BADGES
-											],
+											DIRECTION_BADGES[direction],
 										]}
 									>
-										<Icon
-											name={
-												DIRECTION_ICONS[
-													direction as keyof typeof DIRECTION_ICONS
-												] as any
-											}
-											size="size-3"
-										/>
-										{
-											DIRECTION_LABELS[
-												direction as keyof typeof DIRECTION_LABELS
-											]
-										}
+										<Icon name={DIRECTION_ICONS[direction]} size="size-3" />
+										{DIRECTION_LABELS[direction]}
 									</span>
 								</td>
 								<td class="max-w-lg wrap-break-word">{message}</td>
 								<td class="text-right">
-									{Astro.locals.canEdit() && (
+									{Astro.locals.user?.allowEdit && (
 										<button
 											hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
 											class="btn btn-square text-error btn-ghost btn-xs"
 										>
-											<Icon name="lucide:x" size="size-4" />
+											<Icon name="lucide:x" />
 										</button>
 									)}
 								</td>

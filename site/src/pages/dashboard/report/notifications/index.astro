@@ -21,9 +21,7 @@ import {
 
 const params = Astro.locals.parseQuery(notificationQuerySchema);
 
-const filteredNotifications = await fetchNotifications(params, {
-	useQuery: true,
-});
+const notifications = await fetchNotifications(params);
 ---
 
 <FormResult
@@ -37,8 +35,8 @@ const filteredNotifications = await fetchNotifications(params, {
 />
 
 <DashboardLayout
-	title="Manajemen Notifikasi"
-	description="Riwayat dan pengiriman notifikasi (tagihan, pengingat, komplain) via WhatsApp Chatbot"
+	title="Laporan Notifikasi"
+	description="Riwayat pengiriman notifikasi (tagihan, pengingat, komplain) via WhatsApp Chatbot"
 >
 	<Fragment slot="page-action">
 		<a
@@ -52,7 +50,7 @@ const filteredNotifications = await fetchNotifications(params, {
 	<Alert
 		type="info"
 		title="Sistem Otomatisasi Aktif"
-		description="Sistem mengirimkan pesan pengingat tagihan (WhatsApp) otomatis setiap hari pukul 07.00 WIB untuk penyewa yang memiliki tagihan belum lunas mendekati H-3 jatuh tempo."
+		description="Sistem mengirimkan pesan pengingat tagihan (WhatsApp) otomatis setiap hari pukul 08.00 WITA untuk penyewa yang memiliki tagihan belum lunas mendekati H-3 jatuh tempo."
 	/>
 
 	<FilterToolbar name="notifications" from={params.from} to={params.to}>
@@ -79,7 +77,6 @@ const filteredNotifications = await fetchNotifications(params, {
 		</Fragment>
 	</FilterToolbar>
 
-	<!-- Content Wrapper for HTMX -->
 	<div
 		class="overflow-x-auto rounded-box border border-base-300 shadow-sm"
 		id="notifications-content-wrapper"
@@ -96,11 +93,18 @@ const filteredNotifications = await fetchNotifications(params, {
 			</thead>
 			<tbody id="notifications-table-body">
 				{
-					filteredNotifications.map(
-						({ time, tenantName, roomNumber, invoiceNumber, type, status }) => (
+					notifications.map(
+						({
+							createdAt,
+							tenantName,
+							roomNumber,
+							invoiceNumber,
+							type,
+							status,
+						}) => (
 							<tr>
 								<td class="font-mono text-xs">
-									{formatDate(time, "DD MMM YYYY HH:mm")}
+									{formatDate(createdAt, "DD MMM YYYY HH:mm")}
 								</td>
 								<td class="flex items-center gap-2 text-sm font-semibold">
 									{tenantName}
@@ -113,25 +117,17 @@ const filteredNotifications = await fetchNotifications(params, {
 									<span
 										class:list={[
 											"badge badge-sm font-bold",
-											NOTIFICATION_TYPE_BADGES[
-												type as keyof typeof NOTIFICATION_TYPE_BADGES
-											],
+											NOTIFICATION_TYPE_BADGES[type],
 										]}
 									>
-										{
-											NOTIFICATION_TYPE_LABELS[
-												type as keyof typeof NOTIFICATION_TYPE_LABELS
-											]
-										}
+										{NOTIFICATION_TYPE_LABELS[type]}
 									</span>
 								</td>
 								<td>
 									<span
 										class:list={[
 											"badge badge-sm font-bold",
-											NOTIFICATION_STATUS_BADGES[
-												status as keyof typeof NOTIFICATION_STATUS_BADGES
-											],
+											NOTIFICATION_STATUS_BADGES[status],
 										]}
 									>
 										{status}

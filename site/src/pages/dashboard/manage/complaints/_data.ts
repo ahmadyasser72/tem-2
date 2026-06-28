@@ -6,115 +6,70 @@ import { countBy } from "es-toolkit";
 import { parseDateRange } from "~/lib/date";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
+export const fetchComplaints = async (
+	params: z.infer<typeof complaintQuerySchema>,
+) => {
+	const { startDate, endDate } = parseDateRange(params.from, params.to);
+
+	const complaints = await db.query.complaints.findMany({
+		where: {
+			...(params.query && {
+				OR: [
+					{ description: { like: `%${params.query}%` } },
+					{ tenant: { fullName: { like: `%${params.query}%` } } },
+				],
+			}),
+
+			...(params.status && { status: params.status }),
+
+			createdAt: { gte: startDate, lte: endDate },
+		},
+		with: {
+			tenant: { with: { lease: { with: { room: true } } } },
+			resolver: true,
+		},
+	});
+
+	return complaints.map(({ tenant, resolver, ...complaint }) => ({
+		...complaint,
+		tenantName: tenant.fullName,
+		roomNumber: tenant.lease?.room?.roomNumber ?? null,
+		resolvedByUserName: resolver?.displayName ?? null,
+	}));
+};
+
+export const getComplaintStats = (
+	complaints: Awaited<ReturnType<typeof fetchComplaints>>,
+) => {
+	const counts = countBy(complaints, (complaint) => complaint.status);
+	return [
+		{ title: "Total Komplain", value: complaints.length },
+		{ title: "Terbuka", value: counts.open ?? 0 },
+		{ title: "Proses", value: counts.in_progress ?? 0 },
+		{ title: "Selesai", value: counts.resolved ?? 0 },
+	];
+};
+
 export const complaintQuerySchema = z.object({
 	query: querySchema,
 	status: statusSchema(COMPLAINT_STATUS),
 	...periodFields,
 });
 
-export type ComplaintRow = {
-	id: number;
-	description: string;
-	status: string;
-	createdAt: Date;
-	tenantName: string;
-	roomNumber: string | null;
-	resolvedByUserName: string | null;
-	resolveNotes: string | null;
-	resolvedAt: Date | null;
-};
-
-export const fetchComplaints = async (
-	params: z.infer<typeof complaintQuerySchema>,
-	extra?: { usePeriod?: boolean },
-): Promise<ComplaintRow[]> => {
-	const where: Record<string, unknown> = {};
-
-	if (params.query) {
-		where.OR = [
-			{ description: { like: `%${params.query}%` } },
-			{ tenant: { fullName: { like: `%${params.query}%` } } },
-		];
-	}
-	if (params.status) {
-		where.status = params.status;
-	}
-	if (extra?.usePeriod && (params.from || params.to)) {
-		const { startDate, endDate } = parseDateRange(
-			params.from,
-			params.to,
-			"day",
-		);
-		const createdAtFilter: Record<string, Date> = {};
-		if (startDate) createdAtFilter.gte = startDate;
-		if (endDate) createdAtFilter.lte = endDate;
-		where.createdAt = createdAtFilter;
-	}
-
-	const complaints = await db.query.complaints.findMany({
-		where,
-		with: {
-			tenant: {
-				with: {
-					leases: {
-						where: { isActive: true },
-						with: { room: true },
-					},
-				},
-			},
-			resolver: true,
-		},
-	});
-
-	return complaints.map((complaint) => {
-		const [activeLease] = complaint.tenant?.leases ?? [];
-		return {
-			id: complaint.id,
-			description: complaint.description,
-			status: complaint.status,
-			createdAt: complaint.createdAt,
-			tenantName: complaint.tenant?.fullName ?? "-",
-			roomNumber: activeLease?.room?.roomNumber ?? null,
-			resolvedByUserName: complaint.resolver?.displayName ?? null,
-			resolveNotes: complaint.resolveNotes,
-			resolvedAt: complaint.resolvedAt,
-		};
-	});
-};
-
-export const getComplaintStats = (complaints: ComplaintRow[]) => {
-	const counts = countBy(complaints, (complaint) => complaint.status);
-	return [
-		{ label: "Total Komplain", value: complaints.length },
-		{ label: "Terbuka", value: counts.open ?? 0 },
-		{ label: "Proses", value: counts.in_progress ?? 0 },
-		{ label: "Selesai", value: counts.resolved ?? 0 },
-	];
-};
-
-export const COMPLAINT_STATUS_BADGES: Record<
-	(typeof COMPLAINT_STATUS)[number],
-	string
-> = {
+export const COMPLAINT_STATUS_BADGES = {
 	open: "badge-error",
 	in_progress: "badge-warning",
 	resolved: "badge-success",
-};
+} satisfies Record<(typeof COMPLAINT_STATUS)[number], string>;
 
-export const COMPLAINT_STATUS_LABELS: Record<
-	(typeof COMPLAINT_STATUS)[number],
-	string
-> = {
+export const COMPLAINT_STATUS_LABELS = {
 	open: "Terbuka",
 	in_progress: "Proses",
 	resolved: "Selesai",
-};
+} satisfies Record<(typeof COMPLAINT_STATUS)[number], string>;
 
-export const COMPLAINT_STATUS_BORDERS: Record<
-	(typeof COMPLAINT_STATUS)[number],
-	string
-> = {
+export const COMPLAINT_STATUS_BORDERS = {
 	open: "border-error/40",
 	in_progress: "border-warning/40",
 	resolved: "border-success/40",
-};
+} satisfies Record<(typeof COMPLAINT_STATUS)[number], string>;

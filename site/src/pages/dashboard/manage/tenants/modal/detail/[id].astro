@@ -17,18 +17,16 @@ const tenant = await db.query.tenants.findFirst({
 		originRegion: true,
 	},
 	where: { id: Number(Astro.params.id) },
-});
-
-const tenantLeases = tenant
-	? await db.query.leases.findMany({
-			where: { tenantId: tenant.id },
+	with: {
+		lease: {
+			with: { room: true },
+		},
+		leaseHistory: {
 			with: { room: true },
 			orderBy: { startDate: "desc" },
-		})
-	: [];
-
-const activeLease = tenantLeases.find((lease) => lease.isActive) ?? null;
-const pastLeases = tenantLeases.filter((lease) => !lease.isActive);
+		},
+	},
+});
 
 if (!tenant) Astro.response.status = 404;
 ---
@@ -54,7 +52,7 @@ if (!tenant) Astro.response.status = 404;
 
 					<span class="font-semibold text-base-content/60">Kamar:</span>
 					<span class="font-mono font-bold">
-						{activeLease?.room?.roomNumber ?? (
+						{tenant.lease?.room?.roomNumber ?? (
 							<span class="text-base-content/40 italic">Tidak ada</span>
 						)}
 					</span>
@@ -62,32 +60,32 @@ if (!tenant) Astro.response.status = 404;
 					<span class="font-semibold text-base-content/60">
 						Tanggal Mulai Sewa:
 					</span>
-					<span>{activeLease ? formatDate(activeLease.startDate) : "-"}</span>
+					<span>{tenant.lease ? formatDate(tenant.lease.startDate) : "-"}</span>
 
 					<span class="font-semibold text-base-content/60">
 						Tanggal Selesai Sewa:
 					</span>
 					<span>
-						{activeLease?.endDate ? formatDate(activeLease.endDate) : "-"}
+						{tenant.lease?.endDate ? formatDate(tenant.lease.endDate) : "-"}
 					</span>
 				</div>
 
-				{pastLeases.length > 0 && (
+				{tenant.leaseHistory.length > 0 && (
 					<div class="mt-4">
 						<h4 class="mb-2 flex items-center gap-1.5 text-sm font-bold text-base-content/80">
-							<Icon name="lucide:file-text" size="size-4" />
+							<Icon name="lucide:file-text" />
 							Riwayat Sewa
 						</h4>
 						<div class="max-h-48 divide-y divide-base-200 overflow-y-auto">
-							{pastLeases.map((lease) => (
+							{tenant.leaseHistory.map((lease) => (
 								<div class="flex items-center justify-between py-2.5 text-xs">
 									<div class="flex flex-col gap-0.5">
 										<div class="flex items-center gap-2">
 											<span class="badge font-mono badge-xs badge-neutral">
-												{lease.room?.roomNumber ?? "—"}
+												{lease.room.roomNumber}
 											</span>
 											<span class="font-mono text-xs">
-												{formatCurrency(lease.room?.monthlyPrice ?? 0)}
+												{formatCurrency(lease.room.monthlyPrice)}
 											</span>
 										</div>
 										<span class="text-base-content/60">

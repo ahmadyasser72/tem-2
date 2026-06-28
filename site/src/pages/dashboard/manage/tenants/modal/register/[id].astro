@@ -16,14 +16,11 @@ const tenant = await db.query.tenants.findFirst({
 	where: { id: Number(Astro.params.id) },
 });
 
-const allRooms = await db.query.rooms.findMany({
+const availableRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
 	with: { lease: true },
+	where: { isActive: true, lease: { isActive: false } },
 });
-
-const availableRooms = allRooms.filter(
-	({ isActive, lease }) => isActive && !lease,
-);
 
 if (!tenant) Astro.response.status = 404;
 ---
@@ -51,8 +48,7 @@ if (!tenant) Astro.response.status = 404;
 							</option>
 							{availableRooms.map(({ id, roomNumber, roomType }) => (
 								<option value={id}>
-									{roomNumber} – {ROOM_TYPE_LABELS[roomType] ?? roomType}{" "}
-									(Tersedia)
+									{roomNumber} – {ROOM_TYPE_LABELS[roomType]} (Tersedia)
 								</option>
 							))}
 						</select>

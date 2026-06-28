@@ -8,12 +8,15 @@ import FormResult from "~/components/form/form-result.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { formatDate } from "~/lib/date";
-import { ACTION_BADGES, auditQuerySchema, fetchAuditLogs } from "./_data";
+import {
+	ACTION_BADGES,
+	AUDIT_ACTIONS,
+	auditQuerySchema,
+	fetchAuditLogs,
+} from "./_data";
 import DetailColumn from "./_detail-column.astro";
 
 const params = Astro.locals.parseQuery(auditQuerySchema);
-
-const showSystem = params.show_system !== undefined;
 
 const auditLogs = await fetchAuditLogs(params);
 ---
@@ -36,7 +39,9 @@ const auditLogs = await fetchAuditLogs(params);
 	<Fragment slot="page-action">
 		<a
 			class="btn btn-outline btn-sm"
+			id="audit-print"
 			href={`/dashboard/log/audit/report/download${Astro.url.search}`}
+			hx-swap-oob="true"
 			download
 		>
 			<Icon name="lucide:download" /> PDF
@@ -50,29 +55,17 @@ const auditLogs = await fetchAuditLogs(params);
 				checkbox={{
 					name: "show_system",
 					label: "Tampilkan System",
-					checked: showSystem,
+					checked: params.show_system,
 				}}
 				groups={[
 					{
 						title: "Jenis aksi",
 						name: "action",
-						options: [
-							{
-								value: "CREATE",
-								label: "CREATE",
-								checked: params.action === "CREATE",
-							},
-							{
-								value: "UPDATE",
-								label: "UPDATE",
-								checked: params.action === "UPDATE",
-							},
-							{
-								value: "DELETE",
-								label: "DELETE",
-								checked: params.action === "DELETE",
-							},
-						],
+						options: AUDIT_ACTIONS.map((action) => ({
+							label: action,
+							value: action,
+							checked: params.action === action,
+						})),
 					},
 				]}
 			/>
@@ -103,18 +96,22 @@ const auditLogs = await fetchAuditLogs(params);
 			<tbody>
 				{
 					auditLogs.map(
-						({ id, time, displayName, action, table, recordId, details }) => (
+						({
+							id,
+							createdAt,
+							displayName,
+							action,
+							tableName,
+							recordId,
+							details,
+						}) => (
 							<tr>
 								<td class="font-mono">
-									{formatDate(time, "DD MMM YYYY HH:mm:ss")}
+									{formatDate(createdAt, "DD MMM YYYY HH:mm:ss")}
 								</td>
 								<td>
 									<div class="flex items-center gap-1.5">
-										<Icon
-											class="text-base-content/40"
-											name="lucide:user"
-											size="size-4"
-										/>
+										<Icon class="text-base-content/40" name="lucide:user" />
 										{displayName}
 									</div>
 								</td>
@@ -128,7 +125,7 @@ const auditLogs = await fetchAuditLogs(params);
 										{action}
 									</span>
 								</td>
-								<td class="font-mono">{table}</td>
+								<td class="font-mono">{tableName}</td>
 								<td class="font-mono">
 									<span class="rounded border border-base-300 bg-base-200 px-2 py-0.5 font-bold">
 										{recordId}
@@ -136,12 +133,12 @@ const auditLogs = await fetchAuditLogs(params);
 								</td>
 								<DetailColumn {details} />
 								<td class="text-right">
-									{Astro.locals.canEdit() && (
+									{Astro.locals.user?.allowEdit && (
 										<button
 											hx-get={`/dashboard/log/audit/modal/delete/${id}`}
 											class="btn btn-square text-error btn-ghost btn-xs"
 										>
-											<Icon name="lucide:x" size="size-4" />
+											<Icon name="lucide:x" />
 										</button>
 									)}
 								</td>

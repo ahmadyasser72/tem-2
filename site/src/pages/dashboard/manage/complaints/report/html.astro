@@ -1,5 +1,4 @@
 ---
-import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
 import {
@@ -11,39 +10,24 @@ import {
 
 const params = Astro.locals.parseQuery(complaintQuerySchema);
 
-const allComplaints = await fetchComplaints(params);
-const stats = getComplaintStats(allComplaints);
+const complaints = await fetchComplaints(params);
+const stats = getComplaintStats(complaints);
 
-const rowsData = await fetchComplaints(params, { usePeriod: true });
-
-const rows = rowsData.map((complaint, idx) => ({
-	no: idx + 1,
-	tenantName: complaint.tenantName,
-	roomNumber: complaint.roomNumber,
-	description: complaint.description,
-	statusLabel:
-		COMPLAINT_STATUS_LABELS[
-			complaint.status as keyof typeof COMPLAINT_STATUS_LABELS
-		] ?? complaint.status,
-	createdAt: complaint.createdAt,
-	resolvedAt: complaint.resolvedAt ?? null,
-	resolvedByUserName: complaint.resolvedByUserName ?? "-",
-}));
-
-const subtitleParts: string[] = [];
+const filterParts: string[] = [];
 if (params.status) {
-	subtitleParts.push(
-		`Status: ${COMPLAINT_STATUS_LABELS[params.status as keyof typeof COMPLAINT_STATUS_LABELS]}`,
+	filterParts.push(`Status: ${COMPLAINT_STATUS_LABELS[params.status]}`);
+}
+if (params.from) {
+	filterParts.push(
+		params.from !== params.to
+			? `Periode: ${params.from} s/d ${params.to}`
+			: `Periode: ${params.from}`,
 	);
 }
-if (params.from) subtitleParts.push(`Dari: ${formatDate(params.from)}`);
-if (params.to) subtitleParts.push(`Sampai: ${formatDate(params.to)}`);
-const subtitle =
-	subtitleParts.length > 0 ? subtitleParts.join(" | ") : undefined;
+const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Komplain Penghuni" subtitle={subtitle}>
-	<!-- Stats -->
 	<div
 		style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"
 	>
@@ -51,7 +35,7 @@ const subtitle =
 			stats.map((stat) => (
 				<div style="border:1px solid black;padding:8px 12px;text-align:center;">
 					<p style="font-size:10px;font-weight:400;margin-bottom:4px;">
-						{stat.label}
+						{stat.title}
 					</p>
 					<p style="font-size:18px;font-weight:700;">{stat.value}</p>
 				</div>
@@ -59,12 +43,10 @@ const subtitle =
 		}
 	</div>
 
-	<!-- Section title -->
 	<p style="font-size:12px;font-weight:700;margin-bottom:8px;">
 		Daftar Komplain
 	</p>
 
-	<!-- Table -->
 	<table>
 		<thead>
 			<tr>
@@ -104,39 +86,47 @@ const subtitle =
 		</thead>
 		<tbody>
 			{
-				rows.length === 0 && (
-					<ReportTableEmpty colspan={8} message="Tidak ada data komplain." />
+				complaints.map(
+					(
+						{
+							tenantName,
+							roomNumber,
+							description,
+							status,
+							createdAt,
+							resolvedAt,
+							resolvedByUserName,
+						},
+						idx,
+					) => (
+						<tr>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+								{idx + 1}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+								{tenantName}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+								{roomNumber}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+								{description}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+								{COMPLAINT_STATUS_LABELS[status]}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+								{formatDate(createdAt)}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
+								{resolvedByUserName}
+							</td>
+							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+								{resolvedAt ? formatDate(resolvedAt) : "-"}
+							</td>
+						</tr>
+					),
 				)
-			}
-			{
-				rows.map((row) => (
-					<tr>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-							{row.no}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-							{row.tenantName}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-							{row.roomNumber}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-							{row.description}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-							{row.statusLabel}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-							{formatDate(row.createdAt)}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-							{row.resolvedByUserName}
-						</td>
-						<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-							{row.resolvedAt ? formatDate(row.resolvedAt) : "-"}
-						</td>
-					</tr>
-				))
 			}
 		</tbody>
 	</table>

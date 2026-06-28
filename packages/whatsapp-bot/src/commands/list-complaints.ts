@@ -1,7 +1,7 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
 
-import { STATUS_LABEL } from "./status-labels";
+import { STATUS_LABEL } from "./constants";
 
 export async function listComplaints(
 	tenant: typeof tenants.$inferSelect,
@@ -24,7 +24,7 @@ export async function listComplaints(
 		lines.push(`🆔 #${complaint.id}`);
 		lines.push(`📝 ${complaint.description}`);
 		lines.push(`📅 ${complaint.createdAt.toLocaleDateString()}`);
-		lines.push(`${STATUS_LABEL[complaint.status] ?? complaint.status}`);
+		lines.push(`${STATUS_LABEL[complaint.status]}`);
 		lines.push("");
 	}
 

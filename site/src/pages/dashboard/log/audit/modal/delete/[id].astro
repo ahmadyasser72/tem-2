@@ -7,6 +7,7 @@ import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
+import { ACTION_BADGES } from "../../_data";
 
 export const partial = true;
 
@@ -25,12 +26,6 @@ const auditLog = log
 			recordId: log.recordId,
 		}
 	: null;
-
-const ACTION_BADGES: Record<string, string> = {
-	CREATE: "badge-success text-white",
-	UPDATE: "badge-warning text-white",
-	DELETE: "badge-error text-white",
-};
 
 if (!log) Astro.response.status = 404;
 ---

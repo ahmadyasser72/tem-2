@@ -41,7 +41,7 @@ const accounts = await fetchAccounts(params);
 >
 	<Fragment slot="page-action">
 		{
-			Astro.locals.canEdit() && (
+			Astro.locals.user?.allowEdit && (
 				<button
 					hx-get="/dashboard/manage/accounts/modal/add"
 					class="btn btn-sm btn-primary"
@@ -138,22 +138,18 @@ const accounts = await fetchAccounts(params);
 							</td>
 							<td class="text-right">
 								<div class="flex justify-end gap-1.5">
-									{role !== "admin" && Astro.locals.canEdit() && (
-										<>
-											<button
-												hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
-												class="btn btn-outline btn-xs btn-info"
-											>
-												<Icon name="lucide:pencil" /> Edit
-											</button>
-											<button
-												hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
-												class="btn btn-outline btn-xs btn-error"
-											>
-												<Icon name="lucide:trash-2" /> Hapus
-											</button>
-										</>
-									)}
+									<button
+										hx-get={`/dashboard/manage/accounts/modal/edit/${id}`}
+										class="btn btn-outline btn-xs btn-info"
+									>
+										<Icon name="lucide:pencil" /> Edit
+									</button>
+									<button
+										hx-get={`/dashboard/manage/accounts/modal/delete/${id}`}
+										class="btn btn-outline btn-xs btn-error"
+									>
+										<Icon name="lucide:trash-2" /> Hapus
+									</button>
 								</div>
 							</td>
 						</tr>

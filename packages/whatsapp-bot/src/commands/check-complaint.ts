@@ -1,7 +1,7 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
 
-import { STATUS_LABEL } from "./status-labels";
+import { STATUS_LABEL } from "./constants";
 
 export const checkComplaint = async (
 	tenant: typeof tenants.$inferSelect,
@@ -29,9 +29,7 @@ export const checkComplaint = async (
 	lines.push("━━━━━━━━━━━━━━━━━━━");
 	lines.push(`📝 Keluhan: ${complaint.description}`);
 	lines.push(`📅 Tanggal: ${complaint.createdAt.toLocaleDateString()}`);
-	lines.push(
-		`📍 Status: ${STATUS_LABEL[complaint.status] ?? complaint.status}`,
-	);
+	lines.push(`📍 Status: ${STATUS_LABEL[complaint.status]}`);
 
 	if (complaint.resolveNotes) {
 		lines.push(`📌 Catatan: ${complaint.resolveNotes}`);

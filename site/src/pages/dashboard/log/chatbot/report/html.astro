@@ -1,7 +1,4 @@
 ---
-import { db } from "@e-kos/database";
-
-import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
 import {
@@ -12,71 +9,24 @@ import {
 
 const params = Astro.locals.parseQuery(chatbotQuerySchema);
 
-const rawTenantId = Astro.url.searchParams.get("tenantId");
-const tenantId = rawTenantId ? Number(rawTenantId) : undefined;
+const chatbotLogs = await fetchChatbotLogs(params);
 
-const rows = await fetchChatbotLogs(params, {
-	tenantId,
-	parseMode: "day",
-});
-
-// Header info — if tenantId is set, show tenant name & room above table
-const hasTenantFilter = tenantId != null && !Number.isNaN(tenantId);
-let headerTenant: { fullName: string; roomNumber: string } | null = null;
-if (hasTenantFilter) {
-	const tenant = await db.query.tenants.findFirst({
-		where: { id: tenantId },
-		with: {
-			leases: {
-				where: { isActive: true },
-				with: { room: true },
-			},
-		},
-	});
-	if (tenant) {
-		const activeLease = tenant.leases?.[0];
-		headerTenant = {
-			fullName: tenant.fullName,
-			roomNumber: activeLease?.room?.roomNumber ?? "-",
-		};
-	}
-}
-
-// Subtitle — filter summary
-const subtitleParts: string[] = [];
+const filterParts: string[] = [];
 if (params.direction) {
-	subtitleParts.push(
-		`Arah: ${params.direction === "incoming" ? "Masuk" : "Keluar"}`,
+	filterParts.push(`Arah: ${DIRECTION_LABELS[params.direction]}`);
+}
+if (params.from) {
+	filterParts.push(
+		params.from !== params.to
+			? `Periode: ${params.from} s/d ${params.to}`
+			: `Periode: ${params.from}`,
 	);
 }
-if (params.from) subtitleParts.push(`Dari: ${formatDate(params.from)}`);
-if (params.to) subtitleParts.push(`Sampai: ${formatDate(params.to)}`);
-const subtitle =
-	subtitleParts.length > 0 ? subtitleParts.join(" | ") : undefined;
+
+const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Percakapan Chatbot" subtitle={subtitle}>
-	<!-- Header Info -->
-	{
-		headerTenant && (
-			<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; font-size: 11px;">
-				<div>
-					<span style="font-weight: 700; opacity: 0.6;">Penghuni</span>
-					<div style="font-weight: 700; margin-top: 2px;">
-						{headerTenant.fullName}
-					</div>
-				</div>
-				<div>
-					<span style="font-weight: 700; opacity: 0.6;">Kamar</span>
-					<div style="font-weight: 700; margin-top: 2px; font-family: 'Courier New', monospace;">
-						{headerTenant.roomNumber}
-					</div>
-				</div>
-			</div>
-		)
-	}
-
-	<!-- Table -->
 	<table>
 		<thead>
 			<tr>
@@ -89,34 +39,23 @@ const subtitle =
 		</thead>
 		<tbody>
 			{
-				rows.length === 0 ? (
-					<ReportTableEmpty
-						colspan={5}
-						message="Tidak ada data percakapan chatbot."
-					/>
-				) : (
-					rows.map((row) => (
-						<tr>
-							<td style="font-family: 'Courier New', monospace; font-size: 10px; white-space: nowrap;">
-								{formatDate(row.time, "DD MMM YYYY HH:mm")}
-							</td>
-							<td style="font-weight: 600;">{row.tenantName}</td>
-							<td style="font-family: 'Courier New', monospace; text-align: center;">
-								{row.roomNumber}
-							</td>
-							<td style="text-align: center;">
-								{
-									DIRECTION_LABELS[
-										row.direction as keyof typeof DIRECTION_LABELS
-									]
-								}
-							</td>
-							<td style="max-width: 300px; word-break: break-word;">
-								{row.message}
-							</td>
-						</tr>
-					))
-				)
+				chatbotLogs.map((row) => (
+					<tr>
+						<td style="font-family: 'Courier New', monospace; font-size: 10px; white-space: nowrap;">
+							{formatDate(row.sentAt, "DD MMM YYYY HH:mm")}
+						</td>
+						<td style="font-weight: 600;">{row.tenantName}</td>
+						<td style="font-family: 'Courier New', monospace; text-align: center;">
+							{row.roomNumber}
+						</td>
+						<td style="text-align: center;">
+							{DIRECTION_LABELS[row.direction]}
+						</td>
+						<td style="max-width: 300px; word-break: break-word;">
+							{row.message}
+						</td>
+					</tr>
+				))
 			}
 		</tbody>
 	</table>

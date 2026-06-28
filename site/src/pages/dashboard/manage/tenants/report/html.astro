@@ -1,31 +1,20 @@
 ---
-import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
-import { fetchAllTenants, reportTenantsQuerySchema } from "../_data";
+import { fetchTenants, tenantsQuerySchema } from "../_data";
 
-const params = Astro.locals.parseQuery(reportTenantsQuerySchema);
+const params = Astro.locals.parseQuery(
+	tenantsQuerySchema.omit({ query: true }),
+);
 
-// Query all tenants
-const allTenants = await fetchAllTenants();
+const tenants = await fetchTenants(params);
 
-// Apply status filter
-const filteredTenants = allTenants.filter((tenant) => {
-	if (params.status === "active" && !tenant.isActive) return false;
-	if (params.status === "completed" && tenant.isActive) return false;
-	return true;
-});
-
-// Subtitle
 let subtitle = "Semua penghuni";
 if (params.status === "active") subtitle = "Status: Aktif";
 else if (params.status === "completed") subtitle = "Status: Selesai";
-
-const total = filteredTenants.length;
 ---
 
 <ReportLayout title="Daftar Penghuni Aktif" subtitle={subtitle}>
-	<!-- Table -->
 	<table>
 		<thead>
 			<tr>
@@ -40,47 +29,33 @@ const total = filteredTenants.length;
 		</thead>
 		<tbody>
 			{
-				filteredTenants.length === 0 ? (
-					<ReportTableEmpty
-						colspan={7}
-						message="Tidak ada data penghuni yang sesuai dengan filter."
-					/>
-				) : (
-					filteredTenants.map(
-						(
-							{
-								fullName,
-								phoneNumber,
-								roomNumber,
-								startDate,
-								endDate,
-								isActive,
-							},
-							idx,
-						) => (
-							<tr>
-								<td style="text-align: center; font-family: 'Courier New', monospace;">
-									{idx + 1}
-								</td>
-								<td>{fullName}</td>
-								<td style="font-family: 'Courier New', monospace;">
-									+{phoneNumber}
-								</td>
-								<td style="text-align: center; font-family: 'Courier New', monospace;">
-									{roomNumber}
-								</td>
-								<td style="font-family: 'Courier New', monospace;">
-									{formatDate(startDate)}
-								</td>
-								<td style="font-family: 'Courier New', monospace;">
-									{formatDate(endDate)}
-								</td>
-								<td style="text-align: center;">
-									{isActive ? "Aktif" : "Selesai"}
-								</td>
-							</tr>
-						),
-					)
+				tenants.map(
+					(
+						{ fullName, phoneNumber, roomNumber, startDate, endDate, isActive },
+						idx,
+					) => (
+						<tr>
+							<td style="text-align: center; font-family: 'Courier New', monospace;">
+								{idx + 1}
+							</td>
+							<td>{fullName}</td>
+							<td style="font-family: 'Courier New', monospace;">
+								+{phoneNumber}
+							</td>
+							<td style="text-align: center; font-family: 'Courier New', monospace;">
+								{roomNumber}
+							</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{formatDate(startDate)}
+							</td>
+							<td style="font-family: 'Courier New', monospace;">
+								{formatDate(endDate)}
+							</td>
+							<td style="text-align: center;">
+								{isActive ? "Aktif" : "Selesai"}
+							</td>
+						</tr>
+					),
 				)
 			}
 		</tbody>
@@ -90,7 +65,7 @@ const total = filteredTenants.length;
 					colspan="7"
 					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
 				>
-					Total penghuni: {total}
+					Total penghuni: {tenants.length}
 				</td>
 			</tr>
 		</tfoot>

@@ -1,5 +1,4 @@
 ---
-import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
 import {
@@ -8,25 +7,27 @@ import {
 	notificationQuerySchema,
 } from "../_data";
 
-const params = Astro.locals.parseQuery(notificationQuerySchema);
+const params = Astro.locals.parseQuery(
+	notificationQuerySchema.omit({ query: true }),
+);
 
-const mappedNotifications = await fetchNotifications(params);
+const notifications = await fetchNotifications(params);
 
-// Build subtitle
-const subtitleParts: string[] = [];
+const filterParts: string[] = [];
 if (params.type) {
-	subtitleParts.push(
-		`Jenis: ${NOTIFICATION_TYPE_LABELS[params.type as keyof typeof NOTIFICATION_TYPE_LABELS]}`,
+	filterParts.push(`Jenis: ${NOTIFICATION_TYPE_LABELS[params.type]}`);
+}
+if (params.from) {
+	filterParts.push(
+		params.from !== params.to
+			? `Periode: ${params.from} s/d ${params.to}`
+			: `Periode: ${params.from}`,
 	);
 }
-const subtitle =
-	subtitleParts.length > 0 ? subtitleParts.join(" | ") : undefined;
-
-const total = mappedNotifications.length;
+const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Riwayat Notifikasi" subtitle={subtitle}>
-	<!-- Table -->
 	<table>
 		<thead>
 			<tr>
@@ -39,38 +40,32 @@ const total = mappedNotifications.length;
 		</thead>
 		<tbody>
 			{
-				mappedNotifications.length === 0 ? (
-					<ReportTableEmpty
-						colspan={5}
-						message="Tidak ada data notifikasi yang sesuai dengan filter."
-					/>
-				) : (
-					mappedNotifications.map(
-						({ time, tenantName, roomNumber, invoiceNumber, type, status }) => (
-							<tr>
-								<td style="font-family: 'Courier New', monospace; font-size: 10px;">
-									{formatDate(time, "DD MMM YYYY HH:mm")}
-								</td>
-								<td>
-									{tenantName}
-									<span style="font-family: 'Courier New', monospace; font-size: 10px; opacity: 0.6; margin-left: 4px;">
-										({roomNumber})
-									</span>
-								</td>
-								<td style="font-family: 'Courier New', monospace; font-weight: 600;">
-									{invoiceNumber}
-								</td>
-								<td>
-									{
-										NOTIFICATION_TYPE_LABELS[
-											type as keyof typeof NOTIFICATION_TYPE_LABELS
-										]
-									}
-								</td>
-								<td style="font-weight: 600;">{status}</td>
-							</tr>
-						),
-					)
+				notifications.map(
+					({
+						createdAt,
+						tenantName,
+						roomNumber,
+						invoiceNumber,
+						type,
+						status,
+					}) => (
+						<tr>
+							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
+								{formatDate(createdAt, "DD MMM YYYY HH:mm")}
+							</td>
+							<td>
+								{tenantName}
+								<span style="font-family: 'Courier New', monospace; font-size: 10px; opacity: 0.6; margin-left: 4px;">
+									({roomNumber})
+								</span>
+							</td>
+							<td style="font-family: 'Courier New', monospace; font-weight: 600;">
+								{invoiceNumber}
+							</td>
+							<td>{NOTIFICATION_TYPE_LABELS[type]}</td>
+							<td style="font-weight: 600;">{status}</td>
+						</tr>
+					),
 				)
 			}
 		</tbody>
@@ -80,7 +75,7 @@ const total = mappedNotifications.length;
 					colspan="5"
 					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
 				>
-					Total notifikasi: {total}
+					Total notifikasi: {notifications.length}
 				</td>
 			</tr>
 		</tfoot>

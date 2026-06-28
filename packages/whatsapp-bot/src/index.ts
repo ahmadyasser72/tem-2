@@ -29,25 +29,6 @@ interface PendingMessage {
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
-let lastSendTime = 0;
-
-const sendWithRateLimit = async (
-	sock: ReturnType<typeof makeWASocket>,
-	jid: string,
-	content: { text: string },
-) => {
-	const now = Date.now();
-	const elapsed = now - lastSendTime;
-
-	if (elapsed < 1_000) {
-		const wait = 1_000 - elapsed;
-		console.warn("rate limit: waiting %d ms before next send", wait);
-		await Bun.sleep(wait);
-	}
-
-	await sock.sendMessage(jid, content);
-	lastSendTime = Date.now();
-};
 
 export const main = async () => {
 	const botUser = await db.query.users.findFirst({
@@ -58,8 +39,6 @@ export const main = async () => {
 		console.error("User 'bot-wa' not found. Run `bun run db:seed` first.");
 		process.exit(1);
 	}
-
-	const botUserId = botUser.id;
 
 	const { state, saveCreds } = await useSqliteAuthState();
 
@@ -80,6 +59,23 @@ export const main = async () => {
 			]),
 		),
 	});
+
+	let lastSendTime = 0;
+	const sendMessage = sock.sendMessage;
+	sock.sendMessage = async (...args) => {
+		const now = Date.now();
+		const elapsed = now - lastSendTime;
+
+		if (elapsed < 1_000) {
+			const wait = 1_000 - elapsed;
+			console.warn("rate limit: waiting %d ms before next send", wait);
+			await Bun.sleep(wait);
+		}
+
+		const out = await sendMessage(...args);
+		lastSendTime = Date.now();
+		return out;
+	};
 
 	sock.ev.on("creds.update", saveCreds);
 
@@ -117,7 +113,7 @@ export const main = async () => {
 					continue;
 				}
 
-				await sendWithRateLimit(sock, jid, {
+				sock.sendMessage(jid, {
 					text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
 				});
 
@@ -125,7 +121,7 @@ export const main = async () => {
 				unknownCooldowns.set(jid, Date.now() + 30_000);
 
 				await db.insert(auditLogs).values({
-					userId: botUserId,
+					userId: botUser.id,
 					action: "REJECT",
 					tableName: "chatbot_messages",
 					details: auditDetail.reject(
@@ -151,12 +147,24 @@ export const main = async () => {
 						.set({ isVerified: true })
 						.where(eq(tenants.id, tenant.id));
 
-					await sendWithRateLimit(sock, jid, {
-						text: `*✅ Verifikasi Berhasil!*\n\nHalo *${tenant.fullName}*! Akun Anda telah aktif.\n\nKetik *help* untuk melihat daftar perintah yang tersedia.`,
-					});
+					sock.sendMessage(
+						jid,
+						{
+							text: [
+								"*✅ Verifikasi Berhasil!*",
+								`Halo *${tenant.fullName}*! Akun Anda telah aktif.`,
+								"Ketik *help* untuk melihat daftar perintah yang tersedia.",
+							].join("\n\n"),
+						},
+						{ quoted: message },
+					);
 				} else {
-					await sendWithRateLimit(sock, jid, {
-						text: `*⚠️ Akun Belum Aktif*\n\nHalo *${tenant.fullName}*! Anda belum melakukan verifikasi.\n\nSilakan balas pesan selamat datang dengan kata *YA* untuk mengaktifkan akun Anda.`,
+					sock.sendMessage(jid, {
+						text: [
+							"*⚠️ Akun Belum Aktif*",
+							`Halo *${tenant.fullName}*! Anda belum melakukan verifikasi.`,
+							"Silakan balas pesan selamat datang dengan kata *YA* untuk mengaktifkan akun Anda.",
+						].join("\n\n"),
 					});
 				}
 				continue;
@@ -186,8 +194,7 @@ export const main = async () => {
 							message: responseText,
 						});
 
-						// Kirim respons (rate limited: maks 1 pesan/detik)
-						await sendWithRateLimit(sock, jid, { text: responseText });
+						sock.sendMessage(jid, { text: responseText }, { quoted: message });
 					} catch (err) {
 						console.error("message processing failed for %s:", jid, err);
 					}
@@ -197,8 +204,8 @@ export const main = async () => {
 	});
 
 	setInterval(async () => {
-		await pollNotifications(sock, botUserId);
-		await pollResolvedComplaints(sock, botUserId);
+		await pollNotifications(sock, botUser.id);
+		await pollResolvedComplaints(sock, botUser.id);
 	}, 30_000);
 
 	console.log("WhatsApp bot started");

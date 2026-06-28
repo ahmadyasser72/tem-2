@@ -15,29 +15,15 @@ export const relations = defineRelations(schema, (r) => ({
 	},
 
 	tenants: {
-		leases: r.many.leases({
+		leaseHistory: r.many.leases({
 			from: r.tenants.id,
-			to: r.leases.tenantId,
+			to: r.leases.roomId,
+			where: { isActive: false },
 		}),
-		room: r.one.rooms({
-			from: r.tenants.id.through(r.leases.tenantId),
-			to: r.rooms.id.through(r.leases.roomId),
-		}),
-		invoices: r.many.invoices({
-			from: r.tenants.id.through(r.leases.tenantId),
-			to: r.invoices.leaseId.through(r.leases.id),
-		}),
-		chatbotInteractions: r.many.chatbotMessages({
+		lease: r.one.leases({
 			from: r.tenants.id,
-			to: r.chatbotMessages.tenantId,
-		}),
-		complaintsGiven: r.many.complaints({
-			from: r.tenants.id,
-			to: r.complaints.tenantId,
-		}),
-		notificationReceived: r.many.notifications({
-			from: r.tenants.id,
-			to: r.notifications.tenantId,
+			to: r.leases.roomId,
+			where: { isActive: true },
 		}),
 	},
 
@@ -75,6 +61,7 @@ export const relations = defineRelations(schema, (r) => ({
 		lease: r.one.leases({
 			from: r.invoices.leaseId,
 			to: r.leases.id,
+			optional: false,
 		}),
 		notifications: r.many.notifications({
 			from: r.invoices.id,
@@ -86,6 +73,7 @@ export const relations = defineRelations(schema, (r) => ({
 		tenant: r.one.tenants({
 			from: r.complaints.tenantId,
 			to: r.tenants.id,
+			optional: false,
 		}),
 		resolver: r.one.users({
 			from: r.complaints.resolvedBy,
@@ -104,6 +92,7 @@ export const relations = defineRelations(schema, (r) => ({
 		tenant: r.one.tenants({
 			from: r.chatbotMessages.tenantId,
 			to: r.tenants.id,
+			optional: false,
 		}),
 		notification: r.one.notifications({
 			from: r.chatbotMessages.id,
@@ -115,6 +104,7 @@ export const relations = defineRelations(schema, (r) => ({
 		tenant: r.one.tenants({
 			from: r.notifications.tenantId,
 			to: r.tenants.id,
+			optional: false,
 		}),
 		invoice: r.one.invoices({
 			from: r.notifications.invoiceId,

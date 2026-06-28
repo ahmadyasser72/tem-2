@@ -7,6 +7,7 @@ import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
 import { formatDate } from "~/lib/date";
+import { DIRECTION_LABELS } from "../../_data";
 
 export const partial = true;
 
@@ -15,33 +16,28 @@ const log = await db.query.chatbotMessages.findFirst({
 	with: {
 		tenant: {
 			with: {
-				leases: {
-					where: { isActive: true },
-					with: {
-						room: true,
-					},
-				},
+				lease: { with: { room: true } },
 			},
 		},
 	},
 });
 
-const activeLease = log?.tenant?.leases?.[0];
 const chatbotLog = log
 	? {
-			id: log.id,
-			time: log.sentAt,
-			tenantName: log.tenant?.fullName ?? "-",
-			roomNumber: activeLease?.room?.roomNumber ?? "-",
-			direction: log.direction === "incoming" ? "Masuk" : "Keluar",
-			message: log.message,
+			...log,
+			tenantName: log.tenant.fullName,
+			roomNumber: log.tenant.lease?.room?.roomNumber ?? "-",
 		}
 	: null;
 
 if (!log) Astro.response.status = 404;
 ---
 
-<Modal id="delete_chatbot" title="Hapus Chatbot Log" icon="lucide:message-square-warning">
+<Modal
+	id="delete_chatbot"
+	title="Hapus Chatbot Log"
+	icon="lucide:message-square-warning"
+>
 	{
 		chatbotLog ? (
 			<>
@@ -51,9 +47,9 @@ if (!log) Astro.response.status = 404;
 						{chatbotLog.tenantName} (Kamar {chatbotLog.roomNumber})
 					</span>
 					<span class="font-bold">Arah:</span>
-					<span>{chatbotLog.direction}</span>
+					<span>{DIRECTION_LABELS[chatbotLog.direction]}</span>
 					<span class="font-bold">Waktu:</span>
-					<span>{formatDate(chatbotLog.time, "DD MMM YYYY HH:mm:ss")}</span>
+					<span>{formatDate(chatbotLog.sentAt, "DD MMM YYYY HH:mm:ss")}</span>
 				</div>
 
 				<div class="mt-4 text-sm">

@@ -10,12 +10,11 @@ import { ROOM_TYPE_LABELS } from "../../rooms/_data";
 
 export const partial = true;
 
-const allRooms = await db.query.rooms.findMany({
+const availableRooms = await db.query.rooms.findMany({
 	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
 	with: { lease: true },
+	where: { isActive: true, lease: { isActive: false } },
 });
-
-const emptyRooms = allRooms.filter(({ isActive, lease }) => isActive && !lease);
 ---
 
 <Modal id="add_tenant" title="Tambah Kontrak Sewa" icon="lucide:user-plus">
@@ -65,7 +64,7 @@ const emptyRooms = allRooms.filter(({ isActive, lease }) => isActive && !lease);
 			<select class="select w-full" name="room_id" required>
 				<option value="" disabled selected>Pilih nomor kamar...</option>
 				{
-					emptyRooms.map(({ id, roomNumber, roomType }) => (
+					availableRooms.map(({ id, roomNumber, roomType }) => (
 						<option value={id}>
 							{roomNumber} – {ROOM_TYPE_LABELS[roomType]} (Tersedia)
 						</option>

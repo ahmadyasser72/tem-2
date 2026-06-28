@@ -1,7 +1,4 @@
 ---
-import { db } from "@e-kos/database";
-
-import ReportTableEmpty from "~/components/data/report-table-empty.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { formatDate } from "~/lib/date";
 import {
@@ -10,50 +7,27 @@ import {
 	fetchAuditLogs,
 } from "../_data";
 
-const params = Astro.locals.parseQuery(auditQuerySchema);
+const params = Astro.locals.parseQuery(auditQuerySchema.omit({ query: true }));
 
-const rawUserId = Astro.url.searchParams.get("userId");
-const userId = rawUserId ? Number(rawUserId) : undefined;
-
-const targetUser =
-	userId != null && !Number.isNaN(userId)
-		? await db.query.users.findFirst({ where: { id: userId } })
-		: null;
-
-const rows = await fetchAuditLogs(params, { userId, showSystem: true });
+const auditLogs = await fetchAuditLogs(params);
 
 const filterParts: string[] = [];
-if (targetUser) {
+if (params.action) {
 	filterParts.push(
-		`Pengguna: ${targetUser.displayName ?? targetUser.username}`,
+		`Aksi: ${params.action} (${AUDIT_ACTION_LABELS[params.action]})`,
 	);
 }
-if (params.action) {
-	filterParts.push(`Aksi: ${AUDIT_ACTION_LABELS[params.action]}`);
+if (params.from) {
+	filterParts.push(
+		params.from !== params.to
+			? `Periode: ${params.from} s/d ${params.to}`
+			: `Periode: ${params.from}`,
+	);
 }
 const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Aktivitas Pengguna" subtitle={subtitle}>
-	{
-		targetUser && (
-			<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; font-size: 11px; padding: 8px; border: 1px solid black; background: #fafafa;">
-				<div>
-					<span style="font-weight: 700; opacity: 0.6;">Nama</span>
-					<div style="font-weight: 700; margin-top: 2px;">
-						{targetUser.displayName ?? targetUser.username}
-					</div>
-				</div>
-				<div>
-					<span style="font-weight: 700; opacity: 0.6;">Peran</span>
-					<div style="font-weight: 700; margin-top: 2px; text-transform: capitalize;">
-						{targetUser.role}
-					</div>
-				</div>
-			</div>
-		)
-	}
-
 	<table>
 		<thead>
 			<tr>
@@ -67,31 +41,37 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 		</thead>
 		<tbody>
 			{
-				rows.length === 0 ? (
-					<ReportTableEmpty
-						colspan={6}
-						message="Tidak ada data audit log untuk filter yang dipilih."
-					/>
-				) : (
-					rows.map((row, idx) => (
+				auditLogs.map((row, idx) => (
+					<>
 						<tr>
-							<td style="text-align: center; font-size: 10px;">{idx + 1}</td>
-							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
-								{formatDate(row.time, "DD MMM YYYY HH:mm")}
+							<td rowspan="2" style="text-align: center; font-size: 10px;">
+								{idx + 1}
 							</td>
-							<td>{row.displayName}</td>
-							<td style="font-weight: 700; text-transform: uppercase;">
+							<td
+								rowspan="2"
+								style="font-family: 'Courier New', monospace; font-size: 10px;"
+							>
+								{formatDate(row.createdAt, "DD MMM YYYY HH:mm")}
+							</td>
+							<td rowspan="2">{row.displayName}</td>
+							<td
+								rowspan="2"
+								style="font-weight: 700; text-transform: uppercase; text-align: center;"
+							>
 								{row.action}
 							</td>
 							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
-								{row.table}
+								{row.tableName}
 							</td>
 							<td style="font-family: 'Courier New', monospace; font-size: 10px; text-align: center;">
 								{row.recordId ?? "-"}
 							</td>
 						</tr>
-					))
-				)
+						<tr>
+							<td colspan="2">{row.details?.description ?? "-"}</td>
+						</tr>
+					</>
+				))
 			}
 		</tbody>
 	</table>

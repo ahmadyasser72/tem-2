@@ -2,7 +2,7 @@ import { z } from "astro/zod";
 
 import { getCurrentMonthStr } from "~/lib/date";
 
-export const querySchema = z.string().catch("");
+export const querySchema = z.string().optional();
 
 export const periodFields = {
 	from: z.string().default(getCurrentMonthStr()),

@@ -16,7 +16,7 @@ import {
 } from "./_data";
 
 const params = Astro.locals.parseQuery(tenantsQuerySchema);
-const filteredTenants = await fetchTenants(params);
+const tenants = await fetchTenants(params);
 ---
 
 <FormResult
@@ -56,13 +56,16 @@ const filteredTenants = await fetchTenants(params);
 	<Fragment slot="page-action">
 		<a
 			class="btn btn-outline btn-sm"
+			id="rooms-print"
 			href={`/dashboard/manage/tenants/report/download${Astro.url.search}`}
+			hx-swap-oob="true"
 			download
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>
+
 		{
-			Astro.locals.canEdit() && (
+			Astro.locals.user?.allowEdit && (
 				<button
 					hx-get="/dashboard/manage/tenants/modal/add"
 					class="btn btn-sm btn-primary"
@@ -127,7 +130,7 @@ const filteredTenants = await fetchTenants(params);
 			</thead>
 			<tbody id="tenants-rows">
 				{
-					filteredTenants.map(
+					tenants.map(
 						({
 							id,
 							fullName,
@@ -168,8 +171,8 @@ const filteredTenants = await fetchTenants(params);
 											href={`https://wa.me/${phoneNumber}`}
 											target="_blank"
 										>
-											<Icon name="lucide:phone-call" size="size-3.5" />
-											+{phoneNumber}
+											<Icon name="lucide:phone-call" size="size-3.5" />+
+											{phoneNumber}
 										</a>
 									</td>
 									<td class="text-center">
@@ -205,7 +208,7 @@ const filteredTenants = await fetchTenants(params);
 											>
 												<Icon name="lucide:file-text" /> Detail
 											</button>
-											{Astro.locals.canEdit() &&
+											{Astro.locals.user?.allowEdit &&
 												(isActive ? (
 													<ActionsMenu
 														id={id}

@@ -1,6 +1,6 @@
 export const help = (): string => {
 	return [
-		"*🤖 E-Kos Bot Assistant*",
+		"*🤖 Indekos Ungu*",
 		"",
 		"Berikut perintah yang tersedia:",
 		"",

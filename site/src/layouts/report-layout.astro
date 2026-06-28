@@ -28,7 +28,6 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 		<title>{title}</title>
 	</head>
 	<body class="report-body">
-		<!-- Kop -->
 		<div
 			style="border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 16px;"
 		>
@@ -57,7 +56,6 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 			</div>
 		</div>
 
-		<!-- Judul -->
 		<div style="text-align: center; margin-bottom: 16px;">
 			<h2
 				style="font-size: 14px; font-weight: 700; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.5px;"
@@ -73,15 +71,12 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 			}
 		</div>
 
-		<!-- Dicetak -->
 		<div style="font-size: 10px; margin-bottom: 12px; opacity: 0.6;">
 			Dicetak: {formatDate(new Date(), "DD MMMM YYYY HH:mm")}
 		</div>
 
-		<!-- Konten -->
 		<slot />
 
-		<!-- TTD -->
 		<div
 			style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; text-align: center; font-size: 11px;"
 		>

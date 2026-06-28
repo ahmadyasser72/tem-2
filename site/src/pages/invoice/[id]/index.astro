@@ -100,7 +100,6 @@ const isPending = actualResultCode === "01";
 <BaseLayout title={resultConfig.title}>
 	<div class="flex min-h-dvh items-center justify-center p-4">
 		<div class="mx-auto w-full max-w-xs">
-			<!-- Tombol Aksi (no-print) -->
 			<div class="no-print mb-4 flex items-stretch gap-2">
 				<button
 					class="btn flex-1 btn-outline btn-sm"
@@ -118,10 +117,8 @@ const isPending = actualResultCode === "01";
 				}
 			</div>
 
-			<!-- Kartu Struk Invoice Digital -->
 			<div class="card bg-base-100 shadow-xl" id="invoice-card">
 				<div class="card-body gap-2 p-5">
-					<!-- Kop / Logo -->
 					<div class="mb-2 text-center">
 						<div class="avatar mx-auto mb-2 avatar-placeholder">
 							<div class="w-14 rounded-full bg-neutral text-neutral-content">
@@ -136,7 +133,6 @@ const isPending = actualResultCode === "01";
 
 					<hr class="dash-sep" />
 
-					<!-- Info Invoice -->
 					<div>
 						<div class="inv-row">
 							<span class="opacity-60">No. Invoice</span>
@@ -152,7 +148,6 @@ const isPending = actualResultCode === "01";
 
 					<hr class="dash-sep" />
 
-					<!-- Total -->
 					<div class="mt-1 flex justify-between text-base font-bold">
 						<span
 							>{
@@ -164,7 +159,6 @@ const isPending = actualResultCode === "01";
 
 					<hr class="dash-sep" />
 
-					<!-- Data Penghuni -->
 					<div>
 						<p
 							class="mb-1 text-xs font-semibold tracking-wider uppercase opacity-40"
@@ -183,7 +177,6 @@ const isPending = actualResultCode === "01";
 
 					<hr class="dash-sep" />
 
-					<!-- Info Pembayaran + Badge Status + Pesan (polling) -->
 					<div
 						hx-get={currentUrl}
 						hx-trigger={isPending ? "every 5s" : "none"}

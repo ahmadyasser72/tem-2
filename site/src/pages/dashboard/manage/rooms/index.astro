@@ -11,8 +11,8 @@ import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
 import { formatCurrency } from "~/lib/transforms";
 import {
-	fetchFilteredRooms,
-	getAllRoomsStats,
+	fetchRooms,
+	getRoomsStats,
 	ROOM_STATUS_BADGES,
 	ROOM_STATUS_LABELS,
 	ROOM_TYPE_LABELS,
@@ -21,12 +21,8 @@ import {
 } from "./_data";
 
 const params = Astro.locals.parseQuery(roomQuerySchema);
-const filteredRooms = await fetchFilteredRooms(params);
-
-const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
-	...s,
-	value: String(s.value),
-}));
+const rooms = await fetchRooms(params);
+const roomStats = getRoomsStats(rooms);
 ---
 
 <FormResult
@@ -56,13 +52,16 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 	<Fragment slot="page-action">
 		<a
 			class="btn btn-outline btn-sm"
+			id="rooms-print"
 			href={`/dashboard/manage/rooms/report/download${Astro.url.search}`}
+			hx-swap-oob="true"
 			download
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>
+
 		{
-			Astro.locals.canEdit() && (
+			Astro.locals.user?.allowEdit && (
 				<button
 					hx-get="/dashboard/manage/rooms/modal/add"
 					class="btn btn-sm btn-primary"
@@ -108,10 +107,10 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 				{
 					title: "Tipe Kamar",
 					name: "type",
-					options: ROOM_TYPES.map((t) => ({
-						value: t,
-						label: ROOM_TYPE_LABELS[t],
-						checked: params.type === t,
+					options: ROOM_TYPES.map((type) => ({
+						value: type,
+						label: ROOM_TYPE_LABELS[type],
+						checked: params.type === type,
 					})),
 				},
 			]}
@@ -130,7 +129,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 		id="rooms-content-wrapper"
 	>
 		{
-			filteredRooms.map(
+			rooms.map(
 				({ id, roomNumber, roomType, monthlyPrice, isActive, tenantName }) => {
 					const statusKey = !isActive
 						? "inactive"
@@ -178,7 +177,7 @@ const roomStats = (await getAllRoomsStats(filteredRooms)).map((s) => ({
 									>
 										<Icon name="lucide:file-text" /> Detail
 									</button>
-									{Astro.locals.canEdit() && (
+									{Astro.locals.user?.allowEdit && (
 										<ActionsMenu
 											id={id}
 											menuClass="w-52"

@@ -1,61 +1,42 @@
 ---
-import { db } from "@e-kos/database";
+import { db, ne } from "@e-kos/database";
+import { complaints } from "@e-kos/database/schema";
 
 import { sumBy } from "es-toolkit";
 
 import Stats from "~/components/data/stats.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate } from "~/lib/date";
+import dayjs, { formatDate } from "~/lib/date";
 import { formatCurrency } from "~/lib/transforms";
 import {
 	COMPLAINT_STATUS_BADGES,
 	COMPLAINT_STATUS_LABELS,
 } from "~/pages/dashboard/manage/complaints/_data";
 
-const now = new Date();
+const now = dayjs();
 
-const allRooms = await db.query.rooms.findMany({
-	with: {
-		leases: {
-			where: { isActive: true },
-		},
-	},
-});
-const totalRooms = allRooms.length;
-const occupiedRooms = sumBy(allRooms, ({ leases }) =>
-	leases.length > 0 ? 1 : 0,
-);
-const vacantRooms = sumBy(allRooms, ({ isActive, leases }) =>
-	isActive && leases.length === 0 ? 1 : 0,
+const allRooms = await db.query.rooms.findMany({ with: { lease: true } });
+const occupiedRooms = sumBy(allRooms, ({ lease }) => (lease ? 1 : 0));
+const vacantRooms = sumBy(allRooms, ({ isActive, lease }) =>
+	isActive && lease ? 1 : 0,
 );
 
-const allTenants = await db.query.tenants.findMany({
-	with: {
-		leases: {
-			where: { isActive: true },
-		},
-	},
-});
-const activeTenantsCount = sumBy(allTenants, ({ leases }) =>
-	leases.length > 0 ? 1 : 0,
-);
+const allTenants = await db.query.tenants.findMany({ with: { lease: true } });
+const activeTenants = sumBy(allTenants, ({ lease }) => (lease ? 1 : 0));
 
-const currentMonth = now.getMonth();
-const currentYear = now.getFullYear();
-const leasesEndingThisMonth = allTenants.reduce((count, tenant) => {
-	const activeLease = tenant.leases[0];
-	if (activeLease && activeLease.endDate) {
-		const d = new Date(activeLease.endDate);
-		if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-			return count + 1;
-		}
+const leasesEndingThisMonth = sumBy(allTenants, (tenant) => {
+	if (tenant.lease && tenant.lease.endDate) {
+		const end = dayjs(tenant.lease.endDate);
+		if (end.isSame(now, "month") && end.isSame(now, "years")) return 1;
 	}
-	return count;
-}, 0);
+
+	return 0;
+});
 
 const unpaidInvoices = await db.query.invoices.findMany({
 	where: { status: "unpaid" },
+	limit: 5,
 	with: {
 		lease: {
 			with: {
@@ -67,86 +48,60 @@ const unpaidInvoices = await db.query.invoices.findMany({
 	orderBy: { dueDate: "asc" },
 });
 
-const totalUnpaidAmount = sumBy(unpaidInvoices, (inv) => inv.amount);
+const totalUnpaidAmount = sumBy(unpaidInvoices, ({ amount }) => amount);
 const totalUnpaidCount = unpaidInvoices.length;
 
-const pendingBills = unpaidInvoices.slice(0, 5).map((inv) => {
-	const dueDate = new Date(inv.dueDate);
-	const diffTime = dueDate.getTime() - now.getTime();
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-	const statusStr = diffDays <= 0 ? "Overdue" : `H-${diffDays}`;
-	return {
-		tenant: inv.lease?.tenant?.fullName ?? "-",
-		room: inv.lease?.room?.roomNumber ?? "-",
-		dueDate: inv.dueDate,
-		status: statusStr,
-		amount: inv.amount,
-	};
-});
+const pendingBills = unpaidInvoices
+	.slice(0, 5)
+	.map(({ lease, dueDate, amount }) => {
+		const due = dayjs(dueDate);
+		const diffDays = due.diff(now, "days");
+		const status = diffDays <= 0 ? "Overdue" : `H-${diffDays}`;
+		return {
+			tenant: lease.tenant.fullName,
+			room: lease.room.roomNumber,
+			dueDate,
+			status,
+			amount,
+		};
+	});
 
-const complaintsFromDb = await db.query.complaints.findMany({
+const recentComplaints = await db.query.complaints.findMany({
 	with: {
-		tenant: {
-			with: {
-				leases: {
-					where: { isActive: true },
-					with: {
-						room: true,
-					},
-				},
-			},
-		},
+		tenant: { with: { lease: { with: { room: true } } } },
 	},
 	orderBy: { createdAt: "desc" },
 	limit: 5,
 });
-
-const activeComplaintsCount = sumBy(complaintsFromDb, ({ status }) =>
-	status !== "resolved" ? 1 : 0,
+const activeComplaints = await db.$count(
+	complaints,
+	ne(complaints.status, "resolved"),
 );
-
-const recentComplaints = complaintsFromDb.map((complaint) => {
-	const activeLease = complaint.tenant?.leases?.[0];
-	return {
-		title: complaint.description,
-		room: activeLease?.room?.roomNumber
-			? `Kamar ${activeLease.room.roomNumber}`
-			: "Umum",
-		tenant: complaint.tenant?.fullName ?? "-",
-		date: complaint.createdAt,
-		status: COMPLAINT_STATUS_LABELS[complaint.status] ?? "Terbuka",
-		badge: COMPLAINT_STATUS_BADGES[complaint.status] ?? "badge-neutral",
-	};
-});
-
-const user = Astro.locals.user;
-const showTransactionsLink = user?.role !== "admin";
-const showComplaintsLink = user?.role === "staff";
 
 const stats = [
 	{
 		title: "Total Kamar",
-		value: `${totalRooms} Kamar`,
+		value: `${allRooms.length} Kamar`,
 		desc: `${occupiedRooms} Terisi, ${vacantRooms} Kosong`,
-		icon: "lucide:house",
+		icon: "lucide:house" as const,
 	},
 	{
 		title: "Penghuni Aktif",
-		value: `${activeTenantsCount} Orang`,
+		value: `${activeTenants} Orang`,
 		desc: `${leasesEndingThisMonth} sewa berakhir bulan ini`,
-		icon: "lucide:user",
+		icon: "lucide:user" as const,
 	},
 	{
 		title: "Tagihan Belum Bayar",
 		value: formatCurrency(totalUnpaidAmount),
 		desc: `${totalUnpaidCount} tagihan belum lunas`,
-		icon: "lucide:file-text",
+		icon: "lucide:file-text" as const,
 	},
 	{
 		title: "Komplain Terbuka",
-		value: `${activeComplaintsCount} Komplain`,
-		desc: `${complaintsFromDb.filter(({ status }) => status === "open").length} perlu tindakan segera`,
-		icon: "lucide:circle-alert",
+		value: `${activeComplaints} Komplain`,
+		desc: `${recentComplaints.filter(({ status }) => status === "open").length} perlu tindakan segera`,
+		icon: "lucide:circle-alert" as const,
 	},
 ];
 
@@ -159,6 +114,7 @@ const getStatusBadge = (status: string) => {
 		if (days <= 5) return "badge-warning";
 		return "badge-info";
 	}
+
 	return "badge-neutral";
 };
 ---
@@ -174,15 +130,11 @@ const getStatusBadge = (status: string) => {
 			<div class="card-body p-6">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="card-title text-lg font-bold">
-						<Icon
-							class="text-primary"
-							name="lucide:file-text"
-							size="size-5"
-						/>
+						<Icon class="text-primary" name="lucide:file-text" size="size-5" />
 						Tagihan Mendekati Jatuh Tempo
 					</h2>
 					{
-						showTransactionsLink && (
+						Astro.locals.user?.role !== "admin" && (
 							<a
 								class="btn btn-outline btn-xs btn-primary"
 								href="/dashboard/report/transactions"
@@ -239,20 +191,17 @@ const getStatusBadge = (status: string) => {
 			<div class="card-body p-6">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="card-title text-lg font-bold">
-						<Icon
-							class="text-error"
-							name="lucide:circle-alert"
-							size="size-5"
-						/>
+						<Icon class="text-error" name="lucide:circle-alert" size="size-5" />
 						Komplain Terbaru
 					</h2>
 					{
-						showComplaintsLink && (
+						Astro.locals.user?.role !== "admin" && (
 							<a
 								class="btn btn-outline btn-xs btn-primary"
 								href="/dashboard/manage/complaints"
 							>
-								Kelola Komplain
+								{Astro.locals.user?.role === "staff" ? "Kelola" : "Lihat"}{" "}
+								Komplain
 							</a>
 						)
 					}
@@ -260,22 +209,29 @@ const getStatusBadge = (status: string) => {
 				<div class="divide-y divide-base-200">
 					{
 						recentComplaints.map(
-							({ title, room, tenant, date, status, badge }) => (
+							({ description, createdAt, tenant, status }) => (
 								<div class="flex items-start justify-between rounded-lg px-2 py-3.5 transition-colors first:pt-0 last:pb-0 hover:bg-base-200/20">
 									<div class="flex flex-col gap-1">
 										<span class="text-sm font-bold text-base-content">
-											{title}
+											{description}
 										</span>
 										<div class="flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-											<span class="badge badge-ghost badge-sm">{room}</span>
+											<span class="badge badge-ghost badge-sm">
+												{tenant.lease?.room.roomNumber ?? "-"}
+											</span>
 											<span>•</span>
-											<span>{tenant}</span>
+											<span>{tenant.fullName}</span>
 											<span>•</span>
-											<span>{formatDate(date)}</span>
+											<span>{formatDate(createdAt)}</span>
 										</div>
 									</div>
-									<span class:list={["badge badge-sm font-bold", badge]}>
-										{status}
+									<span
+										class:list={[
+											"badge badge-sm font-bold",
+											COMPLAINT_STATUS_BADGES[status],
+										]}
+									>
+										{COMPLAINT_STATUS_LABELS[status]}
 									</span>
 								</div>
 							),

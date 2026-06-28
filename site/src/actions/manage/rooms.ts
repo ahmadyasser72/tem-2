@@ -11,7 +11,7 @@ export const add = defineAction({
 		room_number: z.string(),
 		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
-		is_active: z.stringbool().optional().default(false),
+		is_active: z.stringbool().optional().catch(false),
 	}),
 	handler: async (input, context) => {
 		const exists = await db.query.rooms.findFirst({
@@ -59,7 +59,7 @@ export const edit = defineAction({
 		room_number: z.string(),
 		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
-		is_active: z.stringbool().optional().default(false),
+		is_active: z.stringbool().optional().catch(false),
 	}),
 	handler: async (input, context) => {
 		const sameNumber = await db.query.rooms.findFirst({

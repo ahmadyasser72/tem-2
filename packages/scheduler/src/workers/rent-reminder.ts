@@ -6,6 +6,8 @@ import {
 	users,
 } from "@e-kos/database/schema";
 
+import dayjs from "dayjs";
+
 import { logger } from "../logger";
 
 export const runRentReminder = async (
@@ -13,7 +15,7 @@ export const runRentReminder = async (
 	now?: Date,
 ) => {
 	const ref = now ?? new Date();
-	const threeDaysLater = new Date(ref.getTime() + 3 * 24 * 60 * 60 * 1000);
+	const threeDaysLater = dayjs(ref).add(3, "days").toDate();
 
 	const dueInvoices = await db.query.invoices.findMany({
 		where: {
@@ -21,45 +23,34 @@ export const runRentReminder = async (
 			dueDate: { gte: ref, lte: threeDaysLater },
 		},
 		with: {
-			lease: {
-				with: {
-					tenant: true,
-				},
-			},
+			lease: { with: { tenant: true } },
 		},
 	});
 
-	const rows = dueInvoices
-		.filter((inv) => inv.lease?.tenant)
-		.map((inv) => ({
-			tenantId: inv.lease!.tenant!.id,
-			invoiceId: inv.id,
-			type: "reminder" as const,
-			status: "pending" as const,
-		}));
+	if (dueInvoices.length > 0) {
+		const newNotifications = await db
+			.insert(notifications)
+			.values(
+				dueInvoices.map((invoice) => ({
+					tenantId: invoice.lease.tenant.id,
+					invoiceId: invoice.id,
+					type: "reminder" as const,
+					status: "pending" as const,
+				})),
+			)
+			.returning({ id: notifications.id });
 
-	const ids = (
-		rows.length > 0
-			? await db
-					.insert(notifications)
-					.values(rows)
-					.returning({ id: notifications.id })
-			: []
-	).map((r) => r.id);
-
-	const count = ids.length;
-	if (count > 0) {
 		await db.insert(auditLogs).values({
 			userId: systemUser.id,
 			action: "CREATE",
 			tableName: "notifications",
 			details: auditDetail.cron(
-				`Cron created ${count} payment reminder notification(s)`,
+				`Cron created ${newNotifications.length} payment reminder notification(s)`,
 				"notifications",
-				ids,
+				newNotifications.map(({ id }) => id),
 			),
 		});
 	}
 
-	logger.info({ count }, "Reminders created");
+	logger.info({ count: dueInvoices.length }, "Reminders created");
 };

@@ -1,6 +1,7 @@
 import { db } from "@e-kos/database";
 
 import { logger } from "./logger";
+import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
 
@@ -11,7 +12,7 @@ const main = async () => {
 	if (!task || !dateStr) {
 		logger.error("Usage: bun trigger <task> <date>");
 		logger.error("Run a scheduler task with a specific reference date.");
-		logger.error("  task   overdue | reminder");
+		logger.error("  task   overdue | reminder | invoice");
 		logger.error("  date   YYYY-MM-DD (WITA, UTC+8)");
 		process.exit(1);
 	}
@@ -39,8 +40,14 @@ const main = async () => {
 		case "reminder":
 			await runRentReminder(systemUser, date);
 			break;
+		case "invoice":
+			await runInvoiceGeneration(systemUser, date);
+			break;
 		default:
-			logger.error({ task }, "Unknown task. Available: overdue, reminder");
+			logger.error(
+				{ task },
+				"Unknown task. Available: overdue, reminder, invoice",
+			);
 			process.exit(1);
 	}
 };

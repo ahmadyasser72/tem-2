@@ -39,6 +39,7 @@
       "name": "@e-kos/scheduler",
       "dependencies": {
         "@e-kos/database": "workspace:*",
+        "dayjs": "1.11.21",
         "pino": "9.14.0",
         "pino-pretty": "13.1.3",
       },

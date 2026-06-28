@@ -1,6 +1,7 @@
 import { db } from "@e-kos/database";
 
 import { logger } from "./logger";
+import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
 
@@ -18,9 +19,14 @@ const main = async () => {
 	// Callback-based Bun.cron pakai UTC, jadi 16:00 UTC = 00:00 WITA (+1 day)
 	Bun.cron("0 16 * * *", () => runOverdueCheck(systemUser));
 
-	// Pengingat pembayaran tiap jam 8 pagi WITA
+	// Pembuatan invoice bulanan dan pengingat pembayaran tiap jam 8 pagi WITA
 	// 00:00 UTC = 08:00 WITA
-	Bun.cron("0 0 * * *", () => runRentReminder(systemUser));
+	Bun.cron("0 0 * * *", async () =>
+		Promise.all([
+			runInvoiceGeneration(systemUser),
+			runRentReminder(systemUser),
+		]),
+	);
 
 	logger.info("Cron jobs registered");
 };

@@ -1,4 +1,4 @@
-import { and, db, eq, sql } from "@e-kos/database";
+import { db, inArray } from "@e-kos/database";
 import {
 	auditDetail,
 	auditLogs,
@@ -13,37 +13,30 @@ export const runOverdueCheck = async (
 	now?: Date,
 ) => {
 	const ref = now ?? new Date();
-	const nowTs = Math.floor(ref.getTime() / 1000);
 
 	const overdue = await db.query.invoices.findMany({
-		where: { status: "unpaid" },
+		where: { status: "unpaid", dueDate: { lte: ref } },
 	});
 
-	const filtered = overdue.filter(
-		(inv) => inv.dueDate.getTime() / 1000 < nowTs,
-	);
-
-	if (filtered.length > 0) {
-		const ids = filtered.map((inv) => inv.id);
+	if (overdue.length > 0) {
+		const ids = overdue.map(({ id }) => id);
 
 		await db
 			.update(invoices)
 			.set({ status: "overdue" })
-			.where(
-				and(eq(invoices.status, "unpaid"), sql`${invoices.dueDate} < ${nowTs}`),
-			);
+			.where(inArray(invoices.id, ids));
 
 		await db.insert(auditLogs).values({
 			userId: systemUser.id,
 			action: "UPDATE",
 			tableName: "invoices",
 			details: auditDetail.cron(
-				`Cron marked ${filtered.length} invoice(s) as overdue`,
+				`Cron marked ${overdue.length} invoice(s) as overdue`,
 				"invoices",
 				ids,
 			),
 		});
 	}
 
-	logger.info({ count: filtered.length }, "Overdue invoices updated");
+	logger.info({ count: overdue.length }, "Overdue invoices updated");
 };

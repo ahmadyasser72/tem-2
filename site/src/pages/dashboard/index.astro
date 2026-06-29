@@ -136,7 +136,7 @@ const getStatusBadge = (status: string) => {
 					{
 						Astro.locals.user?.role !== "admin" && (
 							<a
-								class="btn btn-outline btn-xs btn-primary"
+								class="btn btn-outline btn-primary btn-xs"
 								href="/dashboard/report/transactions"
 							>
 								Lihat Semua
@@ -197,7 +197,7 @@ const getStatusBadge = (status: string) => {
 					{
 						Astro.locals.user?.role !== "admin" && (
 							<a
-								class="btn btn-outline btn-xs btn-primary"
+								class="btn btn-outline btn-primary btn-xs"
 								href="/dashboard/manage/complaints"
 							>
 								{Astro.locals.user?.role === "staff" ? "Kelola" : "Lihat"}{" "}

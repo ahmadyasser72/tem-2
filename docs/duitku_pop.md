@@ -783,7 +783,7 @@ Type : `x-www-form-urlencoded`
   - Contoh: 93600523
 - Parameter: customerName
   - Deskripsi: Pengidentifikasi akun issuer QRIS. Tergantung pada issuer-nya, nilainya dapat berupa nama akun atau nomor telepon. Nilai yang dikembalikan mungkin sebagian disembunyikan.
-  - Contoh: Bam\***_ Maul_**
+  - Contoh: Bam\***\_ Maul_**
 - Parameter: bankAppCode
   - Deskripsi: Authorization ID dari bank.
   - Contoh: 571996

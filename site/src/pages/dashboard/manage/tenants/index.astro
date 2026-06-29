@@ -69,7 +69,7 @@ const tenants = await fetchTenants(params);
 			Astro.locals.user?.allowEdit && (
 				<button
 					hx-get="/dashboard/manage/tenants/modal/add"
-					class="btn btn-sm btn-primary"
+					class="btn btn-primary btn-sm"
 				>
 					<Icon name="lucide:plus" size="size-5" />
 					Tambah Penghuni
@@ -168,7 +168,7 @@ const tenants = await fetchTenants(params);
 									</td>
 									<td>
 										<a
-											class="btn flex items-center gap-1 btn-outline btn-xs btn-success"
+											class="btn flex items-center gap-1 btn-outline btn-success btn-xs"
 											href={`https://wa.me/${phoneNumber}`}
 											target="_blank"
 										>
@@ -205,7 +205,7 @@ const tenants = await fetchTenants(params);
 										<div class="flex justify-end gap-1.5">
 											<button
 												hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
-												class="btn flex items-center gap-1 btn-outline btn-xs btn-primary"
+												class="btn flex items-center gap-1 btn-outline btn-primary btn-xs"
 											>
 												<Icon name="lucide:file-text" /> Detail
 											</button>

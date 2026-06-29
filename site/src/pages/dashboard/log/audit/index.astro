@@ -137,7 +137,7 @@ const auditLogs = await fetchAuditLogs(params);
 									{Astro.locals.user?.allowEdit && (
 										<button
 											hx-get={`/dashboard/log/audit/modal/delete/${id}`}
-											class="btn btn-square text-error btn-ghost btn-xs"
+											class="btn btn-square btn-ghost text-error btn-xs"
 										>
 											<Icon name="lucide:x" />
 										</button>

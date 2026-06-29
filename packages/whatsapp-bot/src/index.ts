@@ -236,7 +236,7 @@ const processCommand = async (
 		return tenantInfo(tenant);
 	}
 
-	return help(tenant);
+	return render("unknown-command", {});
 };
 
 main();

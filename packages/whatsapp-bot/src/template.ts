@@ -92,6 +92,7 @@ interface TemplateParams {
 		paymentUrl: string | null;
 	};
 	"unknown-number": Record<string, never>;
+	"unknown-command": Record<string, never>;
 	"verification-success": {
 		fullName: string;
 	};

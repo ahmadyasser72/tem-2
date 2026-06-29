@@ -29,60 +29,30 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Komplain Penghuni" subtitle={subtitle}>
-	<div
-		style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"
-	>
+	<div class="mb-4 grid grid-cols-4 gap-2">
 		{
 			stats.map((stat) => (
-				<div style="border:1px solid black;padding:8px 12px;text-align:center;">
-					<p style="font-size:10px;font-weight:400;margin-bottom:4px;">
-						{stat.title}
-					</p>
-					<p style="font-size:18px;font-weight:700;">{stat.value}</p>
+				<div class="border border-black p-2 text-center">
+					<p class="mb-1 text-[10px] font-normal">{stat.title}</p>
+					<p class="text-lg font-bold">{stat.value}</p>
 				</div>
 			))
 		}
 	</div>
 
-	<p style="font-size:12px;font-weight:700;margin-bottom:8px;">
-		Daftar Komplain
-	</p>
+	<p class="mb-2 text-sm font-bold">Daftar Komplain</p>
 
 	<table>
 		<thead>
 			<tr>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>No.</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Penghuni</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Kamar</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Deskripsi</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Status</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Tanggal Lapor</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Ditangani Oleh</th
-				>
-				<th
-					style="background:#f3f4f6;border:1px solid black;padding:6px 8px;font-size:10px;font-weight:700;text-align:left;"
-					>Tanggal Selesai</th
-				>
+				<th>No.</th>
+				<th>Penghuni</th>
+				<th>Kamar</th>
+				<th>Deskripsi</th>
+				<th>Status</th>
+				<th>Tanggal Lapor</th>
+				<th>Ditangani Oleh</th>
+				<th>Tanggal Selesai</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -101,28 +71,14 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 						idx,
 					) => (
 						<tr>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-								{idx + 1}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-								{tenantName}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-								{roomNumber}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-								{description}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-								{COMPLAINT_STATUS_LABELS[status]}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
-								{formatDate(createdAt)}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;">
-								{resolvedByUserName}
-							</td>
-							<td style="border:1px solid black;padding:6px 8px;font-size:10px;text-align:center;">
+							<td class="text-center">{idx + 1}</td>
+							<td>{tenantName}</td>
+							<td class="text-center">{roomNumber}</td>
+							<td>{description}</td>
+							<td class="text-center">{COMPLAINT_STATUS_LABELS[status]}</td>
+							<td class="text-center">{formatDate(createdAt)}</td>
+							<td>{resolvedByUserName}</td>
+							<td class="text-center">
 								{resolvedAt ? formatDate(resolvedAt) : "-"}
 							</td>
 						</tr>

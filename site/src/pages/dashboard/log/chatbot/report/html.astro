@@ -31,30 +31,24 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 	<table>
 		<thead>
 			<tr>
-				<th style="width: 18%;">Waktu</th>
-				<th style="width: 18%;">Penghuni</th>
-				<th style="width: 10%;">Kamar</th>
-				<th style="width: 10%;">Arah</th>
-				<th style="width: 44%;">Isi Pesan</th>
+				<th class="w-[18%]">Waktu</th>
+				<th class="w-[18%]">Penghuni</th>
+				<th class="w-[10%]">Kamar</th>
+				<th class="w-[10%]">Arah</th>
+				<th class="w-[44%]">Isi Pesan</th>
 			</tr>
 		</thead>
 		<tbody>
 			{
 				chatbotLogs.map((row) => (
 					<tr>
-						<td style="font-family: 'Courier New', monospace; font-size: 10px; white-space: nowrap;">
+						<td class="font-mono text-[10px] whitespace-nowrap">
 							{formatDate(row.sentAt, "DD MMM YYYY HH:mm")}
 						</td>
-						<td style="font-weight: 600;">{row.tenantName}</td>
-						<td style="font-family: 'Courier New', monospace; text-align: center;">
-							{row.roomNumber}
-						</td>
-						<td style="text-align: center;">
-							{DIRECTION_LABELS[row.direction]}
-						</td>
-						<td style="max-width: 300px; word-break: break-word;">
-							{row.message}
-						</td>
+						<td class="font-semibold">{row.tenantName}</td>
+						<td class="text-center font-mono">{row.roomNumber}</td>
+						<td class="text-center">{DIRECTION_LABELS[row.direction]}</td>
+						<td class="max-w-[300px] break-words">{row.message}</td>
 					</tr>
 				))
 			}

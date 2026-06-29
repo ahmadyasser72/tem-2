@@ -19,13 +19,13 @@ else if (params.status === "completed") subtitle = "Status: Selesai";
 	<table>
 		<thead>
 			<tr>
-				<th style="width: 5%; text-align: center;">No</th>
-				<th style="width: 22%;">Nama Lengkap</th>
-				<th style="width: 15%;">No. HP</th>
-				<th style="width: 10%;">Kamar</th>
-				<th style="width: 15%;">Awal Sewa</th>
-				<th style="width: 15%;">Akhir Sewa</th>
-				<th style="width: 10%;">Status</th>
+				<th class="w-[5%] text-center">No</th>
+				<th class="w-[22%]">Nama Lengkap</th>
+				<th class="w-[15%]">No. HP</th>
+				<th class="w-[10%]">Kamar</th>
+				<th class="w-[15%]">Awal Sewa</th>
+				<th class="w-[15%]">Akhir Sewa</th>
+				<th class="w-[10%]">Status</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -36,25 +36,13 @@ else if (params.status === "completed") subtitle = "Status: Selesai";
 						idx,
 					) => (
 						<tr>
-							<td style="text-align: center; font-family: 'Courier New', monospace;">
-								{idx + 1}
-							</td>
+							<td class="text-center font-mono">{idx + 1}</td>
 							<td>{fullName}</td>
-							<td style="font-family: 'Courier New', monospace;">
-								+{phoneNumber}
-							</td>
-							<td style="text-align: center; font-family: 'Courier New', monospace;">
-								{roomNumber}
-							</td>
-							<td style="font-family: 'Courier New', monospace;">
-								{formatDate(startDate)}
-							</td>
-							<td style="font-family: 'Courier New', monospace;">
-								{formatDate(endDate)}
-							</td>
-							<td style="text-align: center;">
-								{isActive ? "Aktif" : "Selesai"}
-							</td>
+							<td class="font-mono">+{phoneNumber}</td>
+							<td class="text-center font-mono">{roomNumber}</td>
+							<td class="font-mono">{formatDate(startDate)}</td>
+							<td class="font-mono">{formatDate(endDate)}</td>
+							<td class="text-center">{isActive ? "Aktif" : "Selesai"}</td>
 						</tr>
 					),
 				)
@@ -62,10 +50,7 @@ else if (params.status === "completed") subtitle = "Status: Selesai";
 		</tbody>
 		<tfoot>
 			<tr>
-				<td
-					colspan="7"
-					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
-				>
+				<td class="border border-black bg-gray-100 p-2 font-bold" colspan="7">
 					Total penghuni: {tenants.length}
 				</td>
 			</tr>

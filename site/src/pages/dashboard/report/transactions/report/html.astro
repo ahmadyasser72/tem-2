@@ -33,43 +33,31 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Transaksi Bulanan" subtitle={subtitle}>
-	<div
-		style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;"
-	>
-		<div style="border: 1px solid black; padding: 12px 16px;">
-			<div
-				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
-			>
+	<div class="mb-6 grid grid-cols-3 gap-4">
+		<div class="border border-black p-3">
+			<div class="mb-1 text-[10px] font-bold tracking-[0.5px] uppercase">
 				Total Pemasukan
 			</div>
-			<div
-				style="font-size: 18px; font-weight: 700; font-family: 'Courier New', monospace;"
-			>
+			<div class="font-mono text-lg font-bold">
 				{formatCurrency(totalRevenue)}
 			</div>
 		</div>
-		<div style="border: 1px solid black; padding: 12px 16px;">
-			<div
-				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
-			>
+		<div class="border border-black p-3">
+			<div class="mb-1 text-[10px] font-bold tracking-[0.5px] uppercase">
 				Sudah Terbayar
 			</div>
-			<div style="font-size: 18px; font-weight: 700;">
+			<div class="text-lg font-bold">
 				{paidCount} Invoice
 			</div>
 		</div>
-		<div style="border: 1px solid black; padding: 12px 16px;">
-			<div
-				style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"
-			>
+		<div class="border border-black p-3">
+			<div class="mb-1 text-[10px] font-bold tracking-[0.5px] uppercase">
 				Pembayaran Tertunggak
 			</div>
-			<div style="font-size: 18px; font-weight: 700;">
+			<div class="text-lg font-bold">
 				{unpaidCount} Invoice
 			</div>
-			<div
-				style="font-size: 11px; margin-top: 2px; font-family: 'Courier New', monospace;"
-			>
+			<div class="mt-0.5 font-mono text-[11px]">
 				{formatCurrency(outstandingAmount)}
 			</div>
 		</div>
@@ -78,11 +66,11 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 	<table>
 		<thead>
 			<tr>
-				<th style="text-align: center; width: 24px;">No</th>
+				<th class="w-6 text-center">No</th>
 				<th>No. Invoice</th>
 				<th>Penghuni</th>
-				<th style="width: 60px;">Kamar</th>
-				<th style="text-align: right;">Nominal</th>
+				<th class="w-16">Kamar</th>
+				<th class="text-right">Nominal</th>
 				<th>Jatuh Tempo</th>
 				<th>Status</th>
 			</tr>
@@ -96,19 +84,11 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 					) => (
 						<tr>
 							<td class="text-center">{idx + 1}</td>
-							<td style="font-family: 'Courier New', monospace;">
-								{invoiceNumber}
-							</td>
+							<td class="font-mono">{invoiceNumber}</td>
 							<td>{tenantName}</td>
-							<td style="font-family: 'Courier New', monospace;">
-								{roomNumber}
-							</td>
-							<td style="text-align: right; font-family: 'Courier New', monospace;">
-								{formatCurrency(amount)}
-							</td>
-							<td style="font-family: 'Courier New', monospace;">
-								{formatDate(dueDate)}
-							</td>
+							<td class="font-mono">{roomNumber}</td>
+							<td class="text-right font-mono">{formatCurrency(amount)}</td>
+							<td class="font-mono">{formatDate(dueDate)}</td>
 							<td>{INVOICE_STATUS_LABELS[status]}</td>
 						</tr>
 					),

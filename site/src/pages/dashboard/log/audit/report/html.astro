@@ -32,12 +32,12 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 	<table>
 		<thead>
 			<tr>
-				<th style="width: 5%; text-align: center;">No.</th>
-				<th style="width: 20%;">Waktu Kejadian</th>
-				<th style="width: 18%;">Pengguna</th>
-				<th style="width: 14%;">Jenis Aksi</th>
-				<th style="width: 28%;">Tabel Target</th>
-				<th style="width: 15%;">ID Record</th>
+				<th class="w-[5%] text-center">No.</th>
+				<th class="w-[20%]">Waktu Kejadian</th>
+				<th class="w-[18%]">Pengguna</th>
+				<th class="w-[14%]">Jenis Aksi</th>
+				<th class="w-[28%]">Tabel Target</th>
+				<th class="w-[15%]">ID Record</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -45,26 +45,18 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 				auditLogs.map((row, idx) => (
 					<>
 						<tr>
-							<td rowspan="2" style="text-align: center; font-size: 10px;">
+							<td class="text-center text-[10px]" rowspan="2">
 								{idx + 1}
 							</td>
-							<td
-								rowspan="2"
-								style="font-family: 'Courier New', monospace; font-size: 10px;"
-							>
+							<td class="font-mono text-[10px]" rowspan="2">
 								{formatDate(row.createdAt, "DD MMM YYYY HH:mm")}
 							</td>
 							<td rowspan="2">{row.displayName}</td>
-							<td
-								rowspan="2"
-								style="font-weight: 700; text-transform: uppercase; text-align: center;"
-							>
+							<td class="text-center font-bold uppercase" rowspan="2">
 								{row.action}
 							</td>
-							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
-								{row.tableName}
-							</td>
-							<td style="font-family: 'Courier New', monospace; font-size: 10px; text-align: center;">
+							<td class="font-mono text-[10px]">{row.tableName}</td>
+							<td class="text-center font-mono text-[10px]">
 								{row.recordId ?? "-"}
 							</td>
 						</tr>

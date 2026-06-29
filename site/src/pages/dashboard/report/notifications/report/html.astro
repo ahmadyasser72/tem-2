@@ -32,11 +32,11 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 	<table>
 		<thead>
 			<tr>
-				<th style="width: 22%;">Waktu Kirim</th>
-				<th style="width: 28%;">Penghuni</th>
-				<th style="width: 18%;">No. Invoice</th>
-				<th style="width: 16%;">Jenis</th>
-				<th style="width: 16%;">Status</th>
+				<th class="w-[22%]">Waktu Kirim</th>
+				<th class="w-[28%]">Penghuni</th>
+				<th class="w-[18%]">No. Invoice</th>
+				<th class="w-[16%]">Jenis</th>
+				<th class="w-[16%]">Status</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -51,20 +51,18 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 						status,
 					}) => (
 						<tr>
-							<td style="font-family: 'Courier New', monospace; font-size: 10px;">
+							<td class="font-mono text-[10px]">
 								{formatDate(createdAt, "DD MMM YYYY HH:mm")}
 							</td>
 							<td>
 								{tenantName}
-								<span style="font-family: 'Courier New', monospace; font-size: 10px; opacity: 0.6; margin-left: 4px;">
+								<span class="ml-1 font-mono text-[10px] opacity-60">
 									({roomNumber})
 								</span>
 							</td>
-							<td style="font-family: 'Courier New', monospace; font-weight: 600;">
-								{invoiceNumber}
-							</td>
+							<td class="font-mono font-semibold">{invoiceNumber}</td>
 							<td>{NOTIFICATION_TYPE_LABELS[type]}</td>
-							<td style="font-weight: 600;">{status}</td>
+							<td class="font-semibold">{status}</td>
 						</tr>
 					),
 				)
@@ -72,10 +70,7 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 		</tbody>
 		<tfoot>
 			<tr>
-				<td
-					colspan="5"
-					style="border: 1px solid black; padding: 8px; font-weight: 700; background: #f3f4f6;"
-				>
+				<td class="border border-black bg-gray-100 p-2 font-bold" colspan="5">
 					Total notifikasi: {notifications.length}
 				</td>
 			</tr>

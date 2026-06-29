@@ -1,10 +1,15 @@
+import type { Invoice } from "@e-kos/database/schema";
+
 import { formatDate } from "./date";
 
 /**
  * Format invoice number as INV-{YYYYMM}/{ID}
  */
-export const formatInvoiceNumber = (id: number, date: Date): string =>
-	`INV-${formatDate(date, "YYYYMM")}/${id}`;
+export const formatInvoiceNumber = ({
+	id,
+	dueDate,
+}: Pick<Invoice, "id" | "dueDate">): string =>
+	`INV-${formatDate(dueDate, "YYYYMM")}/${id}`;
 
 /**
  * Format currency in Indonesian Rupiah format

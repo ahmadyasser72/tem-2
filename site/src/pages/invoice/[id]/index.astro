@@ -23,7 +23,7 @@ const invoice = await db.query.invoices.findFirst({
 if (!invoice) return Astro.redirect("/");
 
 const { tenant, room } = invoice.lease;
-const invoiceNumber = formatInvoiceNumber(invoice.id, invoice.dueDate);
+const invoiceNumber = formatInvoiceNumber(invoice);
 ---
 
 <BaseLayout title={`Struk Digital ${invoiceNumber}`}>

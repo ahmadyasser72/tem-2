@@ -28,7 +28,7 @@ export const paymentHistory = async (tenant: Tenant): Promise<string> => {
 
 	return render("payment-history", {
 		paid: lease.invoices.map(({ id, amount, dueDate }) => ({
-			id: formatInvoiceNumber(id, dueDate),
+			id: formatInvoiceNumber({ id, dueDate }),
 			amount: formatCurrency(amount),
 			dueDate: formatDate(dueDate),
 		})),

@@ -42,9 +42,7 @@ export const fetchNotifications = async (
 					},
 				},
 			},
-			invoice: {
-				columns: { dueDate: true },
-			},
+			invoice: true,
 		},
 		orderBy: { id: "desc" },
 	});
@@ -54,10 +52,7 @@ export const fetchNotifications = async (
 			...notification,
 			tenantName: tenant.fullName,
 			roomNumber: tenant.lease?.room.roomNumber ?? "-",
-			invoiceNumber:
-				invoiceId && invoice
-					? formatInvoiceNumber(invoiceId, invoice.dueDate)
-					: "-",
+			invoiceNumber: invoice ? formatInvoiceNumber(invoice) : "-",
 		}),
 	);
 };

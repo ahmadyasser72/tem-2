@@ -193,9 +193,11 @@ export const main = async () => {
 	});
 
 	setInterval(async () => {
-		await pollNotifications(sock, botUser.id);
-		await pollResolvedComplaints(sock, botUser.id);
-		await pollInProgressComplaints(sock, botUser.id);
+		await Promise.all([
+			pollNotifications(sock, botUser.id),
+			pollResolvedComplaints(sock, botUser.id),
+			pollInProgressComplaints(sock, botUser.id),
+		]);
 	}, 30_000);
 
 	console.log("WhatsApp bot started");

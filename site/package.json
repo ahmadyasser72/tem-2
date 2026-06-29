@@ -3,7 +3,7 @@
 	"type": "module",
 	"version": "0.0.1",
 	"engines": {
-		"node": "v26.3.1"
+		"node": "26.4.0"
 	},
 	"scripts": {
 		"start": "bun start-server.mjs",
@@ -21,9 +21,9 @@
 		"@tailwindcss/vite": "4.3.1",
 		"@zumer/snapdom": "2.12.9",
 		"astro": "6.4.8",
-		"daisyui": "5.5.23",
-		"es-toolkit": "1.47.1",
-		"fastify": "5.8.5",
+		"daisyui": "5.6.3",
+		"es-toolkit": "1.49.0",
+		"fastify": "5.9.0",
 		"htmx.org": "2.0.10",
 		"iconify-icon": "3.0.2",
 		"puppeteer-core": "25.2.1",

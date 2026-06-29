@@ -28,7 +28,7 @@ const { type, title, description, class: className, ...props } = Astro.props;
 		title ? (
 			<div>
 				<h3 class="font-bold">{title}</h3>
-				<span class="text-xs">{description}</span>
+				<span class="text-xs" set:html={description} />
 			</div>
 		) : (
 			<p>{description}</p>

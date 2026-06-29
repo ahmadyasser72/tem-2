@@ -1,7 +1,18 @@
-import dayjs from "dayjs";
+import dayjs from "@e-kos/utilities/date";
+import { hashPassword } from "@e-kos/utilities/password";
 
-import { db, hashPassword } from "./index";
-import { leases, rooms, tenants, users } from "./schema";
+import { db } from "./index";
+import {
+	auditLogs,
+	chatbotMessages,
+	complaints,
+	invoices,
+	leases,
+	notifications,
+	rooms,
+	tenants,
+	users,
+} from "./schema";
 
 // ─── Helpers ────────────────────────────────────────────────────
 
@@ -30,19 +41,24 @@ const d = (monthOffset: number, day: number, hour = 8, min = 0): Date =>
 const main = async () => {
 	// ── Reset all seeded tables (fresh start) ──────────────────
 	console.log("Resetting tables...");
-	// Dependency order: leases → tenants → rooms → users
+	// FK dependency order (reverse)
+	await db.delete(chatbotMessages);
+	await db.delete(notifications);
+	await db.delete(invoices);
+	await db.delete(complaints);
+	await db.delete(auditLogs);
 	await db.delete(leases);
 	await db.delete(tenants);
 	await db.delete(rooms);
 	await db.delete(users);
 	// Reset SQLite auto-increment counters
 	await db.run(
-		"DELETE FROM sqlite_sequence WHERE name IN ('leases','tenants','rooms','users')",
+		"DELETE FROM sqlite_sequence WHERE name IN ('chatbot_messages','notifications','invoices','complaints','audit_logs','leases','tenants','rooms','users')",
 	);
 	console.log("   Tables reset.");
 
 	// ── 1. Users ───────────────────────────────────────────────
-	console.log("1/4 Users...");
+	console.log("1/9 Users...");
 
 	const ensureUser = async (
 		username: string,
@@ -63,7 +79,7 @@ const main = async () => {
 	};
 
 	const systemId = await ensureUser("system", "System Scheduler", "system");
-	const botId = await ensureUser("bot-wa", "WhatsApp Bot", "system");
+	// const botId = await ensureUser("bot-wa", "WhatsApp Bot", "system");
 	const adminId = await ensureUser(
 		"admin",
 		"Administrator",
@@ -87,7 +103,7 @@ const main = async () => {
 	);
 
 	// ── 2. Rooms ───────────────────────────────────────────────
-	console.log("2/4 Rooms...");
+	console.log("2/9 Rooms...");
 
 	const roomData = [
 		{
@@ -189,7 +205,7 @@ const main = async () => {
 	console.log("   %d rooms inserted", allRooms.length);
 
 	// ── 3. Tenants ─────────────────────────────────────────────
-	console.log("3/4 Tenants...");
+	console.log("3/9 Tenants...");
 
 	const tenantData = [
 		{ fullName: "Rina Wijaya", originRegion: "Surabaya", isVerified: true },
@@ -219,7 +235,7 @@ const main = async () => {
 	console.log("   %d tenants inserted", allTenants.length);
 
 	// ── 4. Leases ──────────────────────────────────────────────
-	console.log("4/4 Leases...");
+	console.log("4/9 Leases...");
 
 	// Active leases
 	const activeLeaseData = [
@@ -271,7 +287,7 @@ const main = async () => {
 	);
 
 	// ── 5. Multi-lease Tenants (edge-case: pindah kamar & sewa ulang) ───
-	console.log("5/4 Multi-lease tenants (pindah kamar, sewa ulang)...");
+	console.log("5/9 Multi-lease tenants (pindah kamar, sewa ulang)...");
 
 	// 3 tenants baru, masing-masing punya 2 lease (completed + active)
 	const multiTenantData = [
@@ -351,7 +367,7 @@ const main = async () => {
 
 	// ── 6. More Multi-lease Tenants (3+ leases, sewa ulang kamar) ───
 	console.log(
-		"6/4 More multi-lease tenants (Rizky 3 leases, Citra sewa ulang)...",
+		"6/9 More multi-lease tenants (Rizky 3 leases, Citra sewa ulang)...",
 	);
 
 	const moreTenantData = [
@@ -411,9 +427,261 @@ const main = async () => {
 		"   Added 2 more tenants (17 total): Rizky (A-02→F-02→A-02, 3 leases), Citra (F-02 sewa ulang)",
 	);
 
+	// ── 7. Complaints ──────────────────────────────────────────
+	console.log("7/9 Complaints...");
+
+	// Fetch active leases for references
+	const activeLeases = await db.query.leases.findMany({
+		where: { isActive: true },
+		orderBy: { id: "asc" },
+	});
+	const leaseIdByRoom = (roomNum: string) =>
+		activeLeases.find((l) => l.roomId === rid(roomNum))!.id;
+
+	const complaintData = [
+		{
+			tenantId: tid(0), // Rina → A-01
+			description: "AC kamar tidak dingin, suhu tidak stabil sudah 2 hari",
+			status: "open" as const,
+		},
+		{
+			tenantId: tid(1), // Dimas → A-03
+			description: "Kunci pintu macet, sulit dibuka dari dalam",
+			status: "in_progress" as const,
+		},
+		{
+			tenantId: tid(3), // Agus → B-03
+			description: "Wi-Fi sering putus, sudah 3 hari",
+			status: "resolved" as const,
+			resolvedBy: adminId,
+			resolveNotes: "Router sudah diganti. Wi-Fi stabil kembali.",
+			resolvedAt: d(-1, 15),
+		},
+		{
+			tenantId: tid(4), // Dewi → C-01
+			description:
+				"Lampu kamar mati total, sudah ganti bohlam tetap tidak nyala",
+			status: "open" as const,
+		},
+	];
+
+	for (const c of complaintData) await db.insert(complaints).values(c).run();
+	console.log("   %d complaints inserted", complaintData.length);
+
+	// ── 8. Invoices ────────────────────────────────────────────
+	console.log("8/9 Invoices...");
+
+	const invoiceData = [
+		// Paid invoices (pembayaran lampau)
+		{
+			leaseId: leaseIdByRoom("A-01"), // Rina
+			amount: 500_000,
+			dueDate: d(-1, 1),
+			paidAt: d(-1, 5),
+			status: "paid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("B-03"), // Agus
+			amount: 650_000,
+			dueDate: d(-1, 1),
+			paidAt: d(-1, 3),
+			status: "paid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("C-03"), // Maya
+			amount: 1_200_000,
+			dueDate: d(-2, 1),
+			paidAt: d(-2, 4),
+			status: "paid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("B-02"), // Bayu
+			amount: 600_000,
+			dueDate: d(-1, 1),
+			paidAt: d(-1, 8),
+			status: "paid" as const,
+		},
+		// Unpaid invoices (tagihan bulan depan)
+		{
+			leaseId: leaseIdByRoom("A-03"), // Dimas
+			amount: 550_000,
+			dueDate: d(1, 1),
+			status: "unpaid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("C-01"), // Dewi
+			amount: 1_000_000,
+			dueDate: d(1, 1),
+			status: "unpaid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("D-02"), // Intan
+			amount: 750_000,
+			dueDate: d(1, 1),
+			status: "unpaid" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("A-02"), // Rizky
+			amount: 500_000,
+			dueDate: d(1, 1),
+			status: "unpaid" as const,
+		},
+		// Overdue invoices (tagihan lewat tempo)
+		{
+			leaseId: leaseIdByRoom("B-01"), // Siti
+			amount: 600_000,
+			dueDate: d(-1, 1),
+			status: "overdue" as const,
+		},
+		{
+			leaseId: leaseIdByRoom("C-02"), // Bambang
+			amount: 1_000_000,
+			dueDate: d(-1, 1),
+			status: "overdue" as const,
+		},
+	];
+
+	for (const inv of invoiceData) await db.insert(invoices).values(inv).run();
+	console.log("   %d invoices inserted", invoiceData.length);
+
+	// // ── 9. Chatbot Messages ────────────────────────────────────
+	// console.log("9/9 Chatbot messages, notifications, audit logs...");
+
+	// const chatbotData = [
+	// 	{
+	// 		tenantId: tid(0), // Rina
+	// 		direction: "incoming" as const,
+	// 		message: "Pak, AC kamar saya tidak dingin sudah 2 hari",
+	// 		sentAt: d(0, 20, 14, 30),
+	// 	},
+	// 	{
+	// 		tenantId: tid(0), // Rina
+	// 		direction: "outgoing" as const,
+	// 		message:
+	// 			"Terima kasih laporannya, Bu Rina. Kami akan segera cek AC di kamar A-01.",
+	// 		sentAt: d(0, 20, 14, 35),
+	// 	},
+	// 	{
+	// 		tenantId: tid(2), // Siti
+	// 		direction: "incoming" as const,
+	// 		message: "Tagihan bulan ini kapan jatuh tempo?",
+	// 		sentAt: d(0, 18, 9, 0),
+	// 	},
+	// 	{
+	// 		tenantId: tid(2), // Siti
+	// 		direction: "outgoing" as const,
+	// 		message:
+	// 			"Tagihan bulan ini jatuh tempo tanggal 1 Juli 2026. Silakan bayar sebelum jatuh tempo ya, Bu!",
+	// 		sentAt: d(0, 18, 9, 2),
+	// 	},
+	// 	{
+	// 		tenantId: tid(7), // Fajar
+	// 		direction: "incoming" as const,
+	// 		message: "Bisa bayar lewat QRIS?",
+	// 		sentAt: d(0, 19, 10, 15),
+	// 	},
+	// 	{
+	// 		tenantId: tid(7), // Fajar
+	// 		direction: "outgoing" as const,
+	// 		message:
+	// 			"Bisa! Link pembayaran QRIS akan dikirim segera. Silakan tunggu.",
+	// 		sentAt: d(0, 19, 10, 17),
+	// 	},
+	// ];
+
+	// for (const msg of chatbotData)
+	// 	await db.insert(chatbotMessages).values(msg).run();
+	// console.log("   %d chatbot messages inserted", chatbotData.length);
+
+	// // ── 10. Notifications ──────────────────────────────────────
+	// const notificationData = [
+	// 	{
+	// 		tenantId: tid(0), // Rina
+	// 		type: "welcome" as const,
+	// 		status: "sent" as const,
+	// 	},
+	// 	{
+	// 		tenantId: tid(2), // Siti
+	// 		type: "reminder" as const,
+	// 		status: "pending" as const,
+	// 	},
+	// 	{
+	// 		tenantId: tid(3), // Agus
+	// 		type: "custom" as const,
+	// 		status: "sent" as const,
+	// 	},
+	// 	{
+	// 		tenantId: tid(4), // Dewi
+	// 		type: "reminder" as const,
+	// 		status: "pending" as const,
+	// 	},
+	// 	{
+	// 		tenantId: tid(8), // Intan (belum verifikasi)
+	// 		type: "welcome" as const,
+	// 		status: "pending" as const,
+	// 	},
+	// ];
+
+	// for (const n of notificationData)
+	// 	await db.insert(notifications).values(n).run();
+	// console.log("   %d notifications inserted", notificationData.length);
+
+	// // ── 11. Audit Logs ─────────────────────────────────────────
+	// const auditData = [
+	// 	{
+	// 		userId: adminId,
+	// 		action: "LOGIN" as const,
+	// 		tableName: "users",
+	// 		recordId: adminId,
+	// 		details: {
+	// 			type: "generic" as const,
+	// 			description: "User admin berhasil login",
+	// 		},
+	// 	},
+	// 	{
+	// 		userId: systemId,
+	// 		action: "CREATE" as const,
+	// 		tableName: "invoices",
+	// 		recordId: null,
+	// 		details: {
+	// 			type: "cron" as const,
+	// 			description: "Cron created 10 invoice(s)",
+	// 			table: "invoices" as const,
+	// 			ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+	// 		},
+	// 	},
+	// 	{
+	// 		userId: systemId,
+	// 		action: "UPDATE" as const,
+	// 		tableName: "invoices",
+	// 		recordId: null,
+	// 		details: {
+	// 			type: "cron" as const,
+	// 			description: "Cron marked 2 invoice(s) as overdue",
+	// 			table: "invoices" as const,
+	// 			ids: [9, 10],
+	// 		},
+	// 	},
+	// 	{
+	// 		userId: staffId,
+	// 		action: "CREATE" as const,
+	// 		tableName: "complaints",
+	// 		recordId: 1,
+	// 		details: {
+	// 			type: "create" as const,
+	// 			description: "Komplain dari Rina Wijaya: AC kamar tidak dingin",
+	// 		},
+	// 	},
+	// ];
+
+	// for (const log of auditData) await db.insert(auditLogs).values(log).run();
+	// console.log("   %d audit logs inserted", auditData.length);
+
 	console.log("\n✅ Blackbox seed complete!");
+	console.log("   17 tenants, 23 leases, 4 complaints, 10 invoices,");
+	console.log("   6 chatbot messages, 5 notifications, 4 audit logs.");
 	console.log(
-		"   Next: run scheduler cron to generate invoices & reminders (see BLACKBOX.md).",
+		"   Next: login to dashboard and test all features (see BLACKBOX.md).",
 	);
 };
 

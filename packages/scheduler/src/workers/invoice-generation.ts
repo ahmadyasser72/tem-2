@@ -5,10 +5,9 @@ import {
 	invoices,
 	users,
 } from "@e-kos/database/schema";
+import dayjs from "@e-kos/utilities/date";
 
-import dayjs from "dayjs";
-
-import { logger } from "../logger";
+import { logger } from "../index";
 
 export const runInvoiceGeneration = async (
 	systemUser: typeof users.$inferSelect,

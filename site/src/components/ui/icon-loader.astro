@@ -2,10 +2,21 @@
 import type { Props as IconProps } from "./icon.astro";
 import Icon from "./icon.astro";
 
-type Props = Pick<IconProps, "size">;
+type Props = Pick<IconProps, "size"> & { name?: IconProps["name"] };
 ---
 
+{
+	Astro.props.name && (
+		<Icon
+			class="htmx-indicator-replace"
+			name={Astro.props.name}
+			size={Astro.props.size}
+		/>
+	)
+}
+
 <Icon
+	class="htmx-indicator"
 	name="svg-spinners:90-ring-with-bg"
-	class:list={[Astro.props.size ?? "size-4", "htmx-indicator"]}
+	size={Astro.props.size}
 />

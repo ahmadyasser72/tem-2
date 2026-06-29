@@ -1,4 +1,7 @@
 ---
+import { formatDate } from "@e-kos/utilities/date";
+import { formatCurrency } from "@e-kos/utilities/transforms";
+
 import { actions } from "astro:actions";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
@@ -7,11 +10,10 @@ import SearchInput from "~/components/data/search-input.astro";
 import Stats from "~/components/data/stats.astro";
 import FormResult from "~/components/form/form-result.astro";
 import ActionsMenu from "~/components/ui/actions-menu.astro";
+import IconLoader from "~/components/ui/icon-loader.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate } from "~/lib/date";
 import { createActionResult } from "~/lib/form-result";
-import { formatCurrency } from "~/lib/transforms";
 import {
 	fetchTransactions,
 	getTransactionStats,
@@ -105,9 +107,9 @@ const summaryStats = [
 		</Fragment>
 	</FilterToolbar>
 
-	<div class="contents" id="transactions-content-wrapper">
-		<Stats items={summaryStats} />
+	<Stats items={summaryStats} />
 
+	<div class="contents" id="transactions-content-wrapper">
 		<div class="overflow-x-auto rounded-box border border-base-300 shadow-sm">
 			<table class="table w-full table-zebra table-sm">
 				<thead>
@@ -136,7 +138,7 @@ const summaryStats = [
 								duitkuReference,
 								paymentUrl,
 							}) => (
-								<tr>
+								<tr id={`invoice-${id}`}>
 									<td class="font-mono text-xs">{invoiceNumber}</td>
 									<td>{tenantName}</td>
 									<td>
@@ -157,15 +159,13 @@ const summaryStats = [
 										</span>
 									</td>
 									<td
-										class="tooltip max-w-32 truncate font-mono text-xs tooltip-info"
-										data-tip={duitkuReference}
+										class="max-w-32 truncate font-mono text-xs"
+										title={duitkuReference ?? undefined}
 									>
-										{duitkuReference}
+										{duitkuReference ?? "-"}
 									</td>
 									<td>
-										{status === "paid" ? (
-											<span class="text-xs">-</span>
-										) : duitkuReference ? (
+										{duitkuReference || status === "paid" ? (
 											<div class="flex items-center gap-1">
 												<a
 													class="btn w-24 btn-outline btn-xs btn-success"
@@ -176,11 +176,10 @@ const summaryStats = [
 													Invoice
 												</a>
 
-												{Astro.locals.user?.allowEdit && (
+												{Astro.locals.user?.allowEdit && status !== "paid" && (
 													<ActionsMenu id={id} menuClass="w-36">
 														<li>
 															<button
-																class="flex items-center gap-2"
 																onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
 															>
 																<Icon
@@ -193,12 +192,13 @@ const summaryStats = [
 														<li>
 															<form
 																hx-post={actions.manage.invoices.markAsPaid}
-																class="contents"
-																hx-select="#transactions-content-wrapper"
+																class="hidden"
+																id={`mark_as_paid_${id}`}
+																hx-indicator="next button"
+																hx-select={`#invoice-${id}`}
 																hx-swap="outerHTML transition:true"
-																hx-target="#transactions-content-wrapper"
+																hx-target={`#invoice-${id}`}
 																action={actions.manage.invoices.markAsPaid}
-																enctype="multipart/form-data"
 																method="post"
 															>
 																<input
@@ -206,14 +206,12 @@ const summaryStats = [
 																	type="hidden"
 																	value={id}
 																/>
-																<button
-																	class="flex items-center gap-2"
-																	type="submit"
-																>
-																	<Icon name="lucide:circle-check" />
-																	Tandai Lunas
-																</button>
 															</form>
+
+															<button type="submit" form={`mark_as_paid_${id}`}>
+																<IconLoader name="lucide:circle-check" />
+																Tandai Lunas
+															</button>
 														</li>
 													</ActionsMenu>
 												)}
@@ -221,53 +219,67 @@ const summaryStats = [
 										) : (
 											<div class="flex items-center gap-1">
 												{Astro.locals.user?.allowEdit && (
-													<form
-														hx-post={
-															actions.manage.invoices.generatePaymentLink
-														}
-														class="contents"
-														hx-select="#transactions-content-wrapper"
-														hx-swap="outerHTML transition:true"
-														hx-target="#transactions-content-wrapper"
-														action={actions.manage.invoices.generatePaymentLink}
-														enctype="multipart/form-data"
-														method="post"
-													>
-														<input name="invoice_id" type="hidden" value={id} />
+													<>
+														<form
+															hx-post={
+																actions.manage.invoices.generatePaymentLink
+															}
+															class="hidden"
+															id={`generate_link_${id}`}
+															hx-indicator="next button"
+															hx-select={`#invoice-${id}`}
+															hx-swap="outerHTML transition:true"
+															hx-target={`#invoice-${id}`}
+															action={
+																actions.manage.invoices.generatePaymentLink
+															}
+															method="post"
+														>
+															<input
+																name="invoice_id"
+																type="hidden"
+																value={id}
+															/>
+														</form>
+
 														<button
 															class="btn w-24 btn-outline btn-xs btn-primary"
 															type="submit"
+															form={`generate_link_${id}`}
 														>
-															<Icon name="lucide:link" size="size-3.5" />{" "}
+															<IconLoader name="lucide:link" size="size-3.5" />
 															Generate
 														</button>
-													</form>
+													</>
 												)}
 
 												{Astro.locals.user?.allowEdit && (
 													<ActionsMenu id={id} menuClass="w-36">
-														<form
-															hx-post={actions.manage.invoices.markAsPaid}
-															class="contents"
-															hx-select="#transactions-content-wrapper"
-															hx-swap="outerHTML transition:true"
-															hx-target="#transactions-content-wrapper"
-															action={actions.manage.invoices.markAsPaid}
-															enctype="multipart/form-data"
-															method="post"
-														>
-															<li>
-																<input
-																	name="invoice_id"
-																	type="hidden"
-																	value={id}
-																/>
-																<button type="submit">
-																	<Icon name="lucide:circle-check" />
-																	Tandai Lunas
-																</button>
-															</li>
-														</form>
+														<li>
+															<form
+																hx-post={actions.manage.invoices.markAsPaid}
+																class="contents"
+																id={`mark_as_paid_${id}`}
+																hx-select={`#invoice-${id}`}
+																hx-swap="outerHTML transition:true"
+																hx-target={`#invoice-${id}`}
+																action={actions.manage.invoices.markAsPaid}
+																method="post"
+															>
+																<li>
+																	<input
+																		name="invoice_id"
+																		type="hidden"
+																		value={id}
+																	/>
+																</li>
+															</form>
+
+															<button type="submit" form={`mark_as_paid_${id}`}>
+																<Icon name="lucide:circle-check" />
+																Tandai Lunas
+															</button>
+														</li>
 													</ActionsMenu>
 												)}
 											</div>

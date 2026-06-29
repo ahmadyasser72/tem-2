@@ -1,9 +1,11 @@
 import { db } from "@e-kos/database";
+import { createLogger, pino } from "@e-kos/utilities/logger";
 
-import { logger } from "./logger";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
+
+export const logger: pino.Logger = createLogger("scheduler");
 
 const main = async () => {
 	const systemUser = await db.query.users.findFirst({

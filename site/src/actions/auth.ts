@@ -1,10 +1,9 @@
 import { db, eq } from "@e-kos/database";
 import { auditDetail, users } from "@e-kos/database/schema";
+import { verifyPassword } from "@e-kos/utilities/password";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
-
-import { verifyPassword } from "~/lib/auth";
 
 export const logout = defineAction({
 	accept: "form",

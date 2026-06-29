@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { hashPassword } from "@e-kos/utilities/password";
 
-import { db, eq, hashPassword } from "./index";
+import { db, eq } from "./index";
 import { USER_ROLES, users } from "./schema";
 
 const ensureUser = async (

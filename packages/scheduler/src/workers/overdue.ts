@@ -6,7 +6,7 @@ import {
 	users,
 } from "@e-kos/database/schema";
 
-import { logger } from "../logger";
+import { logger } from "../index";
 
 export const runOverdueCheck = async (
 	systemUser: typeof users.$inferSelect,

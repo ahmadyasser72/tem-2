@@ -21,11 +21,7 @@ if (loginResult && !loginResult.error) {
 		<div class="card w-96 bg-base-100 shadow-xl">
 			<div class="card-body">
 				<div class="text-center">
-					<Icon
-						class="text-purple-600"
-						name="lucide:house"
-						size="size-24"
-					/>
+					<Icon class="text-purple-600" name="lucide:house" size="size-24" />
 					<h1 class="text-2xl font-bold">Indekos Ungu</h1>
 					<p class="text-sm opacity-50">Sistem Manajemen Indekos</p>
 				</div>
@@ -37,7 +33,6 @@ if (loginResult && !loginResult.error) {
 					hx-select-oob="#login_form_error"
 					hx-swap="none transition:true"
 					action={actions.auth.login}
-					enctype="multipart/form-data"
 					method="post"
 				>
 					<fieldset class="fieldset">

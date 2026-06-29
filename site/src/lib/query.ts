@@ -1,12 +1,12 @@
-import { z } from "astro/zod";
+import { getCurrentMonthStr } from "@e-kos/utilities/date";
 
-import { getCurrentMonthStr } from "~/lib/date";
+import { z } from "astro/zod";
 
 export const querySchema = z.string().optional();
 
 export const periodFields = {
-	from: z.string().default(getCurrentMonthStr()),
-	to: z.string().default(getCurrentMonthStr()),
+	from: z.string().default(() => getCurrentMonthStr()),
+	to: z.string().default(() => getCurrentMonthStr()),
 } as const;
 
 export const statusSchema = <T extends readonly string[]>(values: T) =>

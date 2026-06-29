@@ -1,8 +1,8 @@
 import { CHATBOT_DIRECTIONS, db } from "@e-kos/database";
+import { parseDateRange } from "@e-kos/utilities/date";
 
 import { z } from "astro/zod";
 
-import { parseDateRange } from "~/lib/date";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export const chatbotQuerySchema = z.object({

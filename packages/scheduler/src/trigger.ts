@@ -1,6 +1,6 @@
 import { db } from "@e-kos/database";
 
-import { logger } from "./logger";
+import { logger } from ".";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";

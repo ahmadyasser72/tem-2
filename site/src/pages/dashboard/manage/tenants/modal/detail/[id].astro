@@ -1,11 +1,11 @@
 ---
 import { db } from "@e-kos/database";
+import { formatDate } from "@e-kos/utilities/date";
+import { formatCurrency } from "@e-kos/utilities/transforms";
 
 import DetailModal from "~/components/modal/detail-modal.astro";
 import Icon from "~/components/ui/icon.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { formatDate } from "~/lib/date";
-import { formatCurrency } from "~/lib/transforms";
 
 export const partial = true;
 

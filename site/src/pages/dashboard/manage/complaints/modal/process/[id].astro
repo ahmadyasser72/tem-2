@@ -1,0 +1,47 @@
+---
+import { db } from "@e-kos/database";
+
+import { actions } from "astro:actions";
+
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
+
+export const partial = true;
+
+const complaint = await db.query.complaints.findFirst({
+	where: { id: Number(Astro.params.id) },
+});
+
+if (!complaint) Astro.response.status = 404;
+---
+
+<Modal
+	id="process_complaint"
+	title="Tandai Sedang Diproses"
+	icon="lucide:loader"
+>
+	{
+		complaint ? (
+			<>
+				<p class="mb-4 text-sm text-base-content/60">
+					Tandai komplain (ID: {complaint.id}) sebagai sedang diproses? Status akan berubah
+					dari <span class="font-bold text-error">Terbuka</span> menjadi{" "}
+					<span class="font-bold text-warning">Proses</span>.
+				</p>
+
+				<ModalForm
+					action={actions.manage.complaints.process}
+					modalId="process_complaint"
+					submitClass="btn-warning text-white"
+					submitLabel="Konfirmasi Proses"
+					target="#complaints-content-wrapper"
+				>
+					<input name="id" type="hidden" value={complaint.id} />
+				</ModalForm>
+			</>
+		) : (
+			<NotFound label="Komplain" />
+		)
+	}
+</Modal>

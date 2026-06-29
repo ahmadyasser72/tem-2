@@ -1,4 +1,6 @@
 ---
+import { formatDate } from "@e-kos/utilities/date";
+
 import { actions } from "astro:actions";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
@@ -6,8 +8,7 @@ import SearchInput from "~/components/data/search-input.astro";
 import FormResult from "~/components/form/form-result.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { ROLE_BADGES } from "~/lib/badges";
-import { formatDate } from "~/lib/date";
+import { ROLE_BADGES } from "~/lib/auth";
 import { createActionResult } from "~/lib/form-result";
 import { accountsQuerySchema, fetchAccounts } from "./_data";
 

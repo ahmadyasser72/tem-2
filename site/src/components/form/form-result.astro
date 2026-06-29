@@ -28,6 +28,7 @@ if (!result && actionResults) {
 				title: config.title,
 				getDescription: config.getDescription,
 			});
+
 			break;
 		}
 	}
@@ -50,7 +51,6 @@ if (!result && actionResults) {
 			<Alert
 				type="info"
 				title={result.title}
-				hx-on:htmx-load="setTimeout(() => this.remove(), 5000)"
 				description={result.description}
 			/>
 		)

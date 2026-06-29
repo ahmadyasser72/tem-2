@@ -21,7 +21,7 @@
 		"typescript": "5.9.3"
 	},
 	"dependencies": {
-		"dayjs": "1.11.21",
+		"@e-kos/utilities": "workspace:*",
 		"drizzle-orm": "1.0.0-rc.4-5d5b77c",
 		"es-toolkit": "1.47.1",
 		"microdiff": "1.5.0"

@@ -1,24 +1,14 @@
 import { fileURLToPath } from "node:url";
+import { createLogger } from "@e-kos/utilities/logger";
 
 import fastifyMiddie from "@fastify/middie";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
-import pino from "pino";
-import pinoPretty from "pino-pretty";
 
+// @ts-ignore
 import { handler as ssrHandler } from "./dist/server/entry.mjs";
 
-const logDir = process.env.LOG_PATH ?? "./logs";
-
-const app = Fastify({
-	loggerInstance: pino(
-		{ name: "site" },
-		pino.multistream([
-			{ level: "info", stream: pinoPretty() },
-			{ level: "info", stream: pino.destination(`${logDir}/site.log`) },
-		]),
-	),
-});
+const app = Fastify({ loggerInstance: createLogger("site") });
 
 await app
 	.register(fastifyStatic, {

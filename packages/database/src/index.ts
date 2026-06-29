@@ -18,8 +18,6 @@ export const {
 
 export { eq, ne, and, inArray, sql } from "drizzle-orm";
 
-export { hashPassword, verifyPassword } from "./password";
-
 export const DB_PATH =
 	process.env.DATABASE_PATH ?? path.join(import.meta.dirname, "../db.sqlite");
 export const db = drizzle(DB_PATH, { schema, relations });

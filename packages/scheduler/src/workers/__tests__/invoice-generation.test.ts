@@ -1,11 +1,5 @@
 import { db } from "@e-kos/database";
-import {
-	invoices,
-	leases,
-	rooms,
-	tenants,
-	users,
-} from "@e-kos/database/schema";
+import { leases, rooms, tenants, users } from "@e-kos/database/schema";
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 

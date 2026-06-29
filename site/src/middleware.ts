@@ -8,6 +8,7 @@ import { logAudit } from "~/lib/audit-log";
 import { getPuppeteerToken } from "~/lib/pdf";
 
 export const onRequest = defineMiddleware(async (context, next) => {
+	const persistQuery = new URLSearchParams();
 	context.locals.parseQuery = (schema) => {
 		const querySchema = z
 			.instanceof(URLSearchParams)
@@ -16,9 +17,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 					(acc, [key, value]) => {
 						if (!value) return acc;
 
-						if (!(key in acc)) acc[key] = value;
-						else if (Array.isArray(acc[key])) acc[key].push(value);
-						else acc[key] = [acc[key], value];
+						// if (!(key in acc))
+						acc[key] = value;
+						// else if (Array.isArray(acc[key])) acc[key].push(value);
+						// else acc[key] = [acc[key], value];
 
 						return acc;
 					},
@@ -33,8 +35,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
 				return query;
 			});
 
-		const query = querySchema.parse(context.url.searchParams);
-		return schema.parse(query);
+		const rawQuery = context.url.searchParams;
+		const hxCurrentUrl = context.request.headers.get("hx-current-url")!;
+		const query = querySchema.parse(
+			new URLSearchParams({
+				...(hxCurrentUrl &&
+					Object.fromEntries(new URL(hxCurrentUrl).searchParams.entries())),
+				...Object.fromEntries(rawQuery.entries()),
+			}),
+		);
+
+		const parsed = schema.parse(query);
+		for (const key of Object.keys(schema.shape)) {
+			const value = parsed[key];
+			if (!value || typeof value !== "string") continue;
+
+			persistQuery.set(key, value);
+		}
+
+		return parsed;
 	};
 
 	const { action } = getActionContext(context);
@@ -81,5 +100,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			details,
 		);
 
-	return next();
+	const response = await next();
+	if (persistQuery.size > 0) {
+		response.headers.set(
+			"hx-replace-url",
+			`${context.url.pathname}?${persistQuery}`,
+		);
+	}
+
+	return response;
 });

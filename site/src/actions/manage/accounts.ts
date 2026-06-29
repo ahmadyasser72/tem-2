@@ -1,12 +1,13 @@
 import { db, eq } from "@e-kos/database";
 import { auditDetail, users } from "@e-kos/database/schema";
+import { hashPassword } from "@e-kos/utilities/password";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 import { omit } from "es-toolkit";
 import { toCamelCaseKeys } from "es-toolkit/object";
 
-import { hashPassword, ROLES } from "~/lib/auth";
+import { ROLES } from "~/lib/auth";
 
 export const add = defineAction({
 	accept: "form",

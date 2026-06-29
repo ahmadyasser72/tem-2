@@ -1,9 +1,9 @@
 import { COMPLAINT_STATUS, db } from "@e-kos/database";
+import { parseDateRange } from "@e-kos/utilities/date";
 
 import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
-import { parseDateRange } from "~/lib/date";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export const fetchComplaints = async (

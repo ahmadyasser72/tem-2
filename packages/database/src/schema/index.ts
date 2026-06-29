@@ -8,6 +8,8 @@ import {
 
 import type { AuditDetails } from "./audit-helpers";
 
+export * from "./audit-helpers";
+
 export const USER_ROLES = ["admin", "staff", "owner", "system"] as const;
 export const INVOICE_STATUS = ["unpaid", "paid", "overdue"] as const;
 export const CHATBOT_DIRECTIONS = ["incoming", "outgoing"] as const;
@@ -45,10 +47,7 @@ export const tenants = sqliteTable("tenants", {
 	originRegion: text("origin_region"),
 	isVerified: integer("is_verified", { mode: "boolean" })
 		.notNull()
-		.default(true),
-	createdAt: integer("created_at", { mode: "timestamp" })
-		.notNull()
-		.default(sql`(unixepoch())`),
+		.default(false),
 });
 
 export const rooms = sqliteTable("rooms", {
@@ -93,6 +92,10 @@ export const invoices = sqliteTable("invoices", {
 	duitkuReference: text("duitku_reference"),
 	callbackPayload: text("callback_payload"),
 	status: text("status", { enum: INVOICE_STATUS }).notNull().default("unpaid"),
+
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.notNull()
+		.default(sql`(unixepoch())`),
 });
 
 export const chatbotMessages = sqliteTable("chatbot_messages", {
@@ -144,6 +147,7 @@ export const complaints = sqliteTable("complaints", {
 		.references(() => tenants.id),
 	description: text("description").notNull(),
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
+	processedAt: integer("processed_at", { mode: "timestamp" }),
 	resolvedBy: integer("resolved_by").references(() => users.id),
 	resolveNotes: text("resolve_notes"),
 	resolvedAt: integer("resolved_at", { mode: "timestamp" }),
@@ -156,7 +160,3 @@ export const botAuth = sqliteTable("bot_auth", {
 	key: text("key").primaryKey(),
 	value: text("value").notNull(),
 });
-
-export { auditDetail } from "./audit-helpers";
-export type { AuditDetails } from "./audit-helpers";
-export { CRON_TABLES } from "./audit-helpers";

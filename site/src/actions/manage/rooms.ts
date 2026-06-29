@@ -11,7 +11,7 @@ export const add = defineAction({
 		room_number: z.string(),
 		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
-		is_active: z.stringbool().optional().catch(false),
+		is_active: z.stringbool().optional(),
 	}),
 	handler: async (input, context) => {
 		const exists = await db.query.rooms.findFirst({
@@ -30,12 +30,7 @@ export const add = defineAction({
 
 		const [inserted] = await db
 			.insert(rooms)
-			.values({
-				roomNumber: input.room_number,
-				roomType: input.room_type,
-				monthlyPrice: input.monthly_price,
-				isActive: input.is_active,
-			})
+			.values(toCamelCaseKeys(input))
 			.returning({ id: rooms.id });
 
 		await context.locals.logAudit(
@@ -59,7 +54,7 @@ export const edit = defineAction({
 		room_number: z.string(),
 		room_type: z.enum(ROOM_TYPES),
 		monthly_price: z.coerce.number(),
-		is_active: z.stringbool().optional().catch(false),
+		is_active: z.stringbool().optional(),
 	}),
 	handler: async (input, context) => {
 		const sameNumber = await db.query.rooms.findFirst({
@@ -94,14 +89,11 @@ export const edit = defineAction({
 			});
 		}
 
+		if (input.is_active === undefined) input.is_active = oldRoom.isActive;
+
 		const [updated] = await db
 			.update(rooms)
-			.set({
-				roomNumber: input.room_number,
-				roomType: input.room_type,
-				monthlyPrice: input.monthly_price,
-				isActive: input.is_active,
-			})
+			.set(toCamelCaseKeys(input))
 			.where(eq(rooms.id, input.id))
 			.returning({ id: rooms.id });
 

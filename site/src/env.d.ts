@@ -8,7 +8,7 @@ declare namespace App {
 	}
 
 	interface Locals {
-		parseQuery: <S extends import("astro/zod").ZodType>(
+		parseQuery: <S extends import("astro/zod").ZodObject>(
 			schema: S,
 		) => import("astro/zod").output<S>;
 		logAudit: (

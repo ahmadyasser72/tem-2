@@ -5,10 +5,9 @@ import {
 	chatbotMessages,
 	tenants,
 } from "@e-kos/database/schema";
+import { createLogger } from "@e-kos/utilities/logger";
 
 import { makeWASocket } from "baileys";
-import pino from "pino";
-import pinoPretty from "pino-pretty";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -18,7 +17,10 @@ import { listComplaints } from "./commands/list-complaints";
 import { paymentHistory } from "./commands/payment-history";
 import { submitComplaint } from "./commands/submit-complaint";
 import { tenantInfo } from "./commands/tenant-info";
-import { pollResolvedComplaints } from "./polls/complaints";
+import {
+	pollInProgressComplaints,
+	pollResolvedComplaints,
+} from "./polls/complaints";
 import { pollNotifications } from "./polls/notifications";
 
 interface PendingMessage {
@@ -47,17 +49,9 @@ export const main = async () => {
 		process.exit(1);
 	}
 
-	const logDir = process.env.LOG_PATH ?? "./logs";
-
 	const sock = makeWASocket({
 		auth: state,
-		logger: pino(
-			{ name: "whatsapp-bot" },
-			pino.multistream([
-				{ level: "info", stream: pinoPretty() },
-				{ level: "info", stream: pino.destination(`${logDir}/bot.log`) },
-			]),
-		),
+		logger: createLogger("whatsapp-bot"),
 	});
 
 	let lastSendTime = 0;
@@ -206,6 +200,7 @@ export const main = async () => {
 	setInterval(async () => {
 		await pollNotifications(sock, botUser.id);
 		await pollResolvedComplaints(sock, botUser.id);
+		await pollInProgressComplaints(sock, botUser.id);
 	}, 30_000);
 
 	console.log("WhatsApp bot started");

@@ -1,7 +1,6 @@
 ---
 import type { AuditDetails } from "@e-kos/database/schema";
-
-import { formatCurrency } from "~/lib/transforms";
+import { formatCurrency } from "@e-kos/utilities/transforms";
 
 interface Props {
 	details: AuditDetails | string | null;

@@ -1,12 +1,12 @@
 ---
 import { db } from "@e-kos/database";
+import { formatDate } from "@e-kos/utilities/date";
 
 import { actions } from "astro:actions";
 
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { formatDate } from "~/lib/date";
 import { DIRECTION_LABELS } from "../../_data";
 
 export const partial = true;

@@ -5,12 +5,15 @@ import {
 	getPaymentUrlFromReference,
 } from "@e-kos/database/duitku";
 import { auditDetail, invoices, notifications } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@e-kos/utilities/transforms";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 import { isError } from "es-toolkit/predicate";
-
-import { formatCurrency } from "~/lib/transforms";
 
 export const generatePaymentLink = defineAction({
 	accept: "form",
@@ -23,12 +26,7 @@ export const generatePaymentLink = defineAction({
 		const invoice = await db.query.invoices.findFirst({
 			where: { id: invoiceId },
 			with: {
-				lease: {
-					with: {
-						tenant: true,
-						room: true,
-					},
-				},
+				lease: { with: { tenant: true, room: true } },
 			},
 		});
 
@@ -52,14 +50,6 @@ export const generatePaymentLink = defineAction({
 			});
 		}
 
-		if (!invoice.lease) {
-			console.error("invoices.generatePaymentLink: no lease", { invoiceId });
-			throw new ActionError({
-				code: "BAD_REQUEST",
-				message: "Invoice tidak memiliki data sewa.",
-			});
-		}
-
 		if (!invoice.lease.isActive) {
 			console.error("invoices.generatePaymentLink: lease not active", {
 				invoiceId,
@@ -67,30 +57,6 @@ export const generatePaymentLink = defineAction({
 			throw new ActionError({
 				code: "BAD_REQUEST",
 				message: "Sewa sudah tidak aktif.",
-			});
-		}
-
-		if (!invoice.lease.tenant) {
-			console.error("invoices.generatePaymentLink: tenant not found", {
-				invoiceId,
-			});
-			throw new ActionError({
-				code: "BAD_REQUEST",
-				message: "Data penghuni tidak ditemukan.",
-			});
-		}
-
-		const tenant = invoice.lease.tenant;
-		const room = invoice.lease.room;
-
-		if (!tenant.phoneNumber) {
-			console.error("invoices.generatePaymentLink: tenant has no phone", {
-				invoiceId,
-				tenantId: tenant.id,
-			});
-			throw new ActionError({
-				code: "BAD_REQUEST",
-				message: "Nomor HP penghuni tidak terisi.",
 			});
 		}
 
@@ -102,31 +68,33 @@ export const generatePaymentLink = defineAction({
 			};
 		}
 
-		const merchantOrderId = `INV-${invoice.id.toString().padStart(6, "0")}`;
-		const roomNumber = room?.roomNumber ?? "-";
 		const baseUrl = new URL(context.url.origin);
+		const merchantOrderId = formatInvoiceNumber(invoice.id);
 
 		try {
+			const { tenant, room } = invoice.lease;
+			const payMonth = formatDate(invoice.dueDate, "MMM YYYY");
+
 			const result = await duitkuCreateInvoice({
 				paymentAmount: invoice.amount,
 				merchantOrderId,
-				productDetails: `Pembayaran Sewa Kamar ${roomNumber}`,
+				productDetails: `Pembayaran Sewa Kamar ${room.roomNumber}`,
 				customerVaName: tenant.fullName,
 				phoneNumber: tenant.phoneNumber,
 				itemDetails: [
 					{
-						name: `Sewa Kamar ${roomNumber}`,
+						name: `Sewa Kamar ${payMonth}`,
 						price: invoice.amount,
 						quantity: 1,
 					},
 				],
 				customerDetail: {
 					firstName: tenant.fullName,
-					phoneNumber: tenant.phoneNumber,
+					phoneNumber: tenant.phoneNumber.replace("628", "08"),
 				},
 				returnUrl: new URL("/api/duitku/redirect", baseUrl).href,
 				callbackUrl: new URL("/api/duitku/callback", baseUrl).href,
-				expiryPeriod: 1440, // 24 jam
+				expiryPeriod: 60 * 24 * 14, // 2 weeks
 				paymentMethod: "",
 			});
 
@@ -140,7 +108,7 @@ export const generatePaymentLink = defineAction({
 				"invoices",
 				invoiceId,
 				auditDetail.payment(
-					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${roomNumber}) - ${formatCurrency(invoice.amount)}`,
+					`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${room.roomNumber}) - ${formatCurrency(invoice.amount)}`,
 					invoice.amount,
 					result.reference,
 				),
@@ -207,7 +175,7 @@ export const markAsPaid = defineAction({
 
 		await db
 			.update(invoices)
-			.set({ status: "paid" })
+			.set({ status: "paid", paidAt: new Date() })
 			.where(eq(invoices.id, invoiceId));
 
 		if (invoice.lease?.tenant) {

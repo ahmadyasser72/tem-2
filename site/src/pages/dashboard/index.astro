@@ -1,14 +1,14 @@
 ---
 import { db, ne } from "@e-kos/database";
 import { complaints } from "@e-kos/database/schema";
+import dayjs, { formatDate } from "@e-kos/utilities/date";
+import { formatCurrency } from "@e-kos/utilities/transforms";
 
 import { sumBy } from "es-toolkit";
 
 import Stats from "~/components/data/stats.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import dayjs, { formatDate } from "~/lib/date";
-import { formatCurrency } from "~/lib/transforms";
 import {
 	COMPLAINT_STATUS_BADGES,
 	COMPLAINT_STATUS_LABELS,
@@ -19,7 +19,7 @@ const now = dayjs();
 const allRooms = await db.query.rooms.findMany({ with: { lease: true } });
 const occupiedRooms = sumBy(allRooms, ({ lease }) => (lease ? 1 : 0));
 const vacantRooms = sumBy(allRooms, ({ isActive, lease }) =>
-	isActive && lease ? 1 : 0,
+	isActive && !lease ? 1 : 0,
 );
 
 const allTenants = await db.query.tenants.findMany({ with: { lease: true } });
@@ -219,9 +219,9 @@ const getStatusBadge = (status: string) => {
 											<span class="badge badge-ghost badge-sm">
 												{tenant.lease?.room.roomNumber ?? "-"}
 											</span>
-											<span>•</span>
+											<span>&bull;</span>
 											<span>{tenant.fullName}</span>
-											<span>•</span>
+											<span>&bull;</span>
 											<span>{formatDate(createdAt)}</span>
 										</div>
 									</div>

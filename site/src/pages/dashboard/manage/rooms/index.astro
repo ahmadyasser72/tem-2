@@ -1,4 +1,6 @@
 ---
+import { formatCurrency } from "@e-kos/utilities/transforms";
+
 import { actions } from "astro:actions";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
@@ -9,7 +11,6 @@ import ActionsMenu from "~/components/ui/actions-menu.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
-import { formatCurrency } from "~/lib/transforms";
 import {
 	fetchRooms,
 	getRoomsStats,

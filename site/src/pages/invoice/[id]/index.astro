@@ -1,115 +1,47 @@
 ---
 import { db } from "@e-kos/database";
+import { formatDate } from "@e-kos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@e-kos/utilities/transforms";
 
+import { capitalize } from "es-toolkit";
+
+import Icon from "~/components/ui/icon.astro";
 import BaseLayout from "~/layouts/base-layout.astro";
-import { formatDate } from "~/lib/date";
-import { formatCurrency, formatInvoiceNumber } from "~/lib/transforms";
 
 const invoiceId = Number(Astro.params.id);
-const resultCode = Astro.url.searchParams.get("resultCode") ?? "";
-const reference = Astro.url.searchParams.get("reference") ?? "";
-const amountParam = Astro.url.searchParams.get("amount") ?? "";
+if (Number.isNaN(invoiceId)) return Astro.redirect("/");
 
-// Cari invoice dari database untuk data lengkap & status terkini
-const invoice = !Number.isNaN(invoiceId)
-	? await db.query.invoices.findFirst({
-			where: { id: invoiceId },
-			with: {
-				lease: {
-					with: {
-						tenant: true,
-						room: true,
-					},
-				},
-			},
-		})
-	: null;
+const invoice = await db.query.invoices.findFirst({
+	where: { id: invoiceId },
+	with: {
+		lease: { with: { tenant: true, room: true } },
+	},
+});
+if (!invoice) return Astro.redirect("/");
 
-// Override resultCode berdasarkan status di database (hasil callback)
-// Saat navigasi langsung tanpa query params, derive dari status invoice
-const actualResultCode = resultCode
-	? resultCode
-	: invoice?.status === "paid"
-		? "00"
-		: "01";
-
-interface ResultConfig {
-	statusBadge: string;
-	statusLabel: string;
-	icon: string;
-	title: string;
-	message: string;
-	amount: string;
-}
-
-const resultConfig: ResultConfig = (() => {
-	switch (actualResultCode) {
-		case "00":
-			return {
-				statusBadge: "badge-success",
-				statusLabel: "LUNAS",
-				icon: "✅",
-				title: "Pembayaran Berhasil",
-				message: "Pembayaran Anda telah berhasil diproses. Terima kasih!",
-				amount: amountParam || String(invoice?.amount ?? ""),
-			};
-		case "01":
-			return {
-				statusBadge: "badge-warning",
-				statusLabel: "MENUNGGU",
-				icon: "⏳",
-				title: "Pembayaran Diproses",
-				message:
-					"Pembayaran Anda masih dalam proses. Silakan tunggu konfirmasi.",
-				amount: amountParam || String(invoice?.amount ?? ""),
-			};
-		default:
-			return {
-				statusBadge: "badge-error",
-				statusLabel: "GAGAL",
-				icon: "❌",
-				title: "Pembayaran Dibatalkan / Gagal",
-				message:
-					"Pembayaran Anda dibatalkan atau gagal diproses. Silakan coba lagi.",
-				amount: "-",
-			};
-	}
-})();
-
-const merchantOrderId = formatInvoiceNumber(invoice?.id ?? invoiceId);
-
-const tenantName = invoice?.lease?.tenant?.fullName ?? "-";
-const roomNumber = invoice?.lease?.room?.roomNumber ?? "-";
-const displayAmount =
-	resultConfig.amount && resultConfig.amount !== "-"
-		? Number(resultConfig.amount)
-		: (invoice?.amount ?? 0);
-
-const now = new Date();
-const dateTimeStr = `${formatDate(now, "DD MMMM YYYY, HH:mm")} WITA`;
-
-// Cek login — untuk kontrol tampilan tombol navigasi
-const sessionUser = await Astro.session?.get("user");
-const isLoggedIn = !!sessionUser;
-
-// URL yang sama untuk polling HTMX
-const currentUrl = Astro.url.pathname + Astro.url.search;
-const isPending = actualResultCode === "01";
+const { tenant, room } = invoice.lease;
+const invoiceNumber = formatInvoiceNumber(invoice.id);
 ---
 
-<BaseLayout title={resultConfig.title}>
-	<div class="flex min-h-dvh items-center justify-center p-4">
+<BaseLayout title={`Struk Digital ${invoiceNumber}`}>
+	<div class="flex min-h-dvh items-center justify-center bg-base-200 p-4">
 		<div class="mx-auto w-full max-w-xs">
-			<div class="no-print mb-4 flex items-stretch gap-2">
+			<div class="mb-4 flex items-stretch gap-2 print:hidden">
 				<button
 					class="btn flex-1 btn-outline btn-sm"
 					id="btn-capture"
-					data-filename={merchantOrderId}
+					data-filename={invoiceNumber}
+					disabled={invoice.status !== "paid"}
 				>
-					🖨 Cetak PNG
+					<Icon name="lucide:printer" />
+					Cetak PNG
 				</button>
+
 				{
-					isLoggedIn && (
+					Astro.locals.user && (
 						<a class="btn flex-1 btn-sm btn-primary" href="/dashboard">
 							← Dashboard
 						</a>
@@ -118,136 +50,151 @@ const isPending = actualResultCode === "01";
 			</div>
 
 			<div class="card bg-base-100 shadow-xl" id="invoice-card">
-				<div class="card-body gap-2 p-5">
-					<div class="mb-2 text-center">
-						<div class="avatar mx-auto mb-2 avatar-placeholder">
-							<div class="w-14 rounded-full bg-neutral text-neutral-content">
-								<span class="text-xl font-bold">KU</span>
-							</div>
-						</div>
-						<h2 class="text-base font-bold tracking-wide uppercase">
-							Indekos Ungu
-						</h2>
-						<p class="text-xs opacity-60">Struk Pembayaran Digital</p>
-					</div>
-
-					<hr class="dash-sep" />
-
-					<div>
-						<div class="inv-row">
-							<span class="opacity-60">No. Invoice</span>
-							<span class="font-mono text-xs font-semibold"
-								>{merchantOrderId}</span
-							>
-						</div>
-						<div class="inv-row">
-							<span class="opacity-60">Tanggal & Waktu</span>
-							<span class="font-mono text-xs">{dateTimeStr}</span>
-						</div>
-					</div>
-
-					<hr class="dash-sep" />
-
-					<div class="mt-1 flex justify-between text-base font-bold">
-						<span
-							>{
-								actualResultCode === "00" ? "Total Dibayar" : "Total Tagihan"
-							}</span
-						>
-						<span class="font-mono">{formatCurrency(displayAmount)}</span>
-					</div>
-
-					<hr class="dash-sep" />
-
-					<div>
-						<p
-							class="mb-1 text-xs font-semibold tracking-wider uppercase opacity-40"
-						>
-							Data Penghuni
-						</p>
-						<div class="inv-row">
-							<span class="opacity-60">Nama</span>
-							<span class="font-mono text-xs">{tenantName}</span>
-						</div>
-						<div class="inv-row">
-							<span class="opacity-60">Kamar</span>
-							<span class="font-mono text-xs">{roomNumber}</span>
-						</div>
-					</div>
-
-					<hr class="dash-sep" />
-
+				<div class="card-body p-6">
 					<div
-						hx-get={currentUrl}
-						hx-trigger={isPending ? "every 5s" : "none"}
-						id="payment-status"
-						hx-select="#payment-status"
-						hx-swap="outerHTML"
+						class="mb-3 flex items-center gap-4 border-b-2 border-base-content/20 pb-3"
 					>
-						<div>
-							<p
-								class="mb-1 text-xs font-semibold tracking-wider uppercase opacity-40"
-							>
-								Pembayaran
-							</p>
-							<div class="inv-row">
-								<span class="opacity-60">Status</span>
-								<span>{resultConfig.icon} {resultConfig.statusLabel}</span>
+						<div class="flex-1 text-center">
+							<div class="avatar avatar-placeholder">
+								<div class="w-12 rounded-full bg-neutral text-neutral-content">
+									<span class="text-lg">KU</span>
+								</div>
 							</div>
-							{
-								invoice?.paidAt && (
-									<div class="inv-row">
-										<span class="opacity-60">Tanggal Bayar</span>
-										<span class="font-mono text-xs">
-											{formatDate(invoice.paidAt, "DD MMMM YYYY, HH:mm")} WITA
-										</span>
-									</div>
-								)
-							}
-							{
-								(invoice?.duitkuReference || reference) && (
-									<div class="inv-row">
-										<span class="opacity-60">Referensi</span>
-										<span class="font-mono text-xs">
-											{reference || invoice?.duitkuReference}
-										</span>
-									</div>
-								)
-							}
-						</div>
 
-						<hr class="dash-sep" />
-
-						<div class="my-2 text-center">
-							<span
-								class:list={[
-									"badge px-6 py-3 text-sm badge-lg font-bold tracking-wider",
-									resultConfig.statusBadge,
-								]}
+							<div
+								class="font-serif text-lg font-bold tracking-wider uppercase"
 							>
-								{resultConfig.icon}
-								{resultConfig.statusLabel}
+								Indekos Ungu
+							</div>
+							<div class="my-1 border-b border-base-content/20"></div>
+							<div class="font-serif text-xs leading-relaxed opacity-60">
+								Jl. Sejahtera, Komplek Damai, RT 002/RW 006, Kelurahan Mentaos,
+								Kec. Banjarbaru Utara, Kota Banjar Baru, Kalimantan Selatan
+								70714
+							</div>
+						</div>
+					</div>
+
+					<hr class="my-2 border-0 border-t-2 border-dashed border-base-300" />
+
+					<div class="grid grid-cols-2 text-xs *:gap-0.5">
+						<div class="flex flex-col">
+							<span class="opacity-60">Tanggal Dibuat</span>
+							<span class="font-mono font-semibold">
+								{formatDate(invoice.createdAt)}
 							</span>
 						</div>
 
-						<hr class="dash-sep" />
+						<div class="flex flex-col text-end">
+							<span class="opacity-60">Invoice</span>
+							<span class="font-mono font-semibold">{invoiceNumber}</span>
+						</div>
+					</div>
+
+					<div class="mt-2 grid grid-cols-2 text-xs *:gap-0.5">
+						<div class="flex flex-col">
+							<span class="opacity-60">Nama</span>
+							<span class="font-mono font-semibold">{tenant.fullName}</span>
+						</div>
+
+						<div class="flex flex-col text-end">
+							<span class="opacity-60">Kamar</span>
+							<span class="font-mono font-semibold">{room.roomNumber}</span>
+						</div>
+					</div>
+
+					<hr class="my-2 border-0 border-t-2 border-dashed border-base-300" />
+
+					<div class="flex justify-between">
+						<div class="flex flex-col">
+							<div class="text-sm">
+								Kamar {capitalize(room.roomType)}
+								<span class="ml-1 font-mono font-light opacity-80">x1</span>
+							</div>
+							<div class="font-mono text-xs opacity-60">
+								Sewa {formatDate(invoice?.dueDate, "MMMM YYYY")}
+							</div>
+						</div>
+
+						<div class="font-mono text-xs">
+							{formatCurrency(invoice.amount)}
+						</div>
+					</div>
+
+					<div
+						class="flex items-baseline justify-between py-1 text-base font-bold"
+					>
+						<span>TOTAL</span>
+						<span>{formatCurrency(invoice.amount)}</span>
+					</div>
+
+					<hr class="mb-2 border-0 border-t-2 border-dashed border-base-300" />
+
+					<div id="payment-status">
+						<div class="grid text-xs *:gap-0.5">
+							<div class="flex flex-col">
+								<span class="opacity-60">Pembayaran</span>
+								<span class="font-mono">
+									Duitku
+									{invoice.duitkuReference && `(${invoice.duitkuReference})`}
+								</span>
+							</div>
+						</div>
+
+						<hr
+							class="my-4 border-0 border-t-2 border-dashed border-base-300"
+						/>
+
+						<div class="text-center">
+							<span
+								class:list={[
+									"badge badge-lg font-semibold",
+									invoice.status === "paid" ? "badge-success" : "badge-warning",
+								]}
+							>
+								<Icon
+									name={invoice.status === "paid"
+										? "lucide:check"
+										: "lucide:hourglass"}
+									size="size-6"
+								/>
+
+								{invoice.status === "paid" ? "LUNAS" : "MENUNGGU"}
+							</span>
+
+							{
+								invoice.paidAt && (
+									<p class="mt-2 font-mono text-xs opacity-60">
+										{formatDate(invoice.paidAt, "DD MMM YYYY - HH:mm")} WITA
+									</p>
+								)
+							}
+						</div>
+
+						<hr
+							class="my-4 border-0 border-t-2 border-dashed border-base-300"
+						/>
 
 						<p
 							class:list={[
 								"text-center text-sm font-medium",
-								actualResultCode === "00"
-									? "text-success"
-									: actualResultCode === "01"
-										? "text-warning"
-										: "text-error",
+								invoice.status === "paid" ? "text-success" : "text-warning",
 							]}
 						>
-							{resultConfig.message}
+							{
+								invoice.status === "paid"
+									? "Pembayaran Anda telah berhasil diproses. Terima kasih!"
+									: "Pembayaran Anda belum diterima. Silakan selesaikan pembayaran untuk menyelesaikan transaksi."
+							}
 						</p>
 
-						<p class="mt-1 text-center text-xs opacity-30">
-							Simpan struk ini sebagai bukti pembayaran
-						</p>
+						{
+							invoice.status === "paid" && (
+								<p class="mt-1 text-center text-xs opacity-30">
+									Simpan struk ini sebagai bukti pembayaran
+								</p>
+							)
+						}
 					</div>
 				</div>
 			</div>
@@ -261,39 +208,18 @@ const isPending = actualResultCode === "01";
 	document
 		.getElementById("btn-capture")
 		?.addEventListener("click", async () => {
-			const el = document.getElementById("invoice-card");
-			if (!el) return;
+			const invoice = document.getElementById("invoice-card");
+			if (!invoice) return;
 
-			const btn = document.getElementById("btn-capture");
-			const filename = btn?.getAttribute("data-filename") ?? "invoice";
+			const filename =
+				document.getElementById("btn-capture")?.getAttribute("data-filename") ??
+				new URL(document.URL).pathname.replace("/invoice/", "");
 
-			await snapdom.download(el, {
+			await snapdom.download(invoice, {
 				format: "png",
-				filename: `invoice-${filename}`,
+				filename: `indekos-ungu_${filename}`,
 				scale: 3,
 				backgroundColor: "#ffffff",
 			});
 		});
 </script>
-
-<style>
-	@media print {
-		.no-print {
-			display: none !important;
-		}
-	}
-	body {
-		background: #f3f4f6;
-	}
-	hr.dash-sep {
-		border: none;
-		border-top: 2px dashed #d1d5db;
-		margin: 0.6rem 0;
-	}
-	.inv-row {
-		display: flex;
-		justify-content: space-between;
-		font-size: 0.8rem;
-		padding: 0.15rem 0;
-	}
-</style>

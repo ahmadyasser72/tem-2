@@ -1,4 +1,6 @@
 ---
+import { formatDate } from "@e-kos/utilities/date";
+
 import { actions } from "astro:actions";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
@@ -8,7 +10,6 @@ import Stats from "~/components/data/stats.astro";
 import FormResult from "~/components/form/form-result.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { formatDate } from "~/lib/date";
 import { createActionResult } from "~/lib/form-result";
 import {
 	COMPLAINT_STATUS_BADGES,
@@ -30,6 +31,11 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 <FormResult
 	actionResults={[
 		createActionResult(
+			actions.manage.complaints.process,
+			"Proses komplain",
+			(d) => `Komplain sedang diproses! (ID: ${d.id})`,
+		),
+		createActionResult(
 			actions.manage.complaints.resolve,
 			"Selesaikan komplain",
 			(d) => `Berhasil menyelesaikan komplain! (ID: ${d.id})`,
@@ -50,8 +56,6 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 			<Icon name="lucide:download" /> PDF
 		</a>
 	</Fragment>
-
-	<Stats items={complaintStats} />
 
 	<FilterToolbar name="complaints" from={params.from} to={params.to}>
 		<Fragment slot="actions">
@@ -89,6 +93,8 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 		</Fragment>
 	</FilterToolbar>
 
+	<Stats items={complaintStats} />
+
 	<div class="flex flex-col gap-4" id="complaints-content-wrapper">
 		{
 			complaints.map(
@@ -101,8 +107,10 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 					roomNumber,
 					resolvedByUserName,
 					resolveNotes,
+					processedAt,
 					resolvedAt,
 				}) => {
+					const isOpen = status === "open";
 					const isResolvable = status !== "resolved";
 					return (
 						<div
@@ -129,7 +137,7 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 										<span class="badge font-mono font-bold badge-neutral">
 											{roomNumber || "-"}
 										</span>
-										<span class="text-xs text-base-content/50">&middot;</span>
+										<span class="text-xs text-base-content/50">&bull;</span>
 										<span class="text-xs font-semibold text-base-content/60">
 											{tenantName}
 										</span>
@@ -152,16 +160,25 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 										<span>Dilaporkan pada: {formatDate(createdAt)}</span>
 										{resolvedByUserName && (
 											<>
-												<span>•</span>
+												<span>&bull;</span>
 												<span class="flex items-center gap-1 font-semibold text-success">
 													<Icon name="lucide:circle-check" />
 													Ditangani oleh: {resolvedByUserName}
 												</span>
 											</>
 										)}
+										{processedAt && (
+											<>
+												<span>&bull;</span>
+												<span class="flex items-center gap-1 font-semibold text-warning">
+													<Icon name="lucide:loader" size="size-3.5" />
+													Diproses: {formatDate(processedAt)}
+												</span>
+											</>
+										)}
 										{resolvedAt && (
 											<>
-												<span>•</span>
+												<span>&bull;</span>
 												<span class="flex items-center gap-1">
 													<Icon name="lucide:calendar-check" size="size-3.5" />
 													Selesai: {formatDate(resolvedAt)}
@@ -172,6 +189,15 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 								</div>
 
 								<div class="flex shrink-0 items-center gap-2 self-end md:self-center">
+									{isOpen && (
+										<button
+											hx-get={`/dashboard/manage/complaints/modal/process/${id}`}
+											class="btn btn-outline btn-sm btn-warning"
+										>
+											<Icon name="lucide:loader" />
+											Tandai Proses
+										</button>
+									)}
 									{isResolvable ? (
 										<button
 											hx-get={`/dashboard/manage/complaints/modal/resolve/${id}`}

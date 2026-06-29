@@ -1,5 +1,5 @@
-import { db } from "@e-kos/database";
-import { ROOM_TYPES } from "@e-kos/database/schema";
+import { db } from "@indekos/database";
+import { ROOM_TYPES } from "@indekos/database/schema";
 
 import { z } from "astro/zod";
 import { sumBy } from "es-toolkit";

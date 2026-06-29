@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { createLogger } from "@e-kos/utilities/logger";
+import { createLogger } from "@indekos/utilities/logger";
 
 import fastifyMiddie from "@fastify/middie";
 import fastifyStatic from "@fastify/static";

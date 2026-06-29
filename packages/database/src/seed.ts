@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { hashPassword } from "@e-kos/utilities/password";
+import { hashPassword } from "@indekos/utilities/password";
 
 import { db, eq } from "./index";
 import { USER_ROLES, users } from "./schema";

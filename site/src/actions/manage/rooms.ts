@@ -1,5 +1,5 @@
-import { db, eq, ROOM_TYPES } from "@e-kos/database";
-import { auditDetail, rooms } from "@e-kos/database/schema";
+import { db, eq, ROOM_TYPES } from "@indekos/database";
+import { auditDetail, rooms } from "@indekos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";

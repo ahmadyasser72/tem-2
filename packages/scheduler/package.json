@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/scheduler",
+	"name": "@indekos/scheduler",
 	"type": "module",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -9,8 +9,8 @@
 		"trigger": "bun src/trigger.ts"
 	},
 	"dependencies": {
-		"@e-kos/database": "workspace:*",
-		"@e-kos/utilities": "workspace:*"
+		"@indekos/database": "workspace:*",
+		"@indekos/utilities": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/bun": "1.3.14",

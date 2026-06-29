@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/workspaces",
+	"name": "@indekos/workspaces",
 	"private": true,
 	"license": "AGPL-3.0",
 	"type": "module",
@@ -13,7 +13,7 @@
 		"test": "DATABASE_PATH=$(pwd)/test.db.sqlite bun test --sequential",
 		"dev": "pacwich run dev",
 		"prebuild": "bun --cwd=packages/database --sequential db:push db:seed",
-		"build": "pacwich run build @e-kos/site",
+		"build": "pacwich run build @indekos/site",
 		"start": "pacwich run start",
 		"wa:login": "bun --cwd=packages/whatsapp-bot run login",
 		"wa:logout": "bun --cwd=packages/whatsapp-bot run logout",

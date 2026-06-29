@@ -1,13 +1,13 @@
-import { db, eq } from "@e-kos/database";
-import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
+import { db, eq } from "@indekos/database";
+import { getPaymentUrlFromReference } from "@indekos/database/duitku";
 import {
 	auditDetail,
 	auditLogs,
 	chatbotMessages,
 	notifications,
-} from "@e-kos/database/schema";
-import { formatDate } from "@e-kos/utilities/date";
-import { formatCurrency } from "@e-kos/utilities/transforms";
+} from "@indekos/database/schema";
+import { formatDate } from "@indekos/utilities/date";
+import { formatCurrency } from "@indekos/utilities/transforms";
 
 import type { WASocket } from "baileys";
 

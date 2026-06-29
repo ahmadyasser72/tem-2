@@ -1,6 +1,6 @@
-import { db } from "@e-kos/database";
-import { complaints, type Tenant } from "@e-kos/database/schema";
-import { formatDate } from "@e-kos/utilities/date";
+import { db } from "@indekos/database";
+import { complaints, type Tenant } from "@indekos/database/schema";
+import { formatDate } from "@indekos/utilities/date";
 
 import { render } from "../template";
 

@@ -1,5 +1,5 @@
-import { db, eq } from "@e-kos/database";
-import { auditDetail, auditLogs, complaints } from "@e-kos/database/schema";
+import { db, eq } from "@indekos/database";
+import { auditDetail, auditLogs, complaints } from "@indekos/database/schema";
 
 import type { WASocket } from "baileys";
 

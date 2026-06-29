@@ -1,5 +1,5 @@
-import { db } from "@e-kos/database";
-import { botAuth } from "@e-kos/database/schema";
+import { db } from "@indekos/database";
+import { botAuth } from "@indekos/database/schema";
 
 const logout = async () => {
 	const rows = await db.delete(botAuth).returning();

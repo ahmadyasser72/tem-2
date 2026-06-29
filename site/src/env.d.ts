@@ -3,7 +3,7 @@ declare namespace App {
 		user: {
 			id: number;
 			name: string;
-			role: import("@e-kos/database/schema").User["role"];
+			role: import("@indekos/database/schema").User["role"];
 		};
 	}
 
@@ -12,10 +12,10 @@ declare namespace App {
 			schema: S,
 		) => import("astro/zod").output<S>;
 		logAudit: (
-			action: (typeof import("@e-kos/database/schema").AUDIT_ACTIONS)[number],
+			action: (typeof import("@indekos/database/schema").AUDIT_ACTIONS)[number],
 			tableName: string,
 			recordId: number | null,
-			details: import("@e-kos/database/schema").AuditDetails,
+			details: import("@indekos/database/schema").AuditDetails,
 		) => Promise<void>;
 		user?: SessionData["user"] & { allowEdit?: boolean };
 	}

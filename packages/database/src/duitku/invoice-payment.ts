@@ -1,8 +1,8 @@
-import { formatDate } from "@e-kos/utilities/date";
+import { formatDate } from "@indekos/utilities/date";
 import {
 	formatCurrency,
 	formatInvoiceNumber,
-} from "@e-kos/utilities/transforms";
+} from "@indekos/utilities/transforms";
 
 import { db, eq } from "../index";
 import { auditDetail, auditLogs, invoices } from "../schema";

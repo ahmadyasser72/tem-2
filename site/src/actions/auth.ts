@@ -1,6 +1,6 @@
-import { db, eq } from "@e-kos/database";
-import { auditDetail, users } from "@e-kos/database/schema";
-import { verifyPassword } from "@e-kos/utilities/password";
+import { db, eq } from "@indekos/database";
+import { auditDetail, users } from "@indekos/database/schema";
+import { verifyPassword } from "@indekos/utilities/password";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";

@@ -1,6 +1,6 @@
-import { db, NOTIFICATION_STATUS, NOTIFICATION_TYPES } from "@e-kos/database";
-import { parseDateRange } from "@e-kos/utilities/date";
-import { formatInvoiceNumber } from "@e-kos/utilities/transforms";
+import { db, NOTIFICATION_STATUS, NOTIFICATION_TYPES } from "@indekos/database";
+import { parseDateRange } from "@indekos/utilities/date";
+import { formatInvoiceNumber } from "@indekos/utilities/transforms";
 
 import { z } from "astro/zod";
 

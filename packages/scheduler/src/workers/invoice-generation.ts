@@ -1,12 +1,12 @@
-import { db } from "@e-kos/database";
-import { generatePaymentLink } from "@e-kos/database/duitku/invoice-payment";
+import { db } from "@indekos/database";
+import { generatePaymentLink } from "@indekos/database/duitku/invoice-payment";
 import {
 	auditDetail,
 	auditLogs,
 	invoices,
 	type User,
-} from "@e-kos/database/schema";
-import dayjs from "@e-kos/utilities/date";
+} from "@indekos/database/schema";
+import dayjs from "@indekos/utilities/date";
 
 import { logger } from "../index";
 

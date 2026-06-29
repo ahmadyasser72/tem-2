@@ -1,13 +1,12 @@
-import { db } from "@e-kos/database";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { db } from "@indekos/database";
 import {
 	invoices,
 	leases,
 	rooms,
 	tenants,
 	type Tenant,
-} from "@e-kos/database/schema";
-
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+} from "@indekos/database/schema";
 
 import { tenantInfo } from "../tenant-info";
 

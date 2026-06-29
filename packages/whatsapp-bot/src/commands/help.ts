@@ -1,4 +1,4 @@
-import type { Tenant } from "@e-kos/database/schema";
+import type { Tenant } from "@indekos/database/schema";
 
 import { render } from "../template";
 

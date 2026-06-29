@@ -1,10 +1,10 @@
-import { db, eq } from "@e-kos/database";
+import { db, eq } from "@indekos/database";
 import {
 	auditDetail,
 	leases,
 	notifications,
 	tenants,
-} from "@e-kos/database/schema";
+} from "@indekos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";

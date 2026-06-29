@@ -18,7 +18,7 @@ const config = {
 	overrides: [{ files: "*.astro", options: { parser: "astro" } }],
 
 	importOrder: [
-		"^@e-kos/(.*)$",
+		"^@indekos/(.*)$",
 		"",
 		"<THIRD_PARTY_MODULES>",
 		"",

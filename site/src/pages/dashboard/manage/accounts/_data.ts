@@ -1,4 +1,4 @@
-import { db, USER_ROLES } from "@e-kos/database";
+import { db, USER_ROLES } from "@indekos/database";
 
 import { z } from "astro/zod";
 

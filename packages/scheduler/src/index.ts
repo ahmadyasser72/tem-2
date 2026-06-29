@@ -1,5 +1,5 @@
-import { db } from "@e-kos/database";
-import { createLogger, pino } from "@e-kos/utilities/logger";
+import { db } from "@indekos/database";
+import { createLogger, pino } from "@indekos/utilities/logger";
 
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runOverdueCheck } from "./workers/overdue";

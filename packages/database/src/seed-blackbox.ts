@@ -1,5 +1,5 @@
-import dayjs from "@e-kos/utilities/date";
-import { hashPassword } from "@e-kos/utilities/password";
+import dayjs from "@indekos/utilities/date";
+import { hashPassword } from "@indekos/utilities/password";
 
 import { db } from "./index";
 import {

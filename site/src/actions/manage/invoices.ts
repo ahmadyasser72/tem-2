@@ -1,10 +1,10 @@
-import { db, eq } from "@e-kos/database";
+import { db, eq } from "@indekos/database";
 import {
 	generatePaymentLink as createPaymentLink,
 	DuitkuError,
 	InvoicePaymentError,
-} from "@e-kos/database/duitku/invoice-payment";
-import { auditDetail, invoices, notifications } from "@e-kos/database/schema";
+} from "@indekos/database/duitku/invoice-payment";
+import { auditDetail, invoices, notifications } from "@indekos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";

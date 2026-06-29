@@ -1,11 +1,11 @@
-import { db, eq } from "@e-kos/database";
-import { config, verifyCallbackSignature } from "@e-kos/database/duitku";
+import { db, eq } from "@indekos/database";
+import { config, verifyCallbackSignature } from "@indekos/database/duitku";
 import {
 	auditDetail,
 	auditLogs,
 	invoices,
 	notifications,
-} from "@e-kos/database/schema";
+} from "@indekos/database/schema";
 
 import type { APIRoute } from "astro";
 

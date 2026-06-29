@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/site",
+	"name": "@indekos/site",
 	"type": "module",
 	"version": "0.0.1",
 	"engines": {
@@ -14,8 +14,8 @@
 	},
 	"dependencies": {
 		"@astrojs/node": "10.1.4",
-		"@e-kos/database": "workspace:*",
-		"@e-kos/utilities": "workspace:*",
+		"@indekos/database": "workspace:*",
+		"@indekos/utilities": "workspace:*",
 		"@fastify/middie": "9.3.2",
 		"@fastify/static": "9.1.3",
 		"@tailwindcss/vite": "4.3.1",

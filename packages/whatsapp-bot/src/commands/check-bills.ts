@@ -1,11 +1,11 @@
-import { db } from "@e-kos/database";
-import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
-import type { Tenant } from "@e-kos/database/schema";
-import { formatDate } from "@e-kos/utilities/date";
+import { db } from "@indekos/database";
+import { getPaymentUrlFromReference } from "@indekos/database/duitku";
+import type { Tenant } from "@indekos/database/schema";
+import { formatDate } from "@indekos/utilities/date";
 import {
 	formatCurrency,
 	formatInvoiceNumber,
-} from "@e-kos/utilities/transforms";
+} from "@indekos/utilities/transforms";
 
 import { sumBy } from "es-toolkit";
 

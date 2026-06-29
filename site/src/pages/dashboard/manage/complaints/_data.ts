@@ -1,5 +1,5 @@
-import { COMPLAINT_STATUS, db } from "@e-kos/database";
-import { parseDateRange } from "@e-kos/utilities/date";
+import { COMPLAINT_STATUS, db } from "@indekos/database";
+import { parseDateRange } from "@indekos/utilities/date";
 
 import { z } from "astro/zod";
 import { countBy } from "es-toolkit";

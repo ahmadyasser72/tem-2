@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/whatsapp-bot",
+	"name": "@indekos/whatsapp-bot",
 	"type": "module",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -11,8 +11,8 @@
 		"dev": "bun --watch src/index.ts"
 	},
 	"dependencies": {
-		"@e-kos/database": "workspace:*",
-		"@e-kos/utilities": "workspace:*",
+		"@indekos/database": "workspace:*",
+		"@indekos/utilities": "workspace:*",
 		"baileys": "7.0.0-rc13",
 		"es-toolkit": "1.49.0",
 		"eta": "4.6.0",

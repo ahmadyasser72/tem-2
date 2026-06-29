@@ -1,4 +1,4 @@
-import type { Invoice } from "@e-kos/database/schema";
+import type { Invoice } from "@indekos/database/schema";
 
 import { formatDate } from "./date";
 

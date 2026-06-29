@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/utilities",
+	"name": "@indekos/utilities",
 	"type": "module",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -14,7 +14,7 @@
 		"typescript": "6.0.3"
 	},
 	"dependencies": {
-		"@e-kos/database": "workspace:*",
+		"@indekos/database": "workspace:*",
 		"dayjs": "1.11.21",
 		"pino": "10.3.1",
 		"pino-pretty": "13.1.3",

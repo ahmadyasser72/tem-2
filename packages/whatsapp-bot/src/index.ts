@@ -1,12 +1,12 @@
-import { db, eq } from "@e-kos/database";
+import { db, eq } from "@indekos/database";
 import {
 	auditDetail,
 	auditLogs,
 	chatbotMessages,
 	tenants,
 	type Tenant,
-} from "@e-kos/database/schema";
-import { createLogger } from "@e-kos/utilities/logger";
+} from "@indekos/database/schema";
+import { createLogger } from "@indekos/utilities/logger";
 
 import { makeWASocket } from "baileys";
 

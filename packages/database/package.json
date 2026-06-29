@@ -1,5 +1,5 @@
 {
-	"name": "@e-kos/database",
+	"name": "@indekos/database",
 	"type": "module",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -22,7 +22,7 @@
 		"typescript": "5.9.3"
 	},
 	"dependencies": {
-		"@e-kos/utilities": "workspace:*",
+		"@indekos/utilities": "workspace:*",
 		"drizzle-orm": "1.0.0-rc.4-5d5b77c",
 		"es-toolkit": "1.49.0",
 		"microdiff": "1.5.0"

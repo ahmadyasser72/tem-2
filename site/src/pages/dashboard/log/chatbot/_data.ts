@@ -1,5 +1,5 @@
-import { CHATBOT_DIRECTIONS, db } from "@e-kos/database";
-import { parseDateRange } from "@e-kos/utilities/date";
+import { CHATBOT_DIRECTIONS, db } from "@indekos/database";
+import { parseDateRange } from "@indekos/utilities/date";
 
 import { z } from "astro/zod";
 

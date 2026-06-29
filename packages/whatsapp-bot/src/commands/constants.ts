@@ -1,4 +1,4 @@
-import type { COMPLAINT_STATUS } from "@e-kos/database/schema";
+import type { COMPLAINT_STATUS } from "@indekos/database/schema";
 
 export const STATUS_LABEL = {
 	open: "📩 Menunggu ditangani",

@@ -1,5 +1,5 @@
-import { db, eq } from "@e-kos/database";
-import { botAuth } from "@e-kos/database/schema";
+import { db, eq } from "@indekos/database";
+import { botAuth } from "@indekos/database/schema";
 
 import { BufferJSON, initAuthCreds, proto } from "baileys";
 import type { AuthenticationState, SignalDataTypeMap } from "baileys";

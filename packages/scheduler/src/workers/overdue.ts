@@ -1,10 +1,10 @@
-import { db, inArray } from "@e-kos/database";
+import { db, inArray } from "@indekos/database";
 import {
 	auditDetail,
 	auditLogs,
 	invoices,
 	type User,
-} from "@e-kos/database/schema";
+} from "@indekos/database/schema";
 
 import { logger } from "../index";
 

@@ -1,7 +1,7 @@
-import { db } from "@e-kos/database";
-import type { Tenant } from "@e-kos/database/schema";
-import { formatDate } from "@e-kos/utilities/date";
-import { formatCurrency } from "@e-kos/utilities/transforms";
+import { db } from "@indekos/database";
+import type { Tenant } from "@indekos/database/schema";
+import { formatDate } from "@indekos/utilities/date";
+import { formatCurrency } from "@indekos/utilities/transforms";
 
 import { render } from "../template";
 

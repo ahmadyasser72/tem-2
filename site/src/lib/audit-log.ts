@@ -1,9 +1,9 @@
-import { db } from "@e-kos/database";
+import { db } from "@indekos/database";
 import {
 	AUDIT_ACTIONS,
 	auditLogs,
 	type AuditDetails,
-} from "@e-kos/database/schema";
+} from "@indekos/database/schema";
 
 type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

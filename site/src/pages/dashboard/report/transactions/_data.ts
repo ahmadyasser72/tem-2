@@ -1,7 +1,7 @@
-import { db, INVOICE_STATUS } from "@e-kos/database";
-import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
-import { parseDateRange } from "@e-kos/utilities/date";
-import { formatInvoiceNumber } from "@e-kos/utilities/transforms";
+import { db, INVOICE_STATUS } from "@indekos/database";
+import { getPaymentUrlFromReference } from "@indekos/database/duitku";
+import { parseDateRange } from "@indekos/utilities/date";
+import { formatInvoiceNumber } from "@indekos/utilities/transforms";
 
 import { z } from "astro/zod";
 import { sumBy } from "es-toolkit";

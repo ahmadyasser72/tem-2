@@ -1,4 +1,5 @@
-import { db, eq } from "@e-kos/database";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { db, eq } from "@indekos/database";
 import {
 	invoices,
 	leases,
@@ -6,9 +7,7 @@ import {
 	tenants,
 	users,
 	type User,
-} from "@e-kos/database/schema";
-
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+} from "@indekos/database/schema";
 
 import { runOverdueCheck } from "../overdue";
 

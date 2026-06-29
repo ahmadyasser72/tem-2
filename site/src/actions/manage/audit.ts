@@ -1,5 +1,5 @@
-import { db, eq } from "@e-kos/database";
-import { auditDetail, auditLogs } from "@e-kos/database/schema";
+import { db, eq } from "@indekos/database";
+import { auditDetail, auditLogs } from "@indekos/database/schema";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";

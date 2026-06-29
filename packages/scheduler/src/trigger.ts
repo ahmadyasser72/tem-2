@@ -1,4 +1,4 @@
-import { db } from "@e-kos/database";
+import { db } from "@indekos/database";
 
 import { logger } from ".";
 import { runInvoiceGeneration } from "./workers/invoice-generation";

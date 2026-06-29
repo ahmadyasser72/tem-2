@@ -1,4 +1,4 @@
-import { getCurrentMonthStr } from "@e-kos/utilities/date";
+import { getCurrentMonthStr } from "@indekos/utilities/date";
 
 import { z } from "astro/zod";
 

@@ -1,4 +1,4 @@
-import { db } from "@e-kos/database";
+import { db } from "@indekos/database";
 
 import { getActionContext } from "astro:actions";
 import { defineMiddleware } from "astro:middleware";

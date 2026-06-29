@@ -1,4 +1,4 @@
-import type { USER_ROLES } from "@e-kos/database/schema";
+import type { USER_ROLES } from "@indekos/database/schema";
 
 export const ROLES = ["admin", "staff", "owner"] as const;
 

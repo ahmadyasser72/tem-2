@@ -1,6 +1,8 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
 
+import { render } from "../template";
 import { STATUS_LABEL } from "./constants";
 
 export const checkComplaint = async (
@@ -23,23 +25,16 @@ export const checkComplaint = async (
 		if (resolver) resolverName = resolver.displayName ?? resolver.username;
 	}
 
-	const lines: string[] = [];
-	lines.push(`*📋 Detail Komplain #${complaint.id}*`);
-	lines.push("");
-	lines.push("━━━━━━━━━━━━━━━━━━━");
-	lines.push(`📝 Keluhan: ${complaint.description}`);
-	lines.push(`📅 Tanggal: ${complaint.createdAt.toLocaleDateString()}`);
-	lines.push(`📍 Status: ${STATUS_LABEL[complaint.status]}`);
-
-	if (complaint.resolveNotes) {
-		lines.push(`📌 Catatan: ${complaint.resolveNotes}`);
-	}
-	if (complaint.resolvedBy) {
-		lines.push(`👤 Ditangani oleh: ${resolverName}`);
-	}
-	lines.push("━━━━━━━━━━━━━━━━━━━");
-	lines.push("");
-	lines.push("Ketik *komplainku* untuk daftar komplain.");
-
-	return lines.join("\n");
+	return render("check-complaint", {
+		id: complaint.id,
+		description: complaint.description,
+		createdAt: formatDate(complaint.createdAt),
+		processedAt: complaint.processedAt
+			? formatDate(complaint.processedAt)
+			: null,
+		resolvedAt: complaint.resolvedAt ? formatDate(complaint.resolvedAt) : null,
+		status: STATUS_LABEL[complaint.status],
+		resolveNotes: complaint.resolveNotes ?? null,
+		resolverName,
+	});
 };

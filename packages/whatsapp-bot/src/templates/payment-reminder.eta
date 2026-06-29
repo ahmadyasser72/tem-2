@@ -1,0 +1,17 @@
+*🔔 Pengingat Pembayaran*
+
+Yth. <%= it.fullName %>,
+Tagihan sewa Anda akan segera jatuh tempo.
+<% if (it.roomNumber) { %>
+📍 Kamar: <%= it.roomNumber %>
+<% } %><% if (it.amount) { %>
+💰 Jumlah: <%= it.amount %>
+<% } %><% if (it.dueDate) { %>
+📅 Batas bayar: <%= it.dueDate %>
+<% } %><% if (it.paymentUrl) { %>
+💳 Bayar sekarang: <%= it.paymentUrl %>
+<% } %>
+Silakan lakukan pembayaran tepat waktu.
+Ketik *tagihan* untuk info lebih lanjut.
+
+_Pesan ini dikirim otomatis oleh sistem._

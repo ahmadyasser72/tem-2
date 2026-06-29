@@ -1,0 +1,27 @@
+*💰 Info Tagihan*
+
+📍 Kamar: <%= it.roomNumber %>
+🏠 Tipe: <%= it.roomType %>
+💰 Sewa/bulan: <%= it.monthlyPrice %>
+
+<% if (it.unpaid.length === 0) { %>
+✅ *Semua pembayaran lunas!*
+Terima kasih telah membayar tepat waktu.
+<% } else { %>
+⚠️ *<%= it.unpaid.length %> tagihan belum dibayar*
+━━━━━━━━━━━━━━━━━━━
+<% for (const inv of it.unpaid) { %>
+• Invoice #<%= inv.id %>
+  Dibuat: <%= inv.createdAt %>
+  Jumlah: <%= inv.amount %>
+  Jatuh tempo: <%= inv.dueDate %>
+<% if (inv.paymentUrl) { %>  💳 Bayar: <%= inv.paymentUrl %>
+<% } %>
+<% } %>
+━━━━━━━━━━━━━━━━━━━
+💰 *Total: <%= it.total %>*
+<% if (!it.hasPaymentLink) { %>
+
+Silakan hubungi admin untuk mendapatkan link pembayaran.
+<% } %>
+<% } %>

@@ -1,14 +1,21 @@
 import { db } from "@e-kos/database";
 import { getPaymentUrlFromReference } from "@e-kos/database/duitku";
 import { tenants } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@e-kos/utilities/transforms";
 
 import { sumBy } from "es-toolkit";
 
-export const checkBills = async ({
-	id,
-}: typeof tenants.$inferSelect): Promise<string> => {
-	const activeLease = await db.query.leases.findFirst({
-		where: { tenantId: id, isActive: true },
+import { render } from "../template";
+
+export const checkBills = async (
+	tenant: typeof tenants.$inferSelect,
+): Promise<string> => {
+	const lease = await db.query.leases.findFirst({
+		where: { tenantId: tenant.id, isActive: true },
 		with: {
 			room: true,
 			invoices: {
@@ -17,53 +24,29 @@ export const checkBills = async ({
 		},
 	});
 
-	if (!activeLease?.room) {
+	if (!lease?.room) {
 		return "📍 Anda tidak memiliki kontrak sewa yang aktif.";
 	}
 
-	const unpaid = activeLease.invoices ?? [];
-	const total = sumBy(unpaid, (inv) => inv.amount);
-
-	const lines: string[] = [];
-	lines.push("*💰 Info Tagihan*");
-	lines.push("");
-	lines.push(`📍 Kamar: ${activeLease.room.roomNumber}`);
-	lines.push(`🏠 Tipe: ${activeLease.room.roomType}`);
-	lines.push(
-		`💰 Sewa/bulan: Rp ${activeLease.room.monthlyPrice.toLocaleString()}`,
+	const total = sumBy(lease.invoices, ({ amount }) => amount);
+	const unpaid = lease.invoices.map(
+		({ id, amount, dueDate, createdAt, duitkuReference }) => ({
+			id: formatInvoiceNumber(id),
+			amount: formatCurrency(amount),
+			dueDate: formatDate(dueDate),
+			createdAt: formatDate(createdAt),
+			paymentUrl: duitkuReference
+				? getPaymentUrlFromReference(duitkuReference)
+				: null,
+		}),
 	);
-	lines.push("");
 
-	if (unpaid.length === 0) {
-		lines.push("✅ *Semua pembayaran lunas!*");
-		lines.push("Terima kasih telah membayar tepat waktu.");
-	} else {
-		lines.push(`⚠️ *${unpaid.length} tagihan belum dibayar*`);
-		lines.push("━━━━━━━━━━━━━━━━━━━");
-
-		for (const inv of unpaid) {
-			const invWithRef = await db.query.invoices.findFirst({
-				where: { id: inv.id },
-			});
-
-			lines.push(`• Invoice #${inv.id}`);
-			lines.push(`  Jumlah: Rp ${inv.amount.toLocaleString()}`);
-			lines.push(`  Jatuh tempo: ${inv.dueDate.toLocaleDateString()}`);
-			if (invWithRef?.duitkuReference) {
-				lines.push(
-					`  💳 Bayar: ${getPaymentUrlFromReference(invWithRef.duitkuReference)}`,
-				);
-			}
-			lines.push("");
-		}
-		lines.push("━━━━━━━━━━━━━━━━━━━");
-		lines.push(`💰 *Total: Rp ${total.toLocaleString()}*`);
-		lines.push("");
-
-		if (!unpaid.some((inv) => inv.duitkuReference)) {
-			lines.push("Silakan hubungi admin untuk mendapatkan link pembayaran.");
-		}
-	}
-
-	return lines.join("\n");
+	return render("check-bills", {
+		roomNumber: lease.room.roomNumber,
+		roomType: lease.room.roomType,
+		monthlyPrice: formatCurrency(lease.room.monthlyPrice),
+		unpaid,
+		total: formatCurrency(total),
+		hasPaymentLink: unpaid.some(({ paymentUrl }) => paymentUrl),
+	});
 };

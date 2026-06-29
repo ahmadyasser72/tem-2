@@ -22,6 +22,7 @@ import {
 	pollResolvedComplaints,
 } from "./polls/complaints";
 import { pollNotifications } from "./polls/notifications";
+import { render } from "./template";
 
 interface PendingMessage {
 	tenant: typeof tenants.$inferSelect;
@@ -108,7 +109,7 @@ export const main = async () => {
 				}
 
 				sock.sendMessage(jid, {
-					text: "Maaf, nomor Anda tidak terdaftar sebagai penghuni kos. Silakan hubungi admin untuk informasi lebih lanjut.",
+					text: render("unknown-number", {}),
 				});
 
 				// Cooldown 30 detik sebelum bisa reply nomor yg sama lagi
@@ -144,21 +145,15 @@ export const main = async () => {
 					sock.sendMessage(
 						jid,
 						{
-							text: [
-								"*✅ Verifikasi Berhasil!*",
-								`Halo *${tenant.fullName}*! Akun Anda telah aktif.`,
-								"Ketik *help* untuk melihat daftar perintah yang tersedia.",
-							].join("\n\n"),
+							text: render("verification-success", {
+								fullName: tenant.fullName,
+							}),
 						},
 						{ quoted: message },
 					);
 				} else {
 					sock.sendMessage(jid, {
-						text: [
-							"*⚠️ Akun Belum Aktif*",
-							`Halo *${tenant.fullName}*! Anda belum melakukan verifikasi.`,
-							"Silakan balas pesan selamat datang dengan kata *YA* untuk mengaktifkan akun Anda.",
-						].join("\n\n"),
+						text: render("verification-prompt", { fullName: tenant.fullName }),
 					});
 				}
 				continue;
@@ -213,7 +208,7 @@ const processCommand = async (
 	const lower = text.toLowerCase().trim();
 
 	if (lower === "help") {
-		return help();
+		return help(tenant);
 	}
 
 	const komplainkuMatch = lower.match(/^komplainku(?: (\d+))?$/);
@@ -239,7 +234,7 @@ const processCommand = async (
 		return tenantInfo(tenant);
 	}
 
-	return help();
+	return help(tenant);
 };
 
 main();

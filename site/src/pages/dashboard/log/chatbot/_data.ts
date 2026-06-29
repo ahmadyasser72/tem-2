@@ -11,9 +11,9 @@ export const chatbotQuerySchema = z.object({
 	...periodFields,
 });
 
-export async function fetchChatbotLogs(
+export const fetchChatbotLogs = async (
 	params: z.infer<typeof chatbotQuerySchema>,
-) {
+) => {
 	const { startDate, endDate } = parseDateRange(params.from, params.to);
 
 	const logs = await db.query.chatbotMessages.findMany({
@@ -44,7 +44,7 @@ export async function fetchChatbotLogs(
 		tenantName: tenant.fullName,
 		roomNumber: tenant.lease?.room?.roomNumber ?? "-",
 	}));
-}
+};
 
 export const DIRECTION_BADGES = {
 	incoming: "badge-info",

@@ -1,39 +1,35 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
+import { formatCurrency } from "@e-kos/utilities/transforms";
+
+import { render } from "../template";
 
 export const tenantInfo = async (
 	tenant: typeof tenants.$inferSelect,
 ): Promise<string> => {
 	const activeLease = await db.query.leases.findFirst({
 		where: { tenantId: tenant.id, isActive: true },
-		with: { room: true },
+		with: { room: true, invoices: { where: { status: "unpaid" } } },
 	});
 
 	if (!activeLease?.room) {
 		return "Anda tidak memiliki kontrak sewa yang aktif.";
 	}
 
-	const endDate = activeLease.endDate
-		? activeLease.endDate.toLocaleDateString()
-		: "Berlangsung";
+	const hasUnpaid = activeLease.invoices.length > 0;
 
-	return [
-		"*👤 Info Penghuni & Kamar*",
-		"",
-		"━━━━━━━━━━━━━━━━━━━",
-		"*Data Diri*",
-		`Nama: ${tenant.fullName}`,
-		`No. HP: ${tenant.phoneNumber}`,
-		`Asal: ${tenant.originRegion ?? "-"}`,
-		"",
-		"*Info Kamar*",
-		`📍 No. Kamar: ${activeLease.room.roomNumber}`,
-		`🏠 Tipe: ${activeLease.room.roomType}`,
-		`💰 Sewa: Rp ${activeLease.room.monthlyPrice.toLocaleString()}/bulan`,
-		`📅 Mulai: ${activeLease.startDate.toLocaleDateString()}`,
-		`📅 Selesai: ${endDate}`,
-		"━━━━━━━━━━━━━━━━━━━",
-		"",
-		"Ketik *help* untuk bantuan lebih lanjut.",
-	].join("\n");
+	return render("tenant-info", {
+		fullName: tenant.fullName,
+		phoneNumber: tenant.phoneNumber,
+		originRegion: tenant.originRegion ?? "-",
+		roomNumber: activeLease.room.roomNumber,
+		roomType: activeLease.room.roomType,
+		monthlyPrice: formatCurrency(activeLease.room.monthlyPrice),
+		startDate: formatDate(activeLease.startDate),
+		endDate: activeLease.endDate
+			? formatDate(activeLease.endDate)
+			: "Berlangsung",
+		hasUnpaid,
+	});
 };

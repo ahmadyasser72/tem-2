@@ -1,6 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@e-kos/database";
 import { complaints, tenants } from "@e-kos/database/schema";
+
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 
 import { listComplaints } from "../list-complaints";
 
@@ -52,5 +53,28 @@ describe("listComplaints", () => {
 	it("includes hint to see detail", async () => {
 		const result = await listComplaints(testTenant);
 		expect(result).toMatch(/komplainku \d+/);
+	});
+});
+
+describe("listComplaints no complaints", () => {
+	let tenantNoComplaints: typeof tenants.$inferSelect;
+
+	beforeAll(async () => {
+		const [tenant] = await db
+			.insert(tenants)
+			.values({
+				fullName: "No Complaints",
+				phoneNumber: "6281234567896",
+			})
+			.returning({ id: tenants.id });
+
+		tenantNoComplaints = (await db.query.tenants.findFirst({
+			where: { id: tenant.id },
+		}))!;
+	});
+
+	it("returns no complaints message", async () => {
+		const result = await listComplaints(tenantNoComplaints);
+		expect(result).toBe("Belum ada komplain yang Anda kirimkan.");
 	});
 });

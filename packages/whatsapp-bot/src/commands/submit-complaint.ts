@@ -1,54 +1,30 @@
 import { db } from "@e-kos/database";
 import { complaints, tenants } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
+
+import { render } from "../template";
 
 export const submitComplaint = async (
 	tenant: typeof tenants.$inferSelect,
 	text: string,
 ): Promise<string> => {
-	const complaintDesc = text.replace(/^komplain\s*/i, "").trim();
-
-	if (!complaintDesc || complaintDesc.length < 5) {
-		return [
-			"*📝 Ajukan Komplain*",
-			"",
-			"Silakan kirim keluhan dengan format:",
-			"",
-			"*komplain [deskripsi keluhan]*",
-			"",
-			"Contoh:",
-			"• komplain AC kamar tidak dingin",
-			"• komplain kran wastafel bocor",
-			"• komplain lampu kamar mati",
-			"• komplain tetangga berisik",
-			"",
-			"Setelah komplain terkirim, Anda akan mendapat ID laporan sebagai referensi.",
-		].join("\n");
+	const complaintDescription = text.replace(/^komplain\s*/i, "").trim();
+	if (!complaintDescription || complaintDescription.length < 5) {
+		return render("submit-complaint-format", {});
 	}
 
 	const [newComplaint] = await db
 		.insert(complaints)
 		.values({
 			tenantId: tenant.id,
-			description: complaintDesc,
+			description: complaintDescription,
 			status: "open",
 		})
 		.returning({ id: complaints.id, createdAt: complaints.createdAt });
 
-	return [
-		"*✅ Komplain Diterima*",
-		"",
-		"Terima kasih, laporan Anda telah kami catat.",
-		"",
-		"📋 *Detail Komplain*",
-		"━━━━━━━━━━━━━━━━━━━",
-		`🆔 ID Laporan: #${newComplaint.id}`,
-		`📝 Keluhan: ${complaintDesc}`,
-		`📅 Tanggal: ${newComplaint.createdAt.toLocaleDateString()}`,
-		"━━━━━━━━━━━━━━━━━━━",
-		"",
-		"Status: *Menunggu ditangani*",
-		"",
-		"Kami akan segera memproses laporan Anda.",
-		"Simpan ID laporan untuk referensi.",
-	].join("\n");
+	return render("submit-complaint", {
+		id: newComplaint.id,
+		description: complaintDescription,
+		createdAt: formatDate(newComplaint.createdAt),
+	});
 };

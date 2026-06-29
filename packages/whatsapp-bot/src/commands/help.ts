@@ -1,16 +1,6 @@
-export const help = (): string => {
-	return [
-		"*🤖 Indekos Ungu*",
-		"",
-		"Berikut perintah yang tersedia:",
-		"",
-		"• *tagihan* — Info tagihan yang belum dibayar",
-		"• *riwayat* — Riwayat pembayaran lunas",
-		"• *komplain* — Ajukan keluhan",
-		"• *komplainku* — Daftar komplain / detail (contoh: komplainku 5)",
-		"• *info* — Info kamar dan data diri",
-		"• *help* — Tampilkan bantuan ini",
-		"",
-		"Ketik perintah yang diinginkan.",
-	].join("\n");
-};
+import { tenants } from "@e-kos/database/schema";
+
+import { render } from "../template";
+
+export const help = (tenant: typeof tenants.$inferSelect): string =>
+	render("help", { fullName: tenant.fullName });

@@ -1,0 +1,11 @@
+*✅ Pembayaran Diterima*
+
+Yth. <%= it.fullName %>,
+<% if (it.roomNumber) { %>
+📍 Kamar: <%= it.roomNumber %>
+<% } %><% if (it.amount) { %>
+💰 Jumlah: <%= it.amount %>
+<% } %><% if (it.date) { %>
+📅 Pembayaran: <%= it.date %>
+<% } %>
+Terima kasih telah membayar tepat waktu.

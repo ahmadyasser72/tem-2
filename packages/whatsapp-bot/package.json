@@ -15,6 +15,7 @@
 		"@e-kos/utilities": "workspace:*",
 		"baileys": "7.0.0-rc13",
 		"es-toolkit": "1.49.0",
+		"eta": "4.6.0",
 		"open": "11.0.0",
 		"uqr": "0.1.3"
 	},

@@ -1,0 +1,7 @@
+*📋 Riwayat Pembayaran (<%= it.paid.length %> terakhir)*
+
+<% for (const inv of it.paid) { %>• Invoice #<%= inv.id %>
+  Jumlah: <%= inv.amount %>
+  Lunas: <%= inv.dueDate %>
+
+<% } %>Untuk detail lebih lanjut, hubungi admin.

@@ -1,0 +1,4 @@
+*✅ Verifikasi Berhasil!*
+
+Halo *<%= it.fullName %>*! Akun Anda telah aktif.
+Ketik *help* untuk melihat daftar perintah yang tersedia.

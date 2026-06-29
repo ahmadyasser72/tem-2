@@ -1,0 +1,15 @@
+*✅ Komplain Diterima*
+
+Terima kasih, laporan Anda telah kami catat.
+
+📋 *Detail Komplain*
+━━━━━━━━━━━━━━━━━━━
+🆔 ID Laporan: #<%= it.id %>
+📝 Keluhan: <%= it.description %>
+📅 Tanggal: <%= it.createdAt %>
+━━━━━━━━━━━━━━━━━━━
+
+Status: *Menunggu ditangani*
+
+Kami akan segera memproses laporan Anda.
+Simpan ID laporan untuk referensi.

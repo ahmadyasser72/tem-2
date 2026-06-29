@@ -1,0 +1,14 @@
+*🔄 Komplain Sedang Diproses*
+
+Yth. <%= it.fullName %>,
+
+Laporan komplain Anda sedang dalam proses penanganan oleh staf kami.
+
+📋 *Detail*
+━━━━━━━━━━━━━━━━━━━
+🆔 ID Laporan: #<%= it.id %>
+📝 Keluhan: <%= it.description %>
+━━━━━━━━━━━━━━━━━━━
+
+Kami akan segera menyelesaikan laporan Anda.
+Mohon menunggu informasi selanjutnya.

@@ -1,0 +1,16 @@
+*✅ Komplain Selesai Diproses*
+
+Yth. <%= it.fullName %>,
+
+Laporan komplain Anda telah selesai ditangani.
+
+📋 *Detail*
+━━━━━━━━━━━━━━━━━━━
+🆔 ID Laporan: #<%= it.id %>
+📝 Keluhan: <%= it.description %>
+<% if (it.resolveNotes) { %>📌 Catatan: <%= it.resolveNotes %>
+<% } %>👤 Ditangani oleh: <%= it.resolverDisplayName %>
+━━━━━━━━━━━━━━━━━━━
+
+Terima kasih atas laporannya.
+Jika ada kendala lain, silakan hubungi kami kembali.

@@ -1,0 +1,22 @@
+*👤 Info Penghuni & Kamar*
+
+━━━━━━━━━━━━━━━━━━━
+*Data Diri*
+Nama: <%= it.fullName %>
+No. HP: <%= it.phoneNumber %>
+Asal: <%= it.originRegion %>
+
+*Info Kamar*
+📍 No. Kamar: <%= it.roomNumber %>
+🏠 Tipe: <%= it.roomType %>
+💰 Sewa: <%= it.monthlyPrice %>/bulan
+📅 Mulai: <%= it.startDate %>
+📅 Selesai: <%= it.endDate %>
+━━━━━━━━━━━━━━━━━━━
+
+<% if (it.hasUnpaid) { %>
+⚠️ Anda memiliki tagihan yang belum lunas.
+Ketik *tagihan* untuk melihat detail dan cara pembayaran.
+<% } else { %>
+✅ Tagihan Anda sudah lunas.
+<% } %>

@@ -1,0 +1,9 @@
+*📋 Daftar Komplain (<%= it.items.length %> terbaru)*
+
+<% for (const item of it.items) { %>━━━━━━━━━━━━━━━━━━━
+🆔 #<%= item.id %>
+📝 <%= item.description %>
+📅 <%= item.createdAt %>
+<%= item.status %>
+
+<% } %>Ketik *komplainku <%= it.items[0].id %>* untuk info lebih lanjut.

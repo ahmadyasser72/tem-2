@@ -1,0 +1,13 @@
+*📋 Detail Komplain #<%= it.id %>*
+
+━━━━━━━━━━━━━━━━━━━
+📝 Keluhan: <%= it.description %>
+📅 Tanggal: <%= it.createdAt %>
+📍 Status: <%= it.status %>
+<% if (it.processedAt) { %>🔄 Diproses: <%= it.processedAt %>
+<% } %><% if (it.resolvedAt) { %>✅ Diselesaikan: <%= it.resolvedAt %>
+<% } %><% if (it.resolveNotes) { %>📌 Catatan: <%= it.resolveNotes %>
+<% } %><% if (it.resolverName !== '-') { %>👤 Ditangani oleh: <%= it.resolverName %>
+<% } %>━━━━━━━━━━━━━━━━━━━
+
+Ketik *komplainku* untuk daftar komplain.

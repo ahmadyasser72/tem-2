@@ -1,39 +1,38 @@
 import { db } from "@e-kos/database";
 import { tenants } from "@e-kos/database/schema";
+import { formatDate } from "@e-kos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@e-kos/utilities/transforms";
+
+import { render } from "../template";
 
 export const paymentHistory = async (
 	tenant: typeof tenants.$inferSelect,
 ): Promise<string> => {
-	const activeLease = await db.query.leases.findFirst({
+	const lease = await db.query.leases.findFirst({
 		columns: { id: true },
 		where: { tenantId: tenant.id, isActive: true },
+		with: {
+			invoices: {
+				where: { status: "paid" },
+				limit: 10,
+			},
+		},
 	});
 
-	if (!activeLease) {
+	if (!lease) {
 		return "Anda tidak memiliki riwayat pembayaran.";
-	}
-
-	const paid = await db.query.invoices.findMany({
-		columns: { id: true, amount: true, dueDate: true },
-		where: { leaseId: activeLease.id, status: "paid" },
-		limit: 10,
-	});
-
-	if (paid.length === 0) {
+	} else if (lease.invoices.length === 0) {
 		return "Belum ada riwayat pembayaran lunas.";
 	}
 
-	const lines: string[] = [];
-	lines.push(`*📋 Riwayat Pembayaran (${paid.length} terakhir)*`);
-	lines.push("");
-
-	for (const inv of paid) {
-		lines.push(`• Invoice #${inv.id}`);
-		lines.push(`  Jumlah: Rp ${inv.amount.toLocaleString()}`);
-		lines.push(`  Lunas: ${inv.dueDate.toLocaleDateString()}`);
-		lines.push("");
-	}
-
-	lines.push("Untuk detail lebih lanjut, hubungi admin.");
-	return lines.join("\n");
+	return render("payment-history", {
+		paid: lease.invoices.map(({ id, amount, dueDate }) => ({
+			id: formatInvoiceNumber(id),
+			amount: formatCurrency(amount),
+			dueDate: formatDate(dueDate),
+		})),
+	});
 };

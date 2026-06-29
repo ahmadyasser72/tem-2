@@ -1,5 +1,6 @@
-import { beforeAll, describe, expect, it } from "bun:test";
 import { createHmac } from "node:crypto";
+
+import { beforeAll, describe, expect, it } from "bun:test";
 
 import {
 	config,
@@ -7,7 +8,7 @@ import {
 	generateSignature,
 	getPaymentUrlFromReference,
 	verifyCallbackSignature,
-} from "../duitku";
+} from "../index";
 
 beforeAll(() => {
 	process.env.DUITKU_MERCHANT_CODE = "TST";

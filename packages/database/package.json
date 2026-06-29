@@ -6,7 +6,8 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./schema": "./src/schema/index.ts",
-		"./duitku": "./src/duitku.ts"
+		"./duitku": "./src/duitku/index.ts",
+		"./duitku/invoice-payment": "./src/duitku/invoice-payment.ts"
 	},
 	"scripts": {
 		"check": "tsc --noEmit",

@@ -1,0 +1,103 @@
+import { formatDate } from "@e-kos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@e-kos/utilities/transforms";
+
+import { db, eq } from "../index";
+import { auditDetail, auditLogs, invoices } from "../schema";
+import {
+	createInvoice as duitkuCreateInvoice,
+	DuitkuError,
+	getPaymentUrlFromReference,
+} from "./index";
+
+export { DuitkuError };
+
+export class InvoicePaymentError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "InvoicePaymentError";
+	}
+}
+
+export const generatePaymentLink = async (
+	invoiceId: number,
+	baseUrl: string,
+	auditUserId?: number,
+) => {
+	const invoice = await db.query.invoices.findFirst({
+		where: { id: invoiceId },
+		with: {
+			lease: { with: { tenant: true, room: true } },
+		},
+	});
+
+	if (!invoice) throw new InvoicePaymentError("Invoice tidak ditemukan.");
+	if (invoice.status === "paid")
+		throw new InvoicePaymentError("Invoice sudah lunas.");
+	if (!invoice.lease.isActive)
+		throw new InvoicePaymentError("Sewa sudah tidak aktif.");
+
+	if (invoice.duitkuReference) {
+		return {
+			paymentUrl: getPaymentUrlFromReference(invoice.duitkuReference),
+			reference: invoice.duitkuReference,
+			alreadyExists: true,
+		};
+	}
+
+	const url = new URL(baseUrl);
+	const merchantOrderId = formatInvoiceNumber(invoice.id);
+
+	const { tenant, room } = invoice.lease;
+	const payMonth = formatDate(invoice.dueDate, "MMM YYYY");
+
+	const result = await duitkuCreateInvoice({
+		paymentAmount: invoice.amount,
+		merchantOrderId,
+		productDetails: `Pembayaran Sewa Kamar ${room.roomNumber}`,
+		customerVaName: tenant.fullName,
+		phoneNumber: tenant.phoneNumber,
+		itemDetails: [
+			{
+				name: `Sewa Kamar ${payMonth}`,
+				price: invoice.amount,
+				quantity: 1,
+			},
+		],
+		customerDetail: {
+			firstName: tenant.fullName,
+			phoneNumber: tenant.phoneNumber.replace("628", "08"),
+		},
+		returnUrl: new URL("/api/duitku/redirect", url).href,
+		callbackUrl: new URL("/api/duitku/callback", url).href,
+		expiryPeriod: 60 * 24 * 14, // 2 weeks
+		paymentMethod: "",
+	});
+
+	await db
+		.update(invoices)
+		.set({ duitkuReference: result.reference })
+		.where(eq(invoices.id, invoiceId));
+
+	if (auditUserId) {
+		await db.insert(auditLogs).values({
+			userId: auditUserId,
+			action: "UPDATE",
+			tableName: "invoices",
+			recordId: invoiceId,
+			details: auditDetail.payment(
+				`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${room.roomNumber}) - ${formatCurrency(invoice.amount)}`,
+				invoice.amount,
+				result.reference,
+			),
+		});
+	}
+
+	return {
+		paymentUrl: result.paymentUrl,
+		reference: result.reference,
+		alreadyExists: false,
+	};
+};

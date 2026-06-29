@@ -1,4 +1,5 @@
 import { db } from "@e-kos/database";
+import { generatePaymentLink } from "@e-kos/database/duitku/invoice-payment";
 import {
 	auditDetail,
 	auditLogs,
@@ -52,8 +53,10 @@ export const runInvoiceGeneration = async (
 		}
 	}
 
+	let newInvoices: { id: number }[] = [];
+
 	if (toCreate.length > 0) {
-		const newInvoices = await db
+		newInvoices = await db
 			.insert(invoices)
 			.values(toCreate)
 			.returning({ id: invoices.id });
@@ -68,6 +71,24 @@ export const runInvoiceGeneration = async (
 				newInvoices.map(({ id }) => id),
 			),
 		});
+	}
+
+	// Generate payment links for newly created invoices
+	const siteUrl = process.env.SITE_URL;
+	if (newInvoices.length > 0 && siteUrl) {
+		let generated = 0;
+		for (const { id } of newInvoices) {
+			try {
+				await generatePaymentLink(id, siteUrl, systemUser.id);
+				generated++;
+			} catch (err) {
+				logger.error({ invoiceId: id, err }, "Failed to generate payment link");
+			}
+		}
+		logger.info(
+			{ generated, total: newInvoices.length },
+			"Payment links generated",
+		);
 	}
 
 	logger.info({ count: toCreate.length }, "Invoices generated");

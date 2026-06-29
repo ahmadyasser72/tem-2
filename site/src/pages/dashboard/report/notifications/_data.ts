@@ -42,16 +42,24 @@ export const fetchNotifications = async (
 					},
 				},
 			},
+			invoice: {
+				columns: { dueDate: true },
+			},
 		},
 		orderBy: { id: "desc" },
 	});
 
-	return notifications.map(({ invoiceId, tenant, ...notification }) => ({
-		...notification,
-		tenantName: tenant.fullName,
-		roomNumber: tenant.lease?.room.roomNumber ?? "-",
-		invoiceNumber: invoiceId ? formatInvoiceNumber(invoiceId) : "-",
-	}));
+	return notifications.map(
+		({ invoiceId, invoice, tenant, ...notification }) => ({
+			...notification,
+			tenantName: tenant.fullName,
+			roomNumber: tenant.lease?.room.roomNumber ?? "-",
+			invoiceNumber:
+				invoiceId && invoice
+					? formatInvoiceNumber(invoiceId, invoice.dueDate)
+					: "-",
+		}),
+	);
 };
 
 export const NOTIFICATION_TYPE_BADGES = {

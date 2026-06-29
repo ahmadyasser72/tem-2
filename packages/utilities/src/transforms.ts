@@ -1,8 +1,10 @@
+import { formatDate } from "./date";
+
 /**
- * Format invoice number as INV-XXXXXX
+ * Format invoice number as INV-{YYYYMM}/{ID}
  */
-export const formatInvoiceNumber = (id: number): string =>
-	`INV-${id.toString().padStart(6, "0")}`;
+export const formatInvoiceNumber = (id: number, date: Date): string =>
+	`INV-${formatDate(date, "YYYYMM")}/${id}`;
 
 /**
  * Format currency in Indonesian Rupiah format

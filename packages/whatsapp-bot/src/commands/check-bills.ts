@@ -31,7 +31,7 @@ export const checkBills = async (
 	const total = sumBy(lease.invoices, ({ amount }) => amount);
 	const unpaid = lease.invoices.map(
 		({ id, amount, dueDate, createdAt, duitkuReference }) => ({
-			id: formatInvoiceNumber(id),
+			id: formatInvoiceNumber(id, dueDate),
 			amount: formatCurrency(amount),
 			dueDate: formatDate(dueDate),
 			createdAt: formatDate(createdAt),

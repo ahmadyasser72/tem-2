@@ -48,7 +48,7 @@ export const generatePaymentLink = async (
 	}
 
 	const url = new URL(baseUrl);
-	const merchantOrderId = formatInvoiceNumber(invoice.id);
+	const merchantOrderId = formatInvoiceNumber(invoice.id, invoice.dueDate);
 
 	const { tenant, room } = invoice.lease;
 	const payMonth = formatDate(invoice.dueDate, "MMM YYYY");

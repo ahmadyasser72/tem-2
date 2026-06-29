@@ -37,7 +37,7 @@ export const fetchTransactions = async (
 
 	return invoices.map(({ lease, ...invoice }) => ({
 		...invoice,
-		invoiceNumber: formatInvoiceNumber(invoice.id),
+		invoiceNumber: formatInvoiceNumber(invoice.id, invoice.dueDate),
 		tenantName: lease.tenant.fullName,
 		roomNumber: lease.room.roomNumber,
 		paymentUrl: invoice.duitkuReference

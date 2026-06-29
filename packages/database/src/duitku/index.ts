@@ -83,7 +83,9 @@ export const verifyCallbackSignature = (
 
 /** Derive payment redirect URL from Duitku reference. */
 export const getPaymentUrlFromReference = (reference: string): string => {
-	const appUrl = config().baseUrl.replace("api", "app");
+	const baseUrl =
+		process.env.DUITKU_BASE_URL ?? "https://api-sandbox.duitku.com";
+	const appUrl = baseUrl.replace("api", "app");
 	return `${appUrl}/redirect_checkout?reference=${reference}`;
 };
 

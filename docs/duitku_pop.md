@@ -1,54 +1,52 @@
-# API Reference
+# Referensi API Duitku
 
 ## Pendahuluan
 
-Duitku membuat proses integrasi semudah mungkin. Memungkinkan halaman pembayaran Duitku tampil di halaman _web_/aplikasi anda setelah _checkout_, dengan proses integrasi yang sangat mudah. Serahkan pembayaran anda pada Duitku Pop. Memberikan opsional pembayaran dan konfirmasi pembayaran yang di lakukan oleh _customer_ pada halaman anda. Hanya dengan anda memunculkan Duitku pop di halaman anda.
+Duitku adalah layanan payment gateway yang memudahkan proses pembayaran online. Sistem kos ini menggunakan Duitku Pop untuk menampilkan halaman pembayaran langsung di aplikasi tanpa perlu redirect ke situs eksternal.
 
-## Pratinjau
+## Alur Pembayaran
 
-> 1.  Pelanggan melakukan _checkout_ pembayaran.
-> 2.  Server _merchant_ melakukan _request_ transaksi ke API Duitku untuk mendapatkan DUITKU_REFERENCE.
-> 3.  API Duitku merespon request dengan memberikan DUITKU_REFERENCE.
-> 4.  Server _merchant_ menampilkan halaman pembayaran pada situs mereka untuk ditampilkan pada pelanggan.
-> 5.  Pelanggan memverifikasi detail transaksi dan klik tombol pembayaran. Sistem _merchant_ memanggil fungsi checkout.process(DUITKU_REFERENCE, options).
-> 6.  Sistem pembayaran Duitku memproses transaksi dan merespon status pembayaran. Duitku JS lalu melakukan _callback_ yang telah disediakan di sisi _merchant_.
-> 7.  Sistem pembayaran Duitku memberikan notifikasi status transaksi pada _server merchant_.
+1. Penghuni memilih tagihan yang akan dibayar.
+2. Sistem mengirim data transaksi ke API Duitku untuk mendapatkan kode referensi.
+3. Duitku memberikan kode referensi transaksi.
+4. Sistem menampilkan halaman pembayaran dengan berbagai metode pembayaran.
+5. Penghuni memilih metode pembayaran dan menyelesaikan transaksi.
+6. Duitku memproses pembayaran dan mengirim notifikasi (callback) ke sistem.
+7. Sistem memperbarui status tagihan menjadi lunas berdasarkan notifikasi dari Duitku.
 
-Sorry, your browser doesn't support embedded videos.
-
-## Langkah Integrasi
+## Setup Awal
 
 ![Flowchart pop](images/flowchart-pop-5905d358.jpg)
 
-Untuk menghubungkan dengan API Duitku, ada beberapa hal yang perlu diketahui sebagai berikut.
+Untuk menggunakan API Duitku, Anda memerlukan:
 
-### Kode _Merchant_
+### Kode Merchant
 
-Kode _merchant_ adalah kode proyek yang didapatkan dari halaman _merchant_ Duitku. Kode ini berguna sebagai pengenal proyek anda di setiap transaksinya nanti. Kode ini bisa anda dapatkan pada setiap proyek yang anda daftarkan di [_merchant_ portal](https://passport.duitku.com/merchant/Project). Langkah atau cara pembuatan proyek dapat anda lihat [disini](https://docs.duitku.com/account#integrasi-akun--mendapatkan-api-key).
+Kode merchant adalah identitas unik proyek kos Anda di sistem Duitku. Setiap transaksi akan menggunakan kode ini sebagai pengenal. Dapatkan kode merchant di [merchant portal Duitku](https://passport.duitku.com/merchant/Project) setelah mendaftar dan membuat proyek.
 
-### API _Key_ (_Merchant Key_)
+### API Key (Kunci API)
 
-API merupakan singkatan dari _Application Programming Interface_. API _key_ disini adalah kode otentikasi untuk dapat mengakses API Duitku. API _key_ digunakan untuk mencegah penyalahgunaan atau pengguna berbahaya. Seperti kode _merchant_, API _key_ bisa anda dapatkan pada setiap proyek yang anda daftarkan di [_merchant_ portal](https://passport.duitku.com/merchant/Project) bersamaan dengan kode _merchant_.
+API Key adalah kunci rahasia untuk mengakses API Duitku dengan aman. Kunci ini mencegah akses tidak sah ke sistem pembayaran. Simpan API Key dengan aman dan jangan bagikan ke pihak lain. Dapatkan di [merchant portal Duitku](https://passport.duitku.com/merchant/Project) bersamaan dengan kode merchant.
 
-## Flowchart
+## Diagram Alur
 
-### Membuat Invoice atau Transaction
+### Membuat Tagihan
 
 ![Flowchart create invoice](images/flowchart-create-invoice-724f2935.png)
 
-### Menampilkan Payment Page
+### Menampilkan Halaman Pembayaran
 
 ![Flowchart display payment page](images/flowchart-display-payment-page-790266ed.png)
 
-### Proses Pembayaran (Flow ini hanya berdasarkan user journey Duitku)
+### Proses Pembayaran
 
 ![Flowchart payment process](images/flowchart-payment-process-89e37bea.png)
 
-### Callback (Notifikasi Pembayaran)
+### Notifikasi Pembayaran (Callback)
 
 ![Flowchart callback](images/flowchart-callback-2041a809.png)
 
-## _Browser_ Yang Kompatibel
+## Browser yang Didukung
 
 | Platform | Browser           | Versi           |
 | -------- | ----------------- | --------------- |
@@ -62,17 +60,17 @@ API merupakan singkatan dari _Application Programming Interface_. API _key_ disi
 
 ## Library
 
-Anda dapat mengintegrasikan menggunakan _Library_ Duitku untuk memulai transaksi menggunakan Duitku pada _web_ atau aplikasi anda. _Library_ akan membantu anda pada saat integrasi dengan Duitku. Untuk mengenal lebih lanjut anda dapat melihat _Library_ Duitku pada _package repository_ masing-masing _library_ yang telah tersedia berikut ini.
+Duitku menyediakan library siap pakai untuk mempermudah integrasi. Library tersedia dalam berbagai bahasa pemrograman dan dapat diunduh dari repository berikut:
 
 [![](images/composer-fce820ad.png)](https://packagist.org/packages/duitkupg/duitku-php) [![](images/npm-7d1dc9cd.png)](https://www.npmjs.com/package/duitku)
 
-## Integrasi _Backend_ atau _Server_
+## Integrasi Backend (Server)
 
-Tujuan dari Integrasi _Backend_ adalah untuk mendapat `DUITKU_REFERENCE` dengan mengirimkan informasi pembayaran yang dibutuhkan. Kami menyediakan HTTP API untuk melakukannya.
+Integrasi backend bertujuan untuk mendapatkan kode referensi pembayaran (`DUITKU_REFERENCE`) dengan mengirimkan data tagihan ke API Duitku.
 
-## _Create Invoice_
+## Membuat Tagihan (Create Invoice)
 
-API _Create Invoice_ digunakan untuk mendapatkan nomor referensi Duitku dengan mengirimkan parameter yang dibutuhkan ke API. _Merchant_ akan mendapatkan nomor referensi Duitku, URL pembayaran, dan lainnya dari respon API _Create Invoice_.
+API ini digunakan untuk membuat tagihan pembayaran baru dan mendapatkan kode referensi dari Duitku. Sistem akan menerima kode referensi, URL pembayaran, dan informasi lainnya sebagai respons.
 
 ### _Endpoint_
 

@@ -5,6 +5,7 @@ entity User {
     --
     username : string
     passwordHash : string
+    displayName : string
     role : string
     lastAccessed : timestamp
 }
@@ -15,14 +16,14 @@ entity Tenant {
     fullName : string
     phoneNumber : string
     originRegion : string
-    createdAt : timestamp
+    isVerified : boolean
 }
 
 entity Room {
     + id : int <<PK>>
     --
     roomNumber : string
-    roomType : string
+    roomType : string <<NOT NULL>>
     monthlyPrice : int
     isActive : boolean
 }
@@ -43,9 +44,11 @@ entity Invoice {
     leaseId : int <<FK>>
     amount : int
     dueDate : timestamp
+    paidAt : timestamp
     duitkuReference : string
     callbackPayload : string
     status : string
+    createdAt : timestamp
 }
 
 entity ChatbotMessage {
@@ -65,16 +68,37 @@ entity Notification {
     chatbotMessageId : int <<FK>>
     type : string
     status : string
+    createdAt : timestamp
+}
+
+entity AuditLog {
+    + id : int <<PK>>
+    --
+    userId : int <<FK>>
+    action : string
+    tableName : string
+    recordId : int
+    details : json
+    createdAt : timestamp
 }
 
 entity Complaint {
     + id : int <<PK>>
     --
     tenantId : int <<FK>>
-    resolvedBy : int <<FK>>
     description : string
     status : string
+    processedAt : timestamp
+    resolvedBy : int <<FK>>
+    resolveNotes : string
+    resolvedAt : timestamp
     createdAt : timestamp
+}
+
+entity BotAuth {
+    + key : string <<PK>>
+    --
+    value : string
 }
 
 ' RELATIONSHIPS
@@ -84,7 +108,9 @@ Lease ||--o{ Invoice
 Tenant ||--o{ ChatbotMessage
 Tenant ||--o{ Notification
 Invoice ||--o{ Notification
+ChatbotMessage ||--o| Notification
 Tenant ||--o{ Complaint
-User ||--o{ Complaint
+User ||--o{ Complaint : resolves
+User ||--o{ AuditLog
 
 @enduml

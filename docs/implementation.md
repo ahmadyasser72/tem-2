@@ -281,132 +281,151 @@ Relasi di dalam ERD ini dirancang untuk menjaga keteraturan dan integritas data,
 
 ### `users`
 
-Tabel users digunakan untuk menyimpan data autentikasi pengguna sistem, yang mencakup admin, staff, owner, serta sistem otomatis seperti cron. Keberadaan tabel ini berkaitan langsung dengan proses verifikasi akun pada activity dan sequence diagram, di mana sistem melakukan validasi kredensial sebelum memberikan akses ke fitur tertentu.
+Tabel users menyimpan data login pengguna sistem (admin, staff, owner, dan sistem otomatis). Tabel ini digunakan untuk memverifikasi identitas pengguna sebelum mengakses fitur sistem.
 
-| Nama Kolom      | Tipe Data        | Keterangan                          |
-| --------------- | ---------------- | ----------------------------------- |
-| `id`            | INTEGER (PK, AI) | ID pengguna.                        |
-| `username`      | TEXT (Unique)    | Nama pengguna untuk masuk sistem.   |
-| `password_hash` | TEXT             | Kata sandi akun.                    |
-| `role`          | TEXT             | Role akun (admin/staff/owner/cron). |
-| `last_accessed` | TIMESTAMP        | Kapan terakhir kali akun diakses.   |
+| Nama Kolom        | Tipe Data        | Keterangan                              |
+| ----------------- | ---------------- | --------------------------------------- |
+| `id`              | INTEGER (PK, AI) | ID pengguna unik.                       |
+| `username`        | TEXT (Unique)    | Nama untuk masuk ke sistem.             |
+| `password_hash`   | TEXT             | Kata sandi yang sudah dienkripsi.       |
+| `display_name`    | TEXT             | Nama tampilan di antarmuka.             |
+| `role`            | TEXT             | Peran pengguna (admin/staff/owner/system). |
+| `last_accessed`   | TIMESTAMP        | Waktu terakhir kali akun ini digunakan. |
 
-Atribut seperti username, password_hash, dan role memungkinkan sistem untuk mengatur hak akses sesuai dengan peran pengguna, sebagaimana dijelaskan pada use case diagram. Kolom last_accessed digunakan untuk mencatat aktivitas terakhir pengguna sebagai bagian dari monitoring sistem.
+Field `username`, `password_hash`, dan `role` digunakan untuk mengatur hak akses berdasarkan peran pengguna. Kolom `last_accessed` mencatat kapan pengguna terakhir menggunakan sistem.
 
 ### `tenants`
 
-Tabel tenants berfungsi sebagai pusat penyimpanan data penghuni kos. Data ini menjadi dasar bagi berbagai proses dalam sistem, seperti penyewaan kamar, pengiriman notifikasi, serta interaksi melalui chatbot.
+Tabel tenants menyimpan data penghuni kos. Data ini digunakan untuk penyewaan kamar, pengiriman notifikasi, dan interaksi melalui chatbot.
 
-| Nama Kolom      | Tipe Data        | Keterangan                        |
-| --------------- | ---------------- | --------------------------------- |
-| `id`            | INTEGER (PK, AI) | ID penghuni.                      |
-| `full_name`     | TEXT             | Nama lengkap penghuni.            |
-| `phone_number`  | TEXT (Unique)    | Nomor kontak untuk obrolan bot.   |
-| `origin_region` | TEXT NULL        | Daerah kediaman asal penghuni.    |
-| `created_at`    | TIMESTAMP        | Waktu pertama kali didata sistem. |
+| Nama Kolom      | Tipe Data        | Keterangan                          |
+| --------------- | ---------------- | ----------------------------------- |
+| `id`            | INTEGER (PK, AI) | ID penghuni unik.                   |
+| `full_name`     | TEXT             | Nama lengkap penghuni.              |
+| `phone_number`  | TEXT (Unique)    | Nomor WhatsApp untuk chatbot.       |
+| `origin_region` | TEXT NULL        | Daerah asal penghuni.               |
+| `is_verified`   | BOOLEAN          | Status verifikasi penghuni.         |
 
-Kolom phone_number memiliki peran penting karena digunakan sebagai identitas dalam komunikasi chatbot, sesuai dengan proses pada sequence diagram interaksi chatbot. Tabel ini juga terhubung dengan banyak tabel lain, seperti leases, chatbot_messages, notifications, dan complaints, sehingga menjadi salah satu entitas inti dalam sistem.
+Kolom `phone_number` digunakan sebagai identitas saat berkomunikasi melalui chatbot WhatsApp. Field `is_verified` menandakan apakah data penghuni sudah diverifikasi oleh staff. Tabel ini terhubung dengan tabel leases, chatbot_messages, notifications, dan complaints.
 
 ### `rooms`
 
-Tabel rooms menyimpan informasi terkait kamar yang tersedia dalam sistem. Data ini digunakan dalam proses manajemen kamar oleh staff, sebagaimana terlihat pada activity dan sequence diagram.
+Tabel rooms menyimpan informasi kamar yang tersedia. Data ini digunakan staff untuk mengelola kamar kos.
 
 | Nama Kolom      | Tipe Data        | Keterangan                                |
 | --------------- | ---------------- | ----------------------------------------- |
-| `id`            | INTEGER (PK, AI) | ID kamar.                                 |
-| `room_number`   | TEXT (Unique)    | Nomor di pintu kamar.                     |
-| `room_type`     | TEXT NULL        | Jenis kamar.                              |
-| `monthly_price` | INTEGER          | Harga sewa setiap bulannya.               |
-| `is_active`     | BOOLEAN          | Penentu apakah kamar tersedia atau tidak. |
+| `id`            | INTEGER (PK, AI) | ID kamar unik.                            |
+| `room_number`   | TEXT (Unique)    | Nomor kamar yang tertera di pintu.        |
+| `room_type`     | TEXT             | Jenis kamar (standard/premium).           |
+| `monthly_price` | INTEGER          | Harga sewa per bulan dalam Rupiah.        |
+| `is_active`     | BOOLEAN          | Status kamar (tersedia/tidak).            |
 
-Kolom is_active berfungsi untuk menunjukkan ketersediaan kamar, yang kemudian digunakan dalam proses validasi saat melakukan penyewaan (lease). Tabel ini berelasi dengan tabel leases, yang menghubungkan kamar dengan penghuni.
+Field `room_type` wajib diisi (standard atau premium). Kolom `is_active` menunjukkan apakah kamar bisa disewa. Tabel ini berelasi dengan tabel leases yang menghubungkan kamar dengan penghuni.
 
 ### `leases`
 
-Tabel leases merupakan penghubung antara penghuni (tenants) dan kamar (rooms). Tabel ini merepresentasikan proses penyewaan yang menjadi inti dari sistem manajemen kos.
+Tabel leases menghubungkan penghuni (tenants) dengan kamar (rooms). Tabel ini mencatat informasi penyewaan kamar.
 
 | Nama Kolom   | Tipe Data        | Keterangan                                        |
 | ------------ | ---------------- | ------------------------------------------------- |
-| `id`         | INTEGER (PK, AI) | ID kontrak penyewaan.                             |
-| `tenant_id`  | INTEGER (FK)     | Penghuni yang menyewa kamarnya.                   |
-| `room_id`    | INTEGER (FK)     | Kamar mana yang mereka tempati.                   |
-| `start_date` | TIMESTAMP        | Tanggal mulainya sewa ini resmi dihitung.         |
-| `end_date`   | TIMESTAMP        | Tanggal berakhirnya masa penyewaan.               |
-| `is_active`  | BOOLEAN          | Penanda apakah penyewa ini masih tinggal di sana. |
+| `id`         | INTEGER (PK, AI) | ID kontrak penyewaan unik.                        |
+| `tenant_id`  | INTEGER (FK)     | ID penghuni yang menyewa.                         |
+| `room_id`    | INTEGER (FK)     | ID kamar yang ditempati.                          |
+| `start_date` | TIMESTAMP        | Tanggal mulai sewa berlaku.                       |
+| `end_date`   | TIMESTAMP        | Tanggal sewa berakhir (kosong jika masih aktif).  |
+| `is_active`  | BOOLEAN          | Status penyewaan (masih aktif/telah selesai).     |
 
-Atribut seperti start_date, end_date, dan is_active memungkinkan sistem untuk melacak masa sewa secara akurat. Keberadaan tabel ini sangat berkaitan dengan proses pada activity diagram manajemen penghuni serta sequence diagram registrasi penghuni, di mana sistem harus memastikan ketersediaan kamar sebelum menyimpan data sewa.
+Field `start_date`, `end_date`, dan `is_active` digunakan untuk melacak masa sewa. Tabel ini terkait dengan activity diagram manajemen penghuni dan sequence diagram registrasi penghuni, di mana sistem memeriksa ketersediaan kamar sebelum menyimpan data sewa.
 
 ### `invoices`
 
-Tabel invoices digunakan untuk mencatat seluruh tagihan yang dihasilkan dari proses penyewaan. Setiap data invoice terhubung dengan satu data lease, sesuai dengan relasi pada class diagram.
+Tabel invoices mencatat tagihan yang dihasilkan dari penyewaan. Setiap invoice terhubung dengan satu data lease (kontrak sewa).
 
 | Nama Kolom         | Tipe Data        | Keterangan                                    |
 | ------------------ | ---------------- | --------------------------------------------- |
-| `id`               | INTEGER (PK, AI) | ID lembar tagihan.                            |
-| `lease_id`         | INTEGER (FK)     | Data sewa yang sedang ditagihkan ke penghuni. |
-| `amount`           | INTEGER          | Nominal uang yang wajib dibayar.              |
-| `due_date`         | TIMESTAMP        | Tanggal batas akhir setor uang.               |
-| `duitku_reference` | TEXT NULL        | Kode resi payment gateway (DUITKU).           |
-| `callback_payload` | TEXT NULL        | Payload raw hasil callback payment gateway.   |
-| `status`           | TEXT             | Status pelunasan.                             |
+| `id`               | INTEGER (PK, AI) | ID tagihan unik.                              |
+| `lease_id`         | INTEGER (FK)     | ID kontrak sewa yang ditagihkan.              |
+| `amount`           | INTEGER          | Nominal yang harus dibayar (Rupiah).          |
+| `due_date`         | TIMESTAMP        | Tanggal batas pembayaran.                     |
+| `paid_at`          | TIMESTAMP        | Waktu pembayaran diterima.                    |
+| `duitku_reference` | TEXT             | Kode referensi dari payment gateway.          |
+| `callback_payload` | TEXT             | Data mentah dari notifikasi payment gateway.  |
+| `status`           | TEXT             | Status tagihan (unpaid/paid/overdue).         |
+| `created_at`       | TIMESTAMP        | Waktu tagihan dibuat.                         |
 
-Kolom seperti due_date, status, dan duitku_reference mendukung proses pembayaran yang tergambar pada sequence diagram pembayaran. Selain itu, kolom callback_payload digunakan untuk menyimpan data hasil callback dari payment gateway, yang menunjukkan bahwa sistem terintegrasi dengan layanan eksternal.
+Field `due_date`, `status`, dan `duitku_reference` mendukung proses pembayaran. Kolom `paid_at` mencatat waktu pembayaran diterima, dan `created_at` mencatat kapan tagihan dibuat. Tabel ini terintegrasi dengan layanan payment gateway Duitku.
 
 ### `chatbot_messages`
 
-Tabel chatbot_messages menyimpan riwayat komunikasi antara penghuni dan sistem melalui chatbot. Data ini digunakan untuk mencatat seluruh interaksi yang terjadi, baik pesan masuk maupun keluar.
+Tabel chatbot_messages menyimpan riwayat percakapan antara penghuni dan chatbot WhatsApp. Setiap pesan yang masuk dan keluar akan tercatat sebagai log.
 
 | Nama Kolom  | Tipe Data        | Keterangan                            |
 | ----------- | ---------------- | ------------------------------------- |
-| `id`        | INTEGER (PK, AI) | ID log pesan berjalan.                |
-| `tenant_id` | INTEGER (FK)     | Penghuni yang sedang memakai chatbot. |
-| `direction` | TEXT             | Konteks pesan dikirim/diterima.       |
-| `message`   | TEXT             | Isi tulisan pesannya.                 |
-| `sent_at`   | TIMESTAMP        | Waktu kapan pesan dikirim.            |
+| `id`        | INTEGER (PK, AI) | ID pesan unik.                        |
+| `tenant_id` | INTEGER (FK)     | ID penghuni yang berkomunikasi.       |
+| `direction` | TEXT             | Arah pesan (incoming/outgoing).       |
+| `message`   | TEXT             | Isi pesan teks.                       |
+| `sent_at`   | TIMESTAMP        | Waktu pesan dikirim.                  |
 
-Tabel ini berkaitan langsung dengan activity dan sequence diagram interaksi chatbot, di mana setiap pesan yang dikirim akan disimpan sebagai log. Informasi ini dapat digunakan untuk analisis maupun pelacakan aktivitas pengguna.
+Tabel ini mencatat setiap interaksi chatbot untuk keperluan monitoring dan evaluasi layanan komunikasi dengan penghuni.
 
 ### `notifications`
 
-Tabel notifications digunakan untuk mencatat seluruh notifikasi yang dikirimkan kepada penghuni, terutama yang berkaitan dengan tagihan.
+Tabel notifications mencatat notifikasi yang dikirim kepada penghuni, seperti pengingat tagihan atau konfirmasi pembayaran.
 
-| Nama Kolom           | Tipe Data            | Keterangan                         |
-| -------------------- | -------------------- | ---------------------------------- |
-| `id`                 | INTEGER (PK, AI)     | ID pesan pemberitahuan.            |
-| `tenant_id`          | INTEGER (FK)         | Penghuni yang dikirimi notifikasi. |
-| `invoice_id`         | INTEGER (FK)         | Tagihan yang terkait.              |
-| `chatbot_message_id` | INTEGER (Unique, FK) | Pesan yang dikirimkan.             |
-| `type`               | TEXT                 | Konteks pengingat.                 |
-| `status`             | TEXT                 | Status pengiriman notifikasi.      |
+| Nama Kolom           | Tipe Data            | Keterangan                                      |
+| -------------------- | -------------------- | ----------------------------------------------- |
+| `id`                 | INTEGER (PK, AI)     | ID notifikasi unik.                             |
+| `tenant_id`          | INTEGER (FK)         | ID penghuni penerima notifikasi.                |
+| `invoice_id`         | INTEGER (FK)         | ID tagihan terkait (jika ada).                  |
+| `chatbot_message_id` | INTEGER (Unique, FK) | ID pesan chatbot yang dikirim.                  |
+| `type`               | TEXT                 | Jenis notifikasi (reminder/payment_success/welcome/custom). |
+| `status`             | TEXT                 | Status pengiriman (pending/sent/failed).        |
+| `created_at`         | TIMESTAMP            | Waktu notifikasi dibuat.                        |
 
-Relasi antara notifications, invoices, dan chatbot_messages menunjukkan alur proses pengingat tagihan yang tergambar pada activity dan sequence diagram manajemen pengingat. Kolom type dan status memungkinkan sistem untuk mengelola jenis dan keberhasilan pengiriman notifikasi.
+Tabel ini menghubungkan notifikasi dengan tagihan dan pesan chatbot, memungkinkan sistem mengelola komunikasi otomatis dengan penghuni.
 
 ### `audit_logs`
 
-Tabel audit_logs berfungsi untuk mencatat setiap aktivitas perubahan data dalam sistem. Tabel ini penting untuk menjaga keamanan dan transparansi, terutama dalam sistem yang melibatkan banyak peran pengguna.
+Tabel audit_logs mencatat setiap aktivitas pengguna dalam sistem untuk keperluan keamanan dan monitoring.
 
-| Nama Kolom   | Tipe Data        | Keterangan                            |
-| ------------ | ---------------- | ------------------------------------- |
-| `id`         | INTEGER (PK, AI) | ID rekam jejak perubahan sistem.      |
-| `user_id`    | INTEGER (FK)     | Pengguna yang mengubah datanya.       |
-| `action`     | TEXT             | Aksi perubahannya.                    |
-| `table_name` | TEXT             | Tabel yang dirubah.                   |
-| `record_id`  | INTEGER          | ID dari record yang dirubah.          |
-| `created_at` | TIMESTAMP        | Waktu tindakan mengubah hal tersebut. |
+| Nama Kolom   | Tipe Data        | Keterangan                                    |
+| ------------ | ---------------- | --------------------------------------------- |
+| `id`         | INTEGER (PK, AI) | ID log aktivitas unik.                        |
+| `user_id`    | INTEGER (FK)     | ID pengguna yang melakukan aktivitas.         |
+| `action`     | TEXT             | Jenis aksi (CREATE/UPDATE/DELETE/REJECT/LOGIN). |
+| `table_name` | TEXT             | Nama tabel yang terpengaruh.                  |
+| `record_id`  | INTEGER          | ID data yang diubah (bisa kosong).            |
+| `details`    | JSON             | Informasi tambahan dalam format JSON.         |
+| `created_at` | TIMESTAMP        | Waktu aktivitas terjadi.                      |
 
-Setiap perubahan yang dilakukan oleh user akan direkam, termasuk jenis aksi, tabel yang terlibat, serta waktu kejadian. Meskipun tidak secara eksplisit ditampilkan dalam diagram, tabel ini mendukung kebutuhan non-fungsional seperti auditing dan logging.
+Setiap perubahan data akan tercatat di tabel ini, termasuk siapa yang melakukan, kapan, dan data apa yang terpengaruh. Field `details` menyimpan informasi tambahan dalam format JSON untuk kebutuhan audit yang lebih detail.
 
 ### `complaints`
 
-Tabel complaints digunakan untuk menyimpan data komplain yang diajukan oleh penghuni. Tabel ini berkaitan langsung dengan use case dan diagram proses pengajuan serta penanganan komplain.
+Tabel complaints menyimpan data laporan masalah atau kerusakan yang diajukan penghuni melalui chatbot.
 
-| Nama Kolom    | Tipe Data         | Keterangan                    |
-| ------------- | ----------------- | ----------------------------- |
-| `id`          | INTEGER (PK, AI)  | ID surat pengaduan.           |
-| `tenant_id`   | INTEGER (FK)      | Penghuni pelapor.             |
-| `description` | TEXT              | Isi detail dari kerusakannya. |
-| `status`      | TEXT              | Status keluhan ini.           |
-| `resolved_by` | INTEGER NULL (FK) | Pengguna yang menyelesaikan.  |
-| `created_at`  | TIMESTAMP         | Waktu keluhan dibuat.         |
+| Nama Kolom       | Tipe Data         | Keterangan                                       |
+| ---------------- | ----------------- | ------------------------------------------------ |
+| `id`             | INTEGER (PK, AI)  | ID komplain unik.                                |
+| `tenant_id`      | INTEGER (FK)      | ID penghuni yang mengajukan.                     |
+| `description`    | TEXT              | Deskripsi masalah atau kerusakan.                |
+| `status`         | TEXT              | Status penanganan (open/in_progress/resolved).   |
+| `processed_at`   | TIMESTAMP         | Waktu mulai diproses oleh staff.                 |
+| `resolved_by`    | INTEGER (FK)      | ID staff yang menyelesaikan komplain.            |
+| `resolve_notes`  | TEXT              | Catatan penyelesaian dari staff.                 |
+| `resolved_at`    | TIMESTAMP         | Waktu komplain diselesaikan.                     |
+| `created_at`     | TIMESTAMP         | Waktu komplain dibuat.                           |
 
-Kolom tenant_id menunjukkan siapa yang mengajukan komplain, sedangkan resolved_by menunjukkan pengguna (staff) yang menangani komplain tersebut. Kolom status digunakan untuk melacak progres penyelesaian, sesuai dengan alur pada activity dan sequence diagram komplain.
+Field `status` melacak progres penanganan komplain. Field `resolved_by`, `resolve_notes`, dan `resolved_at` mencatat informasi penyelesaian oleh staff.
+
+### `bot_auth`
+
+Tabel bot_auth menyimpan kredensial autentikasi untuk chatbot WhatsApp dalam format key-value.
+
+| Nama Kolom | Tipe Data     | Keterangan                        |
+| ---------- | ------------- | --------------------------------- |
+| `key`      | TEXT (PK)     | Nama kunci autentikasi.           |
+| `value`    | TEXT          | Nilai autentikasi terenkripsi.    |
+
+Tabel ini digunakan untuk menyimpan session token atau kredensial chatbot agar tetap terkoneksi dengan layanan WhatsApp.

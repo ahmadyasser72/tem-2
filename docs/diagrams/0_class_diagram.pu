@@ -4,6 +4,7 @@ class User {
     + id: int
     + username: string
     + passwordHash: string
+    + displayName: string
     + role: string
     + lastAccessed: timestamp
 
@@ -15,7 +16,7 @@ class Tenant {
     + fullName: string
     + phoneNumber: string
     + originRegion: string
-    + createdAt: timestamp
+    + isVerified: boolean
 
     + sendMessage(msg: string): void
     + createComplaint(desc: string): Complaint
@@ -42,9 +43,11 @@ class Invoice {
     + id: int
     + amount: int
     + dueDate: timestamp
+    + paidAt: timestamp
     + duitkuReference: string
     + callbackPayload: string
     + status: string
+    + createdAt: timestamp
 
     + markAsPaid(): void
 }
@@ -60,17 +63,35 @@ class Notification {
     + id: int
     + type: string
     + status: string
+    + createdAt: timestamp
 
     + send(): void
+}
+
+class AuditLog {
+    + id: int
+    + action: string
+    + tableName: string
+    + recordId: int
+    + details: json
+    + createdAt: timestamp
 }
 
 class Complaint {
     + id: int
     + description: string
     + status: string
+    + processedAt: timestamp
+    + resolveNotes: string
+    + resolvedAt: timestamp
     + createdAt: timestamp
 
     + resolve(): void
+}
+
+class BotAuth {
+    + key: string
+    + value: string
 }
 
 ' RELATIONSHIPS (OBJECT-BASED)
@@ -80,7 +101,9 @@ Lease "1" -- "*" Invoice
 Tenant "1" -- "*" ChatbotMessage
 Tenant "1" -- "*" Notification
 Tenant "1" -- "*" Complaint
-User "1" -- "*" Complaint : processes
+User "1" -- "*" Complaint : resolves
+User "1" -- "*" AuditLog : records
 Invoice "1" -- "*" Notification
+ChatbotMessage "1" -- "0..1" Notification
 
 @enduml

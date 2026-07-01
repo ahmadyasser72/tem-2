@@ -2,9 +2,7 @@
 
 ## 🧾 A. Antarmuka Masukan (Input)
 
-Rancangan masukan sistem merupakan bagian yang menjelaskan bagaimana data dimasukkan ke dalam sistem oleh pengguna. Antarmuka masukan dirancang agar mudah digunakan, jelas, dan meminimalkan kesalahan dalam pengisian data. Setiap elemen input seperti field, tombol, dan pilihan disusun secara terstruktur agar pengguna dapat memahami alur pengisian dengan cepat.
-
-Selain itu, rancangan antarmuka masukan disusun berdasarkan rancangan model sistem dan rancangan basis data yang telah dibuat sebelumnya. Hal ini bertujuan agar setiap data yang dimasukkan sesuai dengan struktur dan kebutuhan sistem, sehingga proses pengolahan data dapat berjalan dengan baik dan terintegrasi.
+Antarmuka masukan dirancang agar mudah digunakan dan meminimalkan kesalahan. Setiap halaman disusun berdasarkan kebutuhan sistem agar data yang dimasukkan sesuai dengan struktur database.
 
 <details>
 <summary>1. Halaman Login</summary>
@@ -118,9 +116,7 @@ Halaman ini berisi riwayat aktivitas pengguna dalam sistem. Informasi yang ditam
 
 ## 📊 B. Antarmuka Keluaran (Output)
 
-Rancangan keluaran sistem menjelaskan bagaimana informasi yang telah diolah oleh sistem disajikan kepada pengguna. Antarmuka keluaran dirancang dalam bentuk laporan dan tampilan data yang mudah dibaca, sehingga pengguna dapat memahami informasi dengan cepat tanpa memerlukan analisis yang kompleks.
-
-Selain itu, rancangan antarmuka keluaran juga dibuat berdasarkan rancangan model sistem dan rancangan basis data yang telah dirancang sebelumnya. Dengan demikian, informasi yang ditampilkan sesuai dengan data yang tersimpan dalam sistem dan dapat mendukung kebutuhan pengguna dalam melakukan pemantauan serta pengambilan keputusan.
+Antarmuka keluaran menampilkan informasi dalam bentuk laporan dan tampilan data yang mudah dibaca. Informasi ditampilkan sesuai dengan data yang tersimpan dalam sistem untuk mendukung pemantauan dan pengambilan keputusan.
 
 <details>
 <summary>1. Laporan Transaksi</summary>

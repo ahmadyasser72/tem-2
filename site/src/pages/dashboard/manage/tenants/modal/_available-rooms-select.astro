@@ -1,0 +1,28 @@
+---
+import { db } from "@indekos/database";
+import { formatCurrency } from "@indekos/utilities/transforms";
+
+import { ROOM_TYPE_LABELS } from "../../rooms/_data";
+
+const availableRooms = await db.query.rooms.findMany({
+	columns: {
+		id: true,
+		roomNumber: true,
+		roomType: true,
+		monthlyPrice: true,
+	},
+	where: { isActive: true, NOT: { lease: { isActive: true } } },
+});
+---
+
+<select class="select w-full" name="room_id" required>
+	<option value="" disabled selected>Pilih nomor kamar...</option>
+	{
+		availableRooms.map(({ id, roomNumber, roomType, monthlyPrice }) => (
+			<option
+				value={id}
+				set:text={`${roomNumber} – ${ROOM_TYPE_LABELS[roomType]} (${formatCurrency(monthlyPrice)})`}
+			/>
+		))
+	}
+</select>

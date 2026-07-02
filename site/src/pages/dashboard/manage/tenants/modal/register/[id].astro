@@ -7,19 +7,13 @@ import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { ROOM_TYPE_LABELS } from "../../../rooms/_data";
+import AvailableRoomsSelect from "../_available-rooms-select.astro";
 
 export const partial = true;
 
 const tenant = await db.query.tenants.findFirst({
 	columns: { id: true, fullName: true },
 	where: { id: Number(Astro.params.id) },
-});
-
-const availableRooms = await db.query.rooms.findMany({
-	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
-	with: { lease: true },
-	where: { isActive: true, lease: { isActive: false } },
 });
 
 if (!tenant) Astro.response.status = 404;
@@ -42,16 +36,7 @@ if (!tenant) Astro.response.status = 404;
 					<input name="id" type="hidden" value={tenant.id} />
 
 					<FormField label="Pilih Kamar">
-						<select class="select w-full" name="room_id" required>
-							<option value="" disabled selected>
-								Pilih kamar...
-							</option>
-							{availableRooms.map(({ id, roomNumber, roomType }) => (
-								<option value={id}>
-									{roomNumber} – {ROOM_TYPE_LABELS[roomType]} (Tersedia)
-								</option>
-							))}
-						</select>
+						<AvailableRoomsSelect />
 					</FormField>
 
 					<div class="grid grid-cols-2 gap-3">

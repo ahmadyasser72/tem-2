@@ -1,20 +1,12 @@
 ---
-import { db } from "@indekos/database";
-
 import { actions } from "astro:actions";
 
 import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
-import { ROOM_TYPE_LABELS } from "../../rooms/_data";
+import AvailableRoomsSelect from "./_available-rooms-select.astro";
 
 export const partial = true;
-
-const availableRooms = await db.query.rooms.findMany({
-	columns: { id: true, roomNumber: true, roomType: true, isActive: true },
-	with: { lease: true },
-	where: { isActive: true, lease: { isActive: false } },
-});
 ---
 
 <Modal id="add_tenant" title="Tambah Kontrak Sewa" icon="lucide:user-plus">
@@ -61,16 +53,7 @@ const availableRooms = await db.query.rooms.findMany({
 			helperText="Hanya menampilkan kamar dengan status kosong/tersedia"
 			label="Pilih Kamar Tersedia"
 		>
-			<select class="select w-full" name="room_id" required>
-				<option value="" disabled selected>Pilih nomor kamar...</option>
-				{
-					availableRooms.map(({ id, roomNumber, roomType }) => (
-						<option value={id}>
-							{roomNumber} – {ROOM_TYPE_LABELS[roomType]} (Tersedia)
-						</option>
-					))
-				}
-			</select>
+			<AvailableRoomsSelect />
 		</FormField>
 
 		<div class="grid grid-cols-2 gap-3">

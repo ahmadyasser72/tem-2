@@ -204,11 +204,19 @@ const tenants = await fetchTenants(params);
 									<td class="text-right">
 										<div class="flex justify-end gap-1.5">
 											<button
+												hx-get={`/dashboard/manage/tenants/modal/chat/${id}`}
+												class="btn flex items-center gap-1 btn-outline btn-primary btn-xs"
+											>
+												<Icon name="lucide:message-square" /> Chat
+											</button>
+
+											<button
 												hx-get={`/dashboard/manage/tenants/modal/detail/${id}`}
 												class="btn flex items-center gap-1 btn-outline btn-primary btn-xs"
 											>
 												<Icon name="lucide:file-text" /> Detail
 											</button>
+
 											{Astro.locals.user?.allowEdit &&
 												(isActive ? (
 													<ActionsMenu

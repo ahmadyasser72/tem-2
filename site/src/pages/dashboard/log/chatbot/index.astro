@@ -81,7 +81,7 @@ const chatbotLogs = await fetchChatbotLogs(params);
 			<tbody id="chatbot-table-body">
 				{
 					chatbotLogs.map(
-						({ id, sentAt, tenantName, roomNumber, direction }) => (
+						({ id, tenantId, sentAt, tenantName, roomNumber, direction }) => (
 							<tr>
 								<td class="font-mono whitespace-nowrap">
 									{formatDate(sentAt, "DD MMM YYYY HH:mm:ss")}
@@ -104,21 +104,30 @@ const chatbotLogs = await fetchChatbotLogs(params);
 									</span>
 								</td>
 								<td class="text-right">
-									<button
-										hx-get={`/dashboard/log/chatbot/modal/view-message/${id}`}
-										class="btn btn-square btn-ghost btn-xs"
-										title="Lihat pesan"
-									>
-										<Icon name="lucide:eye" />
-									</button>
-									{Astro.locals.user?.allowEdit && (
+									<div class="flex justify-end gap-1.5">
 										<button
-											hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
-											class="btn btn-square btn-ghost text-error btn-xs"
+											hx-get={`/dashboard/manage/tenants/modal/chat/${tenantId}`}
+											class="btn btn-square btn-ghost btn-xs"
+											title="Chat"
 										>
-											<Icon name="lucide:x" />
+											<Icon name="lucide:message-square" />
 										</button>
-									)}
+										<button
+											hx-get={`/dashboard/log/chatbot/modal/view-message/${id}`}
+											class="btn btn-square btn-ghost btn-xs"
+											title="Lihat pesan"
+										>
+											<Icon name="lucide:eye" />
+										</button>
+										{Astro.locals.user?.allowEdit && (
+											<button
+												hx-get={`/dashboard/log/chatbot/modal/delete/${id}`}
+												class="btn btn-square btn-ghost text-error btn-xs"
+											>
+												<Icon name="lucide:x" />
+											</button>
+										)}
+									</div>
 								</td>
 							</tr>
 						),

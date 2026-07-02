@@ -1,6 +1,7 @@
 import { CHATBOT_DIRECTIONS, db } from "@indekos/database";
 import { parseDateRange } from "@indekos/utilities/date";
 
+import { render } from "@croct/md-lite";
 import { z } from "astro/zod";
 
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
@@ -60,3 +61,22 @@ export const DIRECTION_LABELS = {
 	incoming: "Masuk",
 	outgoing: "Keluar",
 } satisfies Record<(typeof CHATBOT_DIRECTIONS)[number], string>;
+
+export const formatMessageMarkdown = (message: string): string =>
+	render(message, {
+		fragment: (node) =>
+			node.children
+				.join("")
+				.replaceAll("\n", "<br>")
+				.split("<br>")
+				.filter(Boolean)
+				.join("<br>"),
+		text: (node) => node.content,
+		bold: (node) => `<b>${node.children}</b>`,
+		italic: (node) => `<b>${node.children}</b>`,
+		strike: (node) => `<s>${node.children}</s>`,
+		code: (node) => `<code>${node.content}</code>`,
+		link: (node) => `<a href="${node.href}">${node.children}</a>`,
+		image: (node) => `<p>[gambar ${node.alt}]</p>`,
+		paragraph: (node) => `<p>${node.children.join("")}</p><br>`,
+	});

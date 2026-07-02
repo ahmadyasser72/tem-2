@@ -7,7 +7,7 @@ import { actions } from "astro:actions";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { DIRECTION_LABELS } from "../../_data";
+import { DIRECTION_LABELS, formatMessageMarkdown } from "../../_data";
 
 export const partial = true;
 
@@ -54,9 +54,10 @@ if (!log) Astro.response.status = 404;
 
 				<div class="mt-4 text-sm">
 					<span class="mb-1 block font-bold">Isi Pesan:</span>
-					<p class="max-h-32 overflow-y-auto rounded border border-base-300 bg-base-200 p-3 text-xs leading-relaxed wrap-break-word whitespace-pre-wrap">
-						{chatbotLog.message}
-					</p>
+					<div
+						class="max-h-32 overflow-y-auto rounded border border-base-300 bg-base-200 p-3 text-xs leading-relaxed"
+						set:html={formatMessageMarkdown(chatbotLog.message)}
+					></div>
 				</div>
 
 				<ModalForm

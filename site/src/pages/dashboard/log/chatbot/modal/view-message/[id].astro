@@ -2,11 +2,9 @@
 import { db } from "@indekos/database";
 import { formatDate } from "@indekos/utilities/date";
 
-import { render } from "@croct/md-lite";
-
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { DIRECTION_LABELS } from "../../_data";
+import { DIRECTION_LABELS, formatMessageMarkdown } from "../../_data";
 
 export const partial = true;
 
@@ -21,32 +19,13 @@ const log = await db.query.chatbotMessages.findFirst({
 	},
 });
 
-const [chatbotLog, message] = log
-	? [
-			{
-				...log,
-				tenantName: log.tenant.fullName,
-				roomNumber: log.tenant.lease?.room?.roomNumber ?? "-",
-			},
-			render(log.message, {
-				fragment: (node) =>
-					node.children
-						.join("")
-						.replaceAll("\n", "<br>")
-						.split("<br>")
-						.filter(Boolean)
-						.join("<br>"),
-				text: (node) => node.content,
-				bold: (node) => `<b>${node.children}</b>`,
-				italic: (node) => `<b>${node.children}</b>`,
-				strike: (node) => `<s>${node.children}</s>`,
-				code: (node) => `<code>${node.content}</code>`,
-				link: (node) => `<a href="${node.href}">${node.children}</a>`,
-				image: (node) => `<p>[gambar ${node.alt}]</p>`,
-				paragraph: (node) => `<p>${node.children.join("")}</p><br>`,
-			}),
-		]
-	: [];
+const chatbotLog = log
+	? {
+			...log,
+			tenantName: log.tenant.fullName,
+			roomNumber: log.tenant.lease?.room?.roomNumber ?? "-",
+		}
+	: null;
 
 if (!log) Astro.response.status = 404;
 ---
@@ -74,7 +53,7 @@ if (!log) Astro.response.status = 404;
 					<span class="mb-1 block font-bold">Isi Pesan:</span>
 					<div
 						class="max-h-96 overflow-y-auto rounded border border-base-300 bg-base-200 p-4 text-sm leading-relaxed"
-						set:html={message}
+						set:html={formatMessageMarkdown(chatbotLog.message)}
 					/>
 				</div>
 			</>

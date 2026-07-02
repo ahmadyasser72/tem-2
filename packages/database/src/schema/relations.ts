@@ -25,6 +25,11 @@ export const relations = defineRelations(schema, (r) => ({
 			to: r.leases.roomId,
 			where: { isActive: true },
 		}),
+
+		chatbotLogs: r.many.chatbotMessages({
+			from: r.tenants.id,
+			to: r.chatbotMessages.tenantId,
+		}),
 	},
 
 	rooms: {

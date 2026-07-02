@@ -1,12 +1,11 @@
 ---
 import { formatCurrency } from "@indekos/utilities/transforms";
 
-import { sumBy } from "es-toolkit";
-
 import ReportStats from "~/components/data/report-stats.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import {
 	fetchRooms,
+	getRoomStats,
 	ROOM_STATUS_LABELS,
 	ROOM_TYPE_LABELS,
 	roomQuerySchema,
@@ -15,14 +14,7 @@ import {
 const params = Astro.locals.parseQuery(roomQuerySchema.omit({ query: true }));
 
 const rooms = await fetchRooms(params);
-const total = rooms.length;
-const occupied = sumBy(rooms, ({ isActive, tenantName }) =>
-	isActive && tenantName ? 1 : 0,
-);
-const vacant = sumBy(rooms, ({ isActive, tenantName }) =>
-	isActive && !tenantName ? 1 : 0,
-);
-const inactive = sumBy(rooms, ({ isActive }) => (!isActive ? 1 : 0));
+const roomStats = getRoomStats(rooms);
 
 const filterParts: string[] = [];
 if (params.status) {
@@ -36,14 +28,7 @@ const subtitle =
 ---
 
 <ReportLayout title="Rekap Status Kamar" subtitle={subtitle}>
-	<ReportStats
-		items={[
-			{ title: "Total Kamar", value: total },
-			{ title: "Terisi", value: occupied },
-			{ title: "Tersedia", value: vacant },
-			{ title: "Nonaktif", value: inactive },
-		]}
-	/>
+	<ReportStats stats={roomStats} />
 
 	<table>
 		<thead>

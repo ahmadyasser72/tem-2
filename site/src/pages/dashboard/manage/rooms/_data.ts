@@ -2,8 +2,9 @@ import { db } from "@indekos/database";
 import { ROOM_TYPES } from "@indekos/database/schema";
 
 import { z } from "astro/zod";
-import { sumBy } from "es-toolkit";
+import { countBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { querySchema, statusSchema } from "~/lib/query";
 
 export const ROOM_STATUS = ["occupied", "vacant", "inactive"] as const;
@@ -47,36 +48,38 @@ export const fetchRooms = async (params: z.infer<typeof roomQuerySchema>) => {
 	}));
 };
 
-export const getRoomsStats = (
+export const getRoomStats = (
 	rooms: Awaited<ReturnType<typeof fetchRooms>>,
-) => {
-	const occupied = sumBy(rooms, ({ isActive, tenantName }) =>
-		isActive && tenantName ? 1 : 0,
-	);
-	const vacant = sumBy(rooms, ({ isActive, tenantName }) =>
-		isActive && !tenantName ? 1 : 0,
-	);
-	const inactive = sumBy(rooms, ({ isActive }) => (!isActive ? 1 : 0));
+): Stat[] => {
+	const {
+		occupied = 0,
+		vacant = 0,
+		inactive = 0,
+	} = countBy(rooms, ({ isActive, tenantName }) => {
+		if (isActive) return tenantName ? "occupied" : "vacant";
+		else return "inactive";
+	});
+
 	return [
 		{
 			title: "Total Kamar",
 			value: rooms.length,
-			icon: "lucide:house" as const,
+			icon: "lucide:house",
 		},
 		{
 			title: "Kamar Terisi",
 			value: occupied,
-			icon: "lucide:circle-check" as const,
+			icon: "lucide:circle-check",
 		},
 		{
 			title: "Kamar Tersedia",
 			value: vacant,
-			icon: "lucide:circle-alert" as const,
+			icon: "lucide:circle-alert",
 		},
 		{
 			title: "Kamar Nonaktif",
 			value: inactive,
-			icon: "lucide:x-circle" as const,
+			icon: "lucide:x-circle",
 		},
 	];
 };

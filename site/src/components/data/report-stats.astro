@@ -1,0 +1,26 @@
+---
+import type { Stat } from "./stats.astro";
+
+export interface Props {
+	stats: Omit<Stat, "icon">[];
+}
+
+const { stats } = Astro.props;
+---
+
+<div
+	class="mb-6 grid gap-4"
+	style={`grid-template-columns: repeat(${stats.length}, 1fr)`}
+>
+	{
+		stats.map(({ title, value, desc }) => (
+			<div class="border border-black p-3">
+				<div class="mb-1 text-[10px] font-bold tracking-[0.5px] uppercase">
+					{title}
+				</div>
+				<div class="text-lg font-bold">{value}</div>
+				{desc && <div class="mt-0.5 text-[11px]">{desc}</div>}
+			</div>
+		))
+	}
+</div>

@@ -5,6 +5,7 @@ import { render } from "@croct/md-lite";
 import { z } from "astro/zod";
 import { countBy, uniqBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export const chatbotQuerySchema = z.object({
@@ -84,13 +85,13 @@ export const formatMessageMarkdown = (message: string): string =>
 
 export const getChatbotStats = (
 	logs: Awaited<ReturnType<typeof fetchChatbotLogs>>,
-) => {
+): Stat[] => {
 	const { incoming = 0, outgoing = 0 } = countBy(
 		logs,
 		({ direction }) => direction,
 	);
 	const uniqueTenants = uniqBy(logs, ({ tenantId }) => tenantId).length;
-	const incomingPercent =
+	const incomingRate =
 		logs.length > 0 ? Math.round((incoming / logs.length) * 100) : 0;
 
 	return [
@@ -98,19 +99,19 @@ export const getChatbotStats = (
 			title: "Total Percakapan",
 			value: logs.length,
 			desc: "Pesan masuk dan keluar",
-			icon: "lucide:messages-square" as const,
+			icon: "lucide:messages-square" ,
 		},
 		{
 			title: "Pesan Masuk",
 			value: incoming,
-			desc: `${incomingPercent}% dari total`,
-			icon: "lucide:arrow-down-circle" as const,
+			desc: `${incomingRate}% dari total`,
+			icon: "lucide:arrow-down-circle" ,
 		},
 		{
 			title: "Pesan Keluar",
 			value: outgoing,
 			desc: `${uniqueTenants} penghuni berbeda`,
-			icon: "lucide:arrow-up-circle" as const,
+			icon: "lucide:arrow-up-circle" ,
 		},
 	];
 };

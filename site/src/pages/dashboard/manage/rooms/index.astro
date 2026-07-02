@@ -13,7 +13,7 @@ import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
 import {
 	fetchRooms,
-	getRoomsStats,
+	getRoomStats,
 	ROOM_STATUS_BADGES,
 	ROOM_STATUS_LABELS,
 	ROOM_TYPE_LABELS,
@@ -23,7 +23,7 @@ import {
 
 const params = Astro.locals.parseQuery(roomQuerySchema);
 const rooms = await fetchRooms(params);
-const roomStats = getRoomsStats(rooms);
+const roomStats = getRoomStats(rooms);
 ---
 
 <FormResult
@@ -123,7 +123,7 @@ const roomStats = getRoomsStats(rooms);
 		/>
 	</div>
 
-	<Stats items={roomStats} />
+	<Stats stats={roomStats} />
 
 	<div
 		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"

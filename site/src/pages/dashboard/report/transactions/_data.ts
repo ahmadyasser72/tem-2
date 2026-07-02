@@ -1,11 +1,15 @@
 import { db, INVOICE_STATUS } from "@indekos/database";
 import { getPaymentUrlFromReference } from "@indekos/database/duitku";
 import { parseDateRange } from "@indekos/utilities/date";
-import { formatInvoiceNumber } from "@indekos/utilities/transforms";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@indekos/utilities/transforms";
 
 import { z } from "astro/zod";
-import { sumBy } from "es-toolkit";
+import { groupBy, sumBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export { INVOICE_STATUS };
@@ -48,20 +52,39 @@ export const fetchTransactions = async (
 
 export const getTransactionStats = (
 	transactions: Awaited<ReturnType<typeof fetchTransactions>>,
-) => {
-	const paid = transactions.filter(
-		(transaction) => transaction.status === "paid",
+): Stat[] => {
+	const byStatus = groupBy(transactions, ({ status }) =>
+		status === "paid" ? "paid" : "unpaid",
 	);
-	const unpaid = transactions.filter(
-		(transaction) => transaction.status !== "paid",
-	);
+	const totalRevenue = sumBy(byStatus.paid ?? [], ({ amount }) => amount);
+	const paidCount = byStatus.paid?.length ?? 0;
+	const paidRate =
+		transactions.length > 0
+			? Math.round((paidCount / transactions.length) * 100)
+			: 0;
+	const unpaidCount = byStatus.unpaid?.length ?? 0;
+	const unpaidTotal = sumBy(byStatus.unpaid ?? [], ({ amount }) => amount);
 
-	return {
-		totalRevenue: sumBy(paid, (transaction) => transaction.amount),
-		paidCount: paid.length,
-		unpaidCount: unpaid.length,
-		outstandingAmount: sumBy(unpaid, (transaction) => transaction.amount),
-	};
+	return [
+		{
+			title: "Total Pemasukan",
+			value: formatCurrency(totalRevenue),
+			desc: `${paidCount} invoice terbayar`,
+			icon: "lucide:arrow-up-right" as const,
+		},
+		{
+			title: "Sudah Terbayar",
+			value: `${paidCount} Invoice`,
+			desc: `${paidRate}% dari total`,
+			icon: "lucide:circle-check" as const,
+		},
+		{
+			title: "Pembayaran Tertunggak",
+			value: `${unpaidCount} Invoice`,
+			desc: formatCurrency(unpaidTotal),
+			icon: "lucide:x-circle" as const,
+		},
+	];
 };
 
 export const transactionQuerySchema = z.object({

@@ -4,6 +4,7 @@ import { parseDateRange } from "@indekos/utilities/date";
 import { z } from "astro/zod";
 import { countBy, uniqBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export { AUDIT_ACTIONS };
@@ -69,7 +70,7 @@ export const AUDIT_ACTION_LABELS = {
 
 export const getAuditStats = (
 	logs: Awaited<ReturnType<typeof fetchAuditLogs>>,
-) => {
+): Stat[] => {
 	const {
 		CREATE = 0,
 		UPDATE = 0,
@@ -82,19 +83,19 @@ export const getAuditStats = (
 			title: "Total Aktivitas",
 			value: logs.length,
 			desc: "Seluruh log dalam periode",
-			icon: "lucide:activity" as const,
+			icon: "lucide:activity",
 		},
 		{
 			title: "Pengguna Aktif",
 			value: uniqueUsers,
 			desc: "Pengguna yang melakukan aksi",
-			icon: "lucide:users" as const,
+			icon: "lucide:users",
 		},
 		{
 			title: "Data Dibuat",
 			value: CREATE,
 			desc: `${UPDATE} diubah, ${DELETE} dihapus`,
-			icon: "lucide:plus-circle" as const,
+			icon: "lucide:plus-circle",
 		},
 	];
 };

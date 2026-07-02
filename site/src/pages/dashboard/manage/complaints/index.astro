@@ -22,10 +22,7 @@ import {
 
 const params = Astro.locals.parseQuery(complaintQuerySchema);
 const complaints = await fetchComplaints(params);
-const complaintStats = getComplaintStats(complaints).map((stat) => ({
-	...stat,
-	icon: "lucide:file-text" as const,
-}));
+const complaintStats = getComplaintStats(complaints);
 ---
 
 <FormResult
@@ -93,7 +90,7 @@ const complaintStats = getComplaintStats(complaints).map((stat) => ({
 		</Fragment>
 	</FilterToolbar>
 
-	<Stats items={complaintStats} />
+	<Stats stats={complaintStats} />
 
 	<div class="flex flex-col gap-4" id="complaints-content-wrapper">
 		{

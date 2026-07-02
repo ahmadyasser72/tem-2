@@ -3,6 +3,7 @@ import { db } from "@indekos/database";
 import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { querySchema, statusSchema } from "~/lib/query";
 
 export const TENANT_STATUS = ["active", "completed"] as const;
@@ -53,12 +54,13 @@ export const TENANT_STATUS_BADGES: Record<string, string> = {
 
 export const getTenantsStats = (
 	tenants: Awaited<ReturnType<typeof fetchTenants>>,
-) => {
-	const { active, completed } = countBy(tenants, ({ isActive }) =>
+): Stat[] => {
+	const { active = 0, completed = 0 } = countBy(tenants, ({ isActive }) =>
 		isActive ? "active" : "completed",
 	);
-	const verifiedCount = tenants.filter(({ isVerified }) => isVerified).length;
-	const unverifiedCount = tenants.length - verifiedCount;
+	const { verified = 0, unverified = 0 } = countBy(tenants, ({ isVerified }) =>
+		isVerified ? "verified" : "unverified",
+	);
 
 	return [
 		{
@@ -71,13 +73,13 @@ export const getTenantsStats = (
 			title: "Sewa Aktif",
 			value: active,
 			desc: `${completed} sudah selesai`,
-			icon: "lucide:user-check" as const,
+			icon: "lucide:user-check",
 		},
 		{
 			title: "Terverifikasi",
-			value: verifiedCount,
-			desc: `${unverifiedCount} belum verifikasi`,
-			icon: "lucide:badge-check" as const,
+			value: verified,
+			desc: `${unverified} belum verifikasi`,
+			icon: "lucide:badge-check",
 		},
 	];
 };

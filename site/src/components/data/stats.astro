@@ -1,16 +1,18 @@
 ---
 import Icon from "~/components/ui/icon.astro";
 
-export interface Props {
-	items: Array<{
-		title: string;
-		value: string | number;
-		desc?: string;
-		icon?: `lucide:${string}`;
-	}>;
+export interface Stat {
+	title: string;
+	value: string | number;
+	desc?: string;
+	icon?: `lucide:${string}`;
 }
 
-const { items } = Astro.props;
+export interface Props {
+	stats: Stat[];
+}
+
+const { stats } = Astro.props;
 ---
 
 <div
@@ -19,7 +21,7 @@ const { items } = Astro.props;
 	hx-swap-oob="true"
 >
 	{
-		items.map(({ title, value, desc, icon }) => (
+		stats.map(({ title, value, desc, icon }) => (
 			<div class="stat text-center sm:text-left">
 				{icon && (
 					<div class="stat-figure">

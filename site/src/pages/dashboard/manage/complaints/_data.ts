@@ -4,6 +4,7 @@ import { parseDateRange } from "@indekos/utilities/date";
 import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export const fetchComplaints = async (
@@ -40,13 +41,34 @@ export const fetchComplaints = async (
 
 export const getComplaintStats = (
 	complaints: Awaited<ReturnType<typeof fetchComplaints>>,
-) => {
-	const counts = countBy(complaints, (complaint) => complaint.status);
+): Stat[] => {
+	const {
+		open = 0,
+		in_progress = 0,
+		resolved = 0,
+	} = countBy(complaints, (complaint) => complaint.status);
+
 	return [
-		{ title: "Total Komplain", value: complaints.length },
-		{ title: "Terbuka", value: counts.open ?? 0 },
-		{ title: "Proses", value: counts.in_progress ?? 0 },
-		{ title: "Selesai", value: counts.resolved ?? 0 },
+		{
+			title: "Total Komplain",
+			value: complaints.length,
+			icon: "lucide:file-text" ,
+		},
+		{
+			title: "Terbuka",
+			value: open,
+			icon: "lucide:alert-circle" ,
+		},
+		{
+			title: "Proses",
+			value: in_progress,
+			icon: "lucide:clock" ,
+		},
+		{
+			title: "Selesai",
+			value: resolved,
+			icon: "lucide:circle-check" ,
+		},
 	];
 };
 

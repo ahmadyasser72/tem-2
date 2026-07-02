@@ -26,31 +26,7 @@ import {
 const params = Astro.locals.parseQuery(transactionQuerySchema);
 
 const invoices = await fetchTransactions(params);
-const { totalRevenue, paidCount, unpaidCount, outstandingAmount } =
-	getTransactionStats(invoices);
-const paidPercent =
-	invoices.length > 0 ? Math.round((paidCount / invoices.length) * 100) : 0;
-
-const summaryStats = [
-	{
-		title: "Total Pemasukan",
-		value: formatCurrency(totalRevenue),
-		desc: `${params.from} s/d ${params.to}`,
-		icon: "lucide:arrow-up-right" as const,
-	},
-	{
-		title: "Sudah Terbayar",
-		value: `${paidCount} Invoice`,
-		desc: `${paidPercent}% dari total tagihan`,
-		icon: "lucide:circle-check" as const,
-	},
-	{
-		title: "Pembayaran Tertunggak",
-		value: `${unpaidCount} Invoice`,
-		desc: `${formatCurrency(outstandingAmount)} belum dibayar`,
-		icon: "lucide:x-circle" as const,
-	},
-];
+const transactionStats = getTransactionStats(invoices);
 ---
 
 <FormResult
@@ -107,7 +83,7 @@ const summaryStats = [
 		</Fragment>
 	</FilterToolbar>
 
-	<Stats items={summaryStats} />
+	<Stats stats={transactionStats} />
 
 	<div class="contents" id="transactions-content-wrapper">
 		<div class="overflow-x-auto rounded-box border border-base-300 shadow-sm">

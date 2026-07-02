@@ -16,8 +16,7 @@ const params = Astro.locals.parseQuery(
 );
 
 const invoices = await fetchTransactions(params);
-const { totalRevenue, paidCount, unpaidCount, outstandingAmount } =
-	getTransactionStats(invoices);
+const transactionStats = getTransactionStats(invoices);
 
 const filterParts: string[] = [];
 if (params.status) {
@@ -34,23 +33,7 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
 <ReportLayout title="Laporan Transaksi Bulanan" subtitle={subtitle}>
-	<ReportStats
-		items={[
-			{
-				title: "Total Pemasukan",
-				value: formatCurrency(totalRevenue),
-			},
-			{
-				title: "Sudah Terbayar",
-				value: `${paidCount} Invoice`,
-			},
-			{
-				title: "Pembayaran Tertunggak",
-				value: `${unpaidCount} Invoice`,
-				desc: formatCurrency(outstandingAmount),
-			},
-		]}
-	/>
+	<ReportStats stats={transactionStats} />
 
 	<table>
 		<thead>

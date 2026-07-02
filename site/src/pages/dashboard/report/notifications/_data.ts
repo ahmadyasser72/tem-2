@@ -5,6 +5,7 @@ import { formatInvoiceNumber } from "@indekos/utilities/transforms";
 import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
+import type { Stat } from "~/components/data/stats.astro";
 import { periodFields, querySchema, statusSchema } from "~/lib/query";
 
 export const notificationQuerySchema = z.object({
@@ -90,7 +91,7 @@ export const NOTIFICATION_STATUS_BADGES = {
 
 export const getNotificationStats = (
 	notifications: Awaited<ReturnType<typeof fetchNotifications>>,
-) => {
+): Stat[] => {
 	const {
 		sent = 0,
 		pending = 0,

@@ -4,6 +4,7 @@ import { Eta } from "eta";
 
 const eta = new Eta({
 	views: path.join(import.meta.dirname, "templates"),
+	autoTrim: false,
 });
 
 // Maps template name → param type.
@@ -104,4 +105,4 @@ interface TemplateParams {
 export const render = <K extends keyof TemplateParams>(
 	name: K,
 	params: TemplateParams[K],
-) => eta.render(`./${name}`, params);
+) => eta.render(`./${name}`, params).trimEnd();

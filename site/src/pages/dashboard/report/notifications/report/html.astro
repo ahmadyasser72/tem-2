@@ -4,6 +4,7 @@ import { formatDate } from "@indekos/utilities/date";
 import ReportLayout from "~/layouts/report-layout.astro";
 import {
 	fetchNotifications,
+	NOTIFICATION_STATUS_LABELS,
 	NOTIFICATION_TYPE_LABELS,
 	notificationQuerySchema,
 } from "../_data";
@@ -32,11 +33,12 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 	<table>
 		<thead>
 			<tr>
-				<th class="w-[22%]">Waktu Kirim</th>
-				<th class="w-[28%]">Penghuni</th>
-				<th class="w-[18%]">No. Invoice</th>
-				<th class="w-[16%]">Jenis</th>
-				<th class="w-[16%]">Status</th>
+				<th class="w-[18%]">Dibuat</th>
+				<th class="w-[18%]">Dikirim</th>
+				<th class="w-[22%]">Penghuni</th>
+				<th class="w-[14%]">No. Invoice</th>
+				<th class="w-[14%]">Jenis</th>
+				<th class="w-[14%]">Status</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -44,6 +46,7 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 				notifications.map(
 					({
 						createdAt,
+						sentAt,
 						tenantName,
 						roomNumber,
 						invoiceNumber,
@@ -54,6 +57,9 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 							<td class="font-mono text-[10px]">
 								{formatDate(createdAt, "DD MMM YYYY HH:mm")}
 							</td>
+							<td class="font-mono text-[10px]">
+								{sentAt ? formatDate(sentAt, "DD MMM YYYY HH:mm") : "-"}
+							</td>
 							<td>
 								{tenantName}
 								<span class="ml-1 font-mono text-[10px] opacity-60">
@@ -62,7 +68,9 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 							</td>
 							<td class="font-mono font-semibold">{invoiceNumber}</td>
 							<td>{NOTIFICATION_TYPE_LABELS[type]}</td>
-							<td class="font-semibold">{status}</td>
+							<td class="font-semibold">
+								{NOTIFICATION_STATUS_LABELS[status]}
+							</td>
 						</tr>
 					),
 				)
@@ -70,7 +78,7 @@ const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 		</tbody>
 		<tfoot>
 			<tr>
-				<td class="border border-black bg-gray-100 p-2 font-bold" colspan="5">
+				<td class="border border-black bg-gray-100 p-2 font-bold" colspan="6">
 					Total notifikasi: {notifications.length}
 				</td>
 			</tr>

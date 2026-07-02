@@ -43,13 +43,15 @@ export const fetchNotifications = async (
 				},
 			},
 			invoice: true,
+			chatbotMessage: true,
 		},
 		orderBy: { id: "desc" },
 	});
 
 	return notifications.map(
-		({ invoiceId, invoice, tenant, ...notification }) => ({
+		({ chatbotMessage, invoiceId, invoice, tenant, ...notification }) => ({
 			...notification,
+			sentAt: chatbotMessage?.sentAt,
 			tenantName: tenant.fullName,
 			roomNumber: tenant.lease?.room.roomNumber ?? "-",
 			invoiceNumber: invoice ? formatInvoiceNumber(invoice) : "-",
@@ -66,10 +68,16 @@ export const NOTIFICATION_TYPE_BADGES = {
 
 export const NOTIFICATION_TYPE_LABELS = {
 	reminder: "Pengingat",
-	payment_success: "Pembayaran Berhasil",
-	welcome: "Selamat Datang",
-	custom: "Pesan Khusus",
+	payment_success: "Pembayaran Sukses",
+	welcome: "Verifikasi",
+	custom: "Custom",
 } satisfies Record<(typeof NOTIFICATION_TYPES)[number], string>;
+
+export const NOTIFICATION_STATUS_LABELS = {
+	pending: "Menunggu",
+	sent: "Terkirim",
+	failed: "Gagal",
+} satisfies Record<(typeof NOTIFICATION_STATUS)[number], string>;
 
 export const NOTIFICATION_STATUS_BADGES = {
 	pending: "badge-warning",

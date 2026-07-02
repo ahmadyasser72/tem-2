@@ -14,6 +14,7 @@ import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import {
 	fetchNotifications,
 	NOTIFICATION_STATUS_BADGES,
+	NOTIFICATION_STATUS_LABELS,
 	NOTIFICATION_TYPE_BADGES,
 	NOTIFICATION_TYPE_LABELS,
 	notificationQuerySchema,
@@ -84,7 +85,8 @@ const notifications = await fetchNotifications(params);
 		<table class="table w-full table-sm">
 			<thead>
 				<tr>
-					<th>Waktu Kirim</th>
+					<th>Dibuat</th>
+					<th>Dikirim</th>
 					<th>Penghuni</th>
 					<th>Invoice</th>
 					<th>Tipe</th>
@@ -96,6 +98,7 @@ const notifications = await fetchNotifications(params);
 					notifications.map(
 						({
 							createdAt,
+							sentAt,
 							tenantName,
 							roomNumber,
 							invoiceNumber,
@@ -105,6 +108,9 @@ const notifications = await fetchNotifications(params);
 							<tr>
 								<td class="font-mono text-xs">
 									{formatDate(createdAt, "DD MMM YYYY HH:mm")}
+								</td>
+								<td class="font-mono text-xs">
+									{sentAt ? formatDate(sentAt, "DD MMM YYYY HH:mm") : "-"}
 								</td>
 								<td class="flex items-center gap-2 text-sm font-semibold">
 									{tenantName}
@@ -130,7 +136,7 @@ const notifications = await fetchNotifications(params);
 											NOTIFICATION_STATUS_BADGES[status],
 										]}
 									>
-										{status}
+										{NOTIFICATION_STATUS_LABELS[status]}
 									</span>
 								</td>
 							</tr>

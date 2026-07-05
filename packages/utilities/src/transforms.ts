@@ -11,6 +11,9 @@ export const formatInvoiceNumber = ({
 }: Pick<Invoice, "id" | "dueDate">): string =>
 	`INV-${formatDate(dueDate, "YYYYMM")}/${id}`;
 
+export const parseInvoiceNumber = (invoiceNumber: string): number =>
+	Number(invoiceNumber.split("/").pop());
+
 /**
  * Format currency in Indonesian Rupiah format
  */

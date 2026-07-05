@@ -6,7 +6,7 @@ import { formatCurrency } from "@indekos/utilities/transforms";
 
 import { groupBy, sumBy } from "es-toolkit";
 
-import { logger } from "../index";
+import { logger } from "../logger";
 
 export const runMonthlyReport = async (systemUser: User, now?: Date) => {
 	const ref = now ?? new Date();

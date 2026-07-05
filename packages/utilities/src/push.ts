@@ -4,13 +4,11 @@ import { pushSubscriptions, type User } from "@indekos/database/schema";
 import { groupBy, mapValues } from "es-toolkit";
 import webpush from "web-push";
 
-export const initPush = (
-	subject: string,
-	publicKey: string,
-	privateKey: string,
-) => {
-	webpush.setVapidDetails(subject, publicKey, privateKey);
-};
+const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
+if (!VAPID_SUBJECT || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY)
+	throw new Error("VAPID_* is not set");
+
+webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 export const sendPush = async (
 	users: Pick<User, "id">[],
@@ -42,7 +40,7 @@ export const sendPush = async (
 		return status === 404 || status === 410 ? "invalid" : "sent";
 	});
 
-	if (grouped.invalid.length > 0)
+	if (grouped.invalid?.length > 0)
 		await db.delete(pushSubscriptions).where(
 			inArray(
 				pushSubscriptions.endpoint,

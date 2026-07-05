@@ -29,6 +29,7 @@ export const fetchComplaints = async (
 			tenant: { with: { lease: { with: { room: true } } } },
 			resolver: true,
 		},
+		orderBy: { createdAt: "desc" },
 	});
 
 	return complaints.map(({ tenant, resolver, ...complaint }) => ({

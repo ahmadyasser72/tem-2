@@ -6,6 +6,7 @@ import {
 	invoices,
 	notifications,
 } from "@indekos/database/schema";
+import { parseInvoiceNumber } from "@indekos/utilities/transforms";
 
 import type { APIRoute } from "astro";
 
@@ -43,10 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
 		return new Response(null, { status: 400 });
 	}
 
-	// merchantOrderId format: INV-XXXXXX
-	const invoiceIdStr = merchantOrderId.replace("INV-", "");
-	const invoiceId = Number.parseInt(invoiceIdStr, 10);
-
+	const invoiceId = parseInvoiceNumber(merchantOrderId);
 	if (Number.isNaN(invoiceId)) {
 		console.error("Invalid merchantOrderId format:", merchantOrderId);
 		return new Response(null, { status: 200 }); // Return 200 so Duitku doesn't retry

@@ -6,7 +6,7 @@ import {
 	type User,
 } from "@indekos/database/schema";
 
-import { logger } from "../index";
+import { logger } from "../logger";
 
 export const runOverdueCheck = async (systemUser: User, now?: Date) => {
 	const ref = now ?? new Date();

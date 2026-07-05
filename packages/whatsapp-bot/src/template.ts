@@ -84,6 +84,7 @@ interface TemplateParams {
 		roomNumber: string | null;
 		amount: string | null;
 		date: string | null;
+		invoiceUrl: string | null;
 	};
 	"payment-reminder": {
 		fullName: string;

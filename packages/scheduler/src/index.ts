@@ -1,12 +1,10 @@
 import { db } from "@indekos/database";
-import { createLogger, pino } from "@indekos/utilities/logger";
 
+import { logger } from "./logger";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runMonthlyReport } from "./workers/monthly-report";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
-
-export const logger: pino.Logger = createLogger("scheduler");
 
 const main = async () => {
 	const systemUser = await db.query.users.findFirst({

@@ -4,14 +4,10 @@ import {
 	auditLogs,
 	pushSubscriptions,
 } from "@indekos/database/schema";
-import { initPush, sendPush } from "@indekos/utilities/push";
+import { sendPush } from "@indekos/utilities/push";
 
 import { defineAction } from "astro:actions";
-import { VAPID_PUBLIC_KEY } from "astro:env/client";
-import { VAPID_PRIVATE_KEY, VAPID_SUBJECT } from "astro:env/server";
 import { z } from "astro/zod";
-
-initPush(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 export const subscribe = defineAction({
 	accept: "json",

@@ -52,11 +52,18 @@ export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 					roomNumber: lease?.room?.roomNumber ?? null,
 				});
 			} else if (notification.type === "payment_success") {
+				const siteUrl = process.env.SITE_URL;
+				const invoiceUrl =
+					siteUrl && invoiceData
+						? `${siteUrl}/invoice/${invoiceData.id}`
+						: null;
+
 				msg = render("payment-success", {
 					fullName: tenant.fullName,
 					roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
 					amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
 					date: invoiceData ? formatDate(invoiceData.dueDate) : null,
+					invoiceUrl,
 				});
 			} else {
 				msg = render("payment-reminder", {

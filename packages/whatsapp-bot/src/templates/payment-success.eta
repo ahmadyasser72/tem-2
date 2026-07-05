@@ -7,5 +7,7 @@ Yth. <%= it.fullName %>,
 💰 Jumlah: <%= it.amount %>
 <% } %><% if (it.date) { %>
 📅 Pembayaran: <%= it.date %>
+<% } %><% if (it.invoiceUrl) { %>
+🔗 Link Invoice: <%= it.invoiceUrl %>
 <% } %>
 Terima kasih telah membayar tepat waktu.

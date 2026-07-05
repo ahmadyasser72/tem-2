@@ -188,18 +188,18 @@ export const main = async () => {
 					} catch (err) {
 						console.error("message processing failed for %s:", jid, err);
 					}
-				}, 5_000),
+				}, 1_000),
 			);
 		}
 	});
 
 	setInterval(async () => {
-		await Promise.all([
+		await Promise.allSettled([
 			pollNotifications(sock, botUser.id),
 			pollResolvedComplaints(sock, botUser.id),
 			pollInProgressComplaints(sock, botUser.id),
 		]);
-	}, 30_000);
+	}, 5_000);
 
 	console.log("WhatsApp bot started");
 };

@@ -29,12 +29,12 @@ export const relations = defineRelations(schema, (r) => ({
 	tenants: {
 		leaseHistory: r.many.leases({
 			from: r.tenants.id,
-			to: r.leases.roomId,
+			to: r.leases.tenantId,
 			where: { isActive: false },
 		}),
 		lease: r.one.leases({
 			from: r.tenants.id,
-			to: r.leases.roomId,
+			to: r.leases.tenantId,
 			where: { isActive: true },
 		}),
 

@@ -1,6 +1,6 @@
 import { db } from "@indekos/database";
 
-import { logger } from ".";
+import { logger } from "./logger";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runMonthlyReport } from "./workers/monthly-report";
 import { runOverdueCheck } from "./workers/overdue";

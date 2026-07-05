@@ -44,7 +44,9 @@ const complaintStats = getComplaintStats(complaints);
 	<Fragment slot="page-action">
 		<a
 			class="btn btn-outline btn-sm"
+			id="complaints-print"
 			href={`/dashboard/manage/complaints/report/download${Astro.url.search}`}
+			hx-swap-oob="true"
 			download
 		>
 			<Icon name="lucide:download" /> PDF

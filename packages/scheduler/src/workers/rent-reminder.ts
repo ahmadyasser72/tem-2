@@ -7,7 +7,7 @@ import {
 } from "@indekos/database/schema";
 import dayjs from "@indekos/utilities/date";
 
-import { logger } from "../index";
+import { logger } from "../logger";
 
 export const runRentReminder = async (systemUser: User, now?: Date) => {
 	const ref = now ?? new Date();

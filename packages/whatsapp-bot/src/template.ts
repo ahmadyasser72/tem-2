@@ -101,6 +101,9 @@ interface TemplateParams {
 	"verification-prompt": {
 		fullName: string;
 	};
+	"phone-change-verification": {
+		fullName: string;
+	};
 }
 
 export const render = <K extends keyof TemplateParams>(

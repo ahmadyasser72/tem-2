@@ -17,6 +17,7 @@ export const NOTIFICATION_TYPES = [
 	"reminder",
 	"payment_success",
 	"welcome",
+	"phone_change",
 	"custom",
 ] as const;
 export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;

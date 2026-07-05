@@ -41,16 +41,24 @@ export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 				: undefined;
 
 			let msg: string;
-			if (notification.type === "welcome") {
+			if (
+				notification.type === "welcome" ||
+				notification.type === "phone_change"
+			) {
 				const lease = await db.query.leases.findFirst({
 					where: { tenantId: notification.tenantId, isActive: true },
 					with: { room: true },
 				});
 
-				msg = render("welcome", {
-					fullName: tenant.fullName,
-					roomNumber: lease?.room?.roomNumber ?? null,
-				});
+				msg =
+					notification.type === "welcome"
+						? render("welcome", {
+								fullName: tenant.fullName,
+								roomNumber: lease?.room?.roomNumber ?? null,
+							})
+						: render("phone-change-verification", {
+								fullName: tenant.fullName,
+							});
 			} else if (notification.type === "payment_success") {
 				const siteUrl = process.env.SITE_URL;
 				const invoiceUrl =
@@ -98,9 +106,11 @@ export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 			const actionDesc =
 				notification.type === "welcome"
 					? `Bot mengirim pesan selamat datang ke tenant #${tenant.id}`
-					: notification.type === "payment_success"
-						? `Bot mengirim konfirmasi pembayaran sukses ke tenant #${tenant.id}`
-						: `Bot mengirim pengingat pembayaran ke tenant #${tenant.id}`;
+					: notification.type === "phone_change"
+						? `Bot mengirim verifikasi ganti nomor ke tenant #${tenant.id}`
+						: notification.type === "payment_success"
+							? `Bot mengirim konfirmasi pembayaran sukses ke tenant #${tenant.id}`
+							: `Bot mengirim pengingat pembayaran ke tenant #${tenant.id}`;
 
 			await db.insert(auditLogs).values({
 				userId: botUserId,

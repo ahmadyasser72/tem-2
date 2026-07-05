@@ -67,6 +67,7 @@ export const NOTIFICATION_TYPE_BADGES = {
 	reminder: "badge-warning",
 	payment_success: "badge-success",
 	welcome: "badge-primary",
+	phone_change: "badge-secondary",
 	custom: "badge-info",
 } satisfies Record<(typeof NOTIFICATION_TYPES)[number], string>;
 
@@ -74,6 +75,7 @@ export const NOTIFICATION_TYPE_LABELS = {
 	reminder: "Pengingat",
 	payment_success: "Pembayaran Sukses",
 	welcome: "Verifikasi",
+	phone_change: "Verifikasi Ganti Nomor",
 	custom: "Custom",
 } satisfies Record<(typeof NOTIFICATION_TYPES)[number], string>;
 

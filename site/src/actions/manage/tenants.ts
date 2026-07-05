@@ -192,25 +192,36 @@ export const edit = defineAction({
 			});
 		}
 
+		const phoneChanged = phoneNumber !== target.phoneNumber;
+
 		const [updated] = await db
 			.update(tenants)
 			.set({
 				fullName: input.full_name,
 				phoneNumber,
 				originRegion: input.origin_region ?? null,
+				...(phoneChanged && { isVerified: false }),
 			})
 			.where(eq(tenants.id, input.id))
 			.returning({ id: tenants.id });
+
+		if (phoneChanged) {
+			await db.insert(notifications).values({
+				tenantId: updated.id,
+				type: "phone_change",
+				status: "pending",
+			});
+		}
+
+		const description = phoneChanged
+			? `Mengubah data penghuni ${input.full_name} (${phoneNumber}); nomor diubah, reset verifikasi`
+			: `Mengubah data penghuni ${input.full_name} (${phoneNumber})`;
 
 		await context.locals.logAudit(
 			"UPDATE",
 			"tenants",
 			updated.id,
-			auditDetail.update(
-				`Mengubah data penghuni ${input.full_name} (${phoneNumber})`,
-				target,
-				toCamelCaseKeys(input),
-			),
+			auditDetail.update(description, target, toCamelCaseKeys(input)),
 		);
 
 		return updated;

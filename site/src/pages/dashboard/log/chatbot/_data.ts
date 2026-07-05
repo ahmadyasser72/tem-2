@@ -99,19 +99,19 @@ export const getChatbotStats = (
 			title: "Total Percakapan",
 			value: logs.length,
 			desc: "Pesan masuk dan keluar",
-			icon: "lucide:messages-square" ,
+			icon: "lucide:messages-square",
 		},
 		{
 			title: "Pesan Masuk",
 			value: incoming,
 			desc: `${incomingRate}% dari total`,
-			icon: "lucide:arrow-down-circle" ,
+			icon: "lucide:arrow-down-circle",
 		},
 		{
 			title: "Pesan Keluar",
 			value: outgoing,
 			desc: `${uniqueTenants} penghuni berbeda`,
-			icon: "lucide:arrow-up-circle" ,
+			icon: "lucide:arrow-up-circle",
 		},
 	];
 };

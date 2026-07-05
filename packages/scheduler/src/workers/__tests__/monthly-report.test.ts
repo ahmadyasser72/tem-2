@@ -1,6 +1,5 @@
 import { db } from "@indekos/database";
 import {
-	auditLogs,
 	invoices,
 	leases,
 	rooms,
@@ -27,7 +26,6 @@ mock.module("@indekos/utilities/push", () => ({
 }));
 
 let systemUser: User;
-let staffUser: User;
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -46,7 +44,7 @@ beforeAll(async () => {
 				.returning()
 		)[0];
 
-	const [staff] = await db
+	const [_staff] = await db
 		.insert(users)
 		.values({
 			username: "monthly-staff",
@@ -55,8 +53,6 @@ beforeAll(async () => {
 			role: "staff",
 		})
 		.returning();
-
-	staffUser = staff;
 
 	const [room] = await db
 		.insert(rooms)

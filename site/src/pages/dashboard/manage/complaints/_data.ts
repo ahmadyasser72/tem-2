@@ -52,22 +52,22 @@ export const getComplaintStats = (
 		{
 			title: "Total Komplain",
 			value: complaints.length,
-			icon: "lucide:file-text" ,
+			icon: "lucide:file-text",
 		},
 		{
 			title: "Terbuka",
 			value: open,
-			icon: "lucide:alert-circle" ,
+			icon: "lucide:alert-circle",
 		},
 		{
 			title: "Proses",
 			value: in_progress,
-			icon: "lucide:clock" ,
+			icon: "lucide:clock",
 		},
 		{
 			title: "Selesai",
 			value: resolved,
-			icon: "lucide:circle-check" ,
+			icon: "lucide:circle-check",
 		},
 	];
 };

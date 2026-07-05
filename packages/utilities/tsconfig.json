@@ -3,6 +3,6 @@
 	"include": ["./src/**/*.ts"],
 
 	"compilerOptions": {
-		"types": ["bun", "node", "web-push"],
-	},
+		"types": ["bun", "node", "web-push"]
+	}
 }

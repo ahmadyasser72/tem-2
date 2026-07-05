@@ -7,7 +7,7 @@ import { defineConfig, envField } from "astro/config";
 export default defineConfig({
 	output: "server",
 	adapter: node({ mode: "middleware" }),
-	security: { checkOrigin: false, },
+	security: { checkOrigin: false },
 
 	env: {
 		schema: {

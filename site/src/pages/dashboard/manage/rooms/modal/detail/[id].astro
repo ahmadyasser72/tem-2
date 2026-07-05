@@ -6,7 +6,7 @@ import { formatCurrency } from "@indekos/utilities/transforms";
 import DetailModal from "~/components/modal/detail-modal.astro";
 import Icon from "~/components/ui/icon.astro";
 import NotFound from "~/components/ui/not-found.astro";
-import { ROOM_TYPE_LABELS } from "../../_data";
+import { ROOM_FACILITIES, ROOM_TYPE_LABELS } from "../../_data";
 
 export const partial = true;
 
@@ -47,7 +47,14 @@ if (!room) Astro.response.status = 404;
 					<span class="font-bold">{room.roomNumber}</span>
 
 					<span class="font-semibold text-base-content/60">Jenis Kamar:</span>
-					<span>{ROOM_TYPE_LABELS[room.roomType] ?? room.roomType}</span>
+					<span>{ROOM_TYPE_LABELS[room.roomType]}</span>
+
+					<span class="font-semibold text-base-content/60">Fasilitas:</span>
+					<div class="flex flex-wrap gap-1">
+						{(ROOM_FACILITIES[room.roomType] ?? []).map((f) => (
+							<span class="badge badge-outline badge-sm">{f}</span>
+						))}
+					</div>
 
 					<span class="font-semibold text-base-content/60">Harga/Bulan:</span>
 					<span class="font-mono font-bold">

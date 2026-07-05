@@ -42,11 +42,8 @@ const { title } = Astro.props;
 		} else if (node.matches("#alert-client")) {
 			// #alert-client is client-controlled, skip
 			node.remove();
-		} else if (
-			node.matches(".alert") &&
-			node.parentElement?.matches(".toast")
-		) {
-			processToast(node);
+		} else if (node.matches(".alert")) {
+			processAlert(node);
 		}
 	});
 
@@ -76,13 +73,14 @@ const { title } = Astro.props;
 			element.scrollIntoView({ behavior: "smooth" });
 	});
 
-	const processToast = (alert: HTMLElement) => {
+	const processAlert = (alert: HTMLElement) => {
 		const closeButton = alert.querySelector<HTMLButtonElement>(".alert-close")!;
 		let timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
 		return new Promise<void>((resolve) => {
+			const isToast = alert.parentElement?.matches(".toast");
 			const clientOnly = alert.id === "alert-client";
-			if (clientOnly) alert.classList.toggle("hidden", false);
+			alert.classList.toggle("hidden", false);
 
 			const remove = () => {
 				alert.addEventListener(
@@ -91,8 +89,10 @@ const { title } = Astro.props;
 						if (clientOnly) {
 							alert.classList.toggle("hidden", true);
 							alert.classList.remove("opacity-0", "scale-25");
-						} else {
+						} else if (isToast) {
 							alert.remove();
+						} else {
+							alert.classList.toggle("hidden", true);
 						}
 
 						resolve();
@@ -104,7 +104,9 @@ const { title } = Astro.props;
 				alert.classList.add("opacity-0", "scale-25");
 			};
 
-			const autoRemove = () => setTimeout(remove, 5000);
+			const autoRemove = () => {
+				if (isToast) return setTimeout(remove, 5000);
+			};
 			const persistOnHover = () => {
 				clearTimeout(timeout);
 				alert.addEventListener(
@@ -143,7 +145,7 @@ const { title } = Astro.props;
 			alertDescription.innerText = description;
 		}
 
-		processToast(alert).finally(() => {
+		processAlert(alert).finally(() => {
 			alert.classList.toggle(`alert-${type}`, false);
 
 			if (!description) {

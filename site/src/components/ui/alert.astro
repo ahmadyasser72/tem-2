@@ -7,9 +7,17 @@ interface Props extends JSX.HTMLAttributes {
 	type?: "info" | "error";
 	title?: string;
 	description: string;
+	close?: boolean;
 }
 
-const { type, title, description, class: className, ...props } = Astro.props;
+const {
+	type,
+	title,
+	description,
+	class: className,
+	close = true,
+	...props
+} = Astro.props;
 ---
 
 <div
@@ -35,7 +43,11 @@ const { type, title, description, class: className, ...props } = Astro.props;
 		)
 	}
 
-	<button class="alert-close btn btn-circle btn-ghost btn-sm">
-		<Icon name="lucide:x" />
-	</button>
+	{
+		close && (
+			<button class="alert-close btn btn-circle btn-ghost btn-sm">
+				<Icon name="lucide:x" />
+			</button>
+		)
+	}
 </div>

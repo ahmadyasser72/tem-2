@@ -158,7 +158,8 @@ export const edit = defineAction({
 		origin_region: z
 			.string()
 			.optional()
-			.transform((s) => s ?? null),
+			.transform((s) => s ?? null)
+			.catch(null),
 	}),
 	handler: async (input, context) => {
 		const target = await db.query.tenants.findFirst({

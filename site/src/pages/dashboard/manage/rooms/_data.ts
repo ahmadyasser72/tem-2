@@ -95,6 +95,19 @@ export const ROOM_TYPE_LABELS = {
 	premium: "Premium",
 } satisfies Record<(typeof ROOM_TYPES)[number], string>;
 
+export const ROOM_FACILITIES: Record<(typeof ROOM_TYPES)[number], string[]> = {
+	standard: ["AC", "WiFi", "Kasur", "Lemari"],
+	premium: [
+		"AC",
+		"WiFi",
+		"Kasur",
+		"Lemari",
+		"Kamar Mandi Dalam",
+		"TV",
+		"Water Heater",
+	],
+};
+
 export const ROOM_STATUS_LABELS = {
 	occupied: "Terisi",
 	vacant: "Kosong",

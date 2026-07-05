@@ -4,7 +4,7 @@ import type { JSX } from "astro/jsx-runtime";
 import Icon from "./icon.astro";
 
 interface Props extends JSX.HTMLAttributes {
-	type: "info" | "error";
+	type?: "info" | "error";
 	title?: string;
 	description: string;
 }
@@ -27,11 +27,15 @@ const { type, title, description, class: className, ...props } = Astro.props;
 	{
 		title ? (
 			<div>
-				<h3 class="font-bold">{title}</h3>
-				<span class="text-xs" set:html={description} />
+				<h3 class="alert-title font-bold">{title}</h3>
+				<span class="alert-description text-xs" set:html={description} />
 			</div>
 		) : (
-			<p>{description}</p>
+			<p class="alert-description">{description}</p>
 		)
 	}
+
+	<button class="alert-close btn btn-circle btn-ghost btn-sm">
+		<Icon name="lucide:x" />
+	</button>
 </div>

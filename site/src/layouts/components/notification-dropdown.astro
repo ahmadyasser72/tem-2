@@ -1,0 +1,145 @@
+---
+import Icon from "~/components/ui/icon.astro";
+---
+
+<button class="btn btn-square btn-ghost" popovertarget="notification-popover">
+	<Icon name="lucide:bell" size="size-5" />
+</button>
+<ul
+	class="menu dropdown dropdown-end dropdown-bottom mt-2 w-64 menu-sm bg-base-100 p-2 shadow-sm"
+	id="notification-popover"
+	popover
+	style="position-anchor:--user-anchor"
+>
+	<li>
+		<button class="btn btn-primary btn-sm" id="push-toggle">
+			Aktifkan Notifikasi
+		</button>
+	</li>
+	<li>
+		<button class="btn btn-sm" id="push-test"> Kirim Test Notifikasi </button>
+	</li>
+</ul>
+
+<script>
+	import { actions } from "astro:actions";
+	import { VAPID_PUBLIC_KEY } from "astro:env/client";
+
+	const sw = await new Promise<ServiceWorkerRegistration | null>(
+		async (resolve) => {
+			if ("serviceWorker" in navigator && "PushManager" in window) {
+				await navigator.serviceWorker
+					.register("/sw.js")
+					.catch(() => resolve(null));
+
+				navigator.serviceWorker.ready.then(resolve);
+			} else {
+				resolve(null);
+			}
+		},
+	);
+
+	(async () => {
+		const pushToggle = document.getElementById("push-toggle");
+		const pushTest = document.getElementById("push-test");
+		if (
+			!(pushToggle instanceof HTMLButtonElement) ||
+			!(pushTest instanceof HTMLButtonElement)
+		)
+			return;
+
+		const updateToggle = (subscription: PushSubscription | null) => {
+			const subscribed = !!subscription;
+			pushToggle.textContent = subscribed
+				? "Nonaktifkan Notifikasi"
+				: "Aktifkan Notifikasi";
+
+			pushToggle.classList.toggle("btn-error", subscribed);
+			pushToggle.classList.toggle("btn-primary", !subscribed);
+
+			pushTest.disabled = !subscribed;
+		};
+
+		if (!sw) {
+			updateToggle(null);
+			pushToggle.addEventListener("click", () => {
+				showClientSideToast("error", "Browser tidak mendukung.");
+			});
+			return;
+		}
+
+		{
+			let subscription = await sw.pushManager.getSubscription();
+			updateToggle(subscription);
+
+			const subscribe = async () => {
+				const permission =
+					Notification.permission === "default"
+						? await Notification.requestPermission()
+						: Notification.permission;
+				if (permission !== "granted") {
+					showClientSideToast("error", "Akses notifikasi ditolak.");
+					return;
+				}
+
+				subscription = await sw.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: VAPID_PUBLIC_KEY,
+				});
+
+				const { error } = await actions.push.subscribe(
+					subscription.toJSON() as never,
+				);
+				if (error) {
+					console.error("Failed to save subscription:", error);
+					await subscription.unsubscribe();
+					subscription = null;
+					showClientSideToast(
+						"error",
+						"Gagal mendaftarkan notifikasi browser.",
+					);
+				}
+			};
+
+			const unsubscribe = async () => {
+				if (!subscription) return;
+
+				const { error } = await actions.push.unsubscribe({
+					endpoint: subscription.endpoint,
+				});
+				if (error) {
+					console.error("Failed to remove subscription:", error);
+					showClientSideToast("error", "Gagal menghapus notifikasi browser.");
+					return;
+				}
+
+				await subscription.unsubscribe();
+				subscription = null;
+			};
+
+			pushToggle.addEventListener("click", async () => {
+				pushToggle.disabled = true;
+
+				const subscribed = !!subscription;
+				await (subscribed ? unsubscribe : subscribe)();
+				updateToggle(subscription);
+
+				pushToggle.disabled = false;
+			});
+		}
+
+		pushTest.addEventListener("click", async () => {
+			pushTest.disabled = true;
+
+			const { error } = await actions.push.test();
+			if (error) {
+				console.error("Failed to send test notification:", error.message);
+				showClientSideToast("error", "Gagal kirim test notifikasi.");
+			} else {
+				showClientSideToast("info", "Notifikasi test dikirim!");
+			}
+
+			pushTest.disabled = false;
+		});
+	})();
+</script>

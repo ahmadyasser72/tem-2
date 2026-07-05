@@ -1,6 +1,7 @@
 import { db } from "@indekos/database";
 import { complaints, type Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
+import { sendPush } from "@indekos/utilities/push";
 
 import { render } from "../template";
 
@@ -21,6 +22,16 @@ export const submitComplaint = async (
 			status: "open",
 		})
 		.returning({ id: complaints.id, createdAt: complaints.createdAt });
+
+	const users = await db.query.users.findMany({
+		where: { role: { in: ["staff", "owner"] } },
+	});
+
+	await sendPush(users, {
+		title: `Komplain Baru dari ${tenant.fullName}`,
+		body: complaintDescription,
+		url: `/dashboard/complaints/${newComplaint.id}`,
+	});
 
 	return render("submit-complaint", {
 		id: newComplaint.id,

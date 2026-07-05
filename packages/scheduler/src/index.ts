@@ -2,6 +2,7 @@ import { db } from "@indekos/database";
 import { createLogger, pino } from "@indekos/utilities/logger";
 
 import { runInvoiceGeneration } from "./workers/invoice-generation";
+import { runMonthlyReport } from "./workers/monthly-report";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
 
@@ -29,6 +30,10 @@ const main = async () => {
 			runRentReminder(systemUser),
 		]),
 	);
+
+	// Laporan keuangan bulanan tiap tanggal 1 jam 8 pagi WITA
+	// 00:00 UTC = 08:00 WITA
+	Bun.cron("0 0 1 * *", () => runMonthlyReport(systemUser));
 
 	logger.info("Cron jobs registered");
 };

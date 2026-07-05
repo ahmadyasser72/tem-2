@@ -24,6 +24,16 @@ export default defineConfig({
 			}),
 			DUITKU_API_KEY: envField.string({ access: "secret", context: "server" }),
 			DUITKU_BASE_URL: envField.string({ access: "secret", context: "server" }),
+
+			VAPID_PUBLIC_KEY: envField.string({
+				access: "public",
+				context: "client",
+			}),
+			VAPID_PRIVATE_KEY: envField.string({
+				access: "secret",
+				context: "server",
+			}),
+			VAPID_SUBJECT: envField.string({ access: "secret", context: "server" }),
 		},
 	},
 

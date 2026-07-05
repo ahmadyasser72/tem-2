@@ -2,6 +2,7 @@ import { db } from "@indekos/database";
 
 import { logger } from ".";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
+import { runMonthlyReport } from "./workers/monthly-report";
 import { runOverdueCheck } from "./workers/overdue";
 import { runRentReminder } from "./workers/rent-reminder";
 
@@ -12,7 +13,7 @@ const main = async () => {
 	if (!task || !dateStr) {
 		logger.error("Usage: bun trigger <task> <date>");
 		logger.error("Run a scheduler task with a specific reference date.");
-		logger.error("  task   overdue | reminder | invoice");
+		logger.error("  task   overdue | reminder | invoice | report");
 		logger.error("  date   YYYY-MM-DD (WITA, UTC+8)");
 		process.exit(1);
 	}
@@ -43,10 +44,13 @@ const main = async () => {
 		case "invoice":
 			await runInvoiceGeneration(systemUser, date);
 			break;
+		case "report":
+			await runMonthlyReport(systemUser, date);
+			break;
 		default:
 			logger.error(
 				{ task },
-				"Unknown task. Available: overdue, reminder, invoice",
+				"Unknown task. Available: overdue, reminder, invoice, report",
 			);
 			process.exit(1);
 	}

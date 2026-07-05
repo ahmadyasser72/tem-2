@@ -13,33 +13,41 @@ const initial = user.name.charAt(0).toUpperCase();
 ---
 
 <button
-	class="flex w-full items-center gap-3 p-2 text-left"
+	class="btn btn-ghost pr-2 pl-4 btn-xl"
 	popovertarget="user-popover"
 	style="anchor-name:--user-anchor"
 >
+	<div class="flex flex-col items-end gap-0.5 max-sm:hidden">
+		<div class="text-sm font-medium">{user.name}</div>
+		<span class:list={["badge badge-xs uppercase", ROLE_BADGES[user.role]]}
+			>{user.role}</span
+		>
+	</div>
 	<div class="avatar avatar-placeholder">
-		<div class="w-9 rounded-full bg-neutral text-neutral-content">
+		<div class="size-10 rounded-full bg-neutral text-neutral-content">
 			<span class="text-sm font-bold">{initial}</span>
 		</div>
 	</div>
-	<div class="flex-1">
-		<div class="text-sm font-medium">{user.name}</div>
-		<span
-			class:list={[
-				"badge badge-xs uppercase",
-				ROLE_BADGES[user.role] ?? "badge-ghost",
-			]}>{user.role}</span
-		>
-	</div>
-	<Icon name="lucide:chevrons-up" size="size-5" />
+
+	<Icon name="lucide:chevrons-down" size="size-5" />
 </button>
 
 <ul
-	class="menu dropdown dropdown-top w-56 bg-base-100 p-2 shadow-sm"
+	class="menu dropdown dropdown-end dropdown-bottom mt-2 w-48 menu-sm bg-base-100 p-2 shadow-sm"
 	id="user-popover"
-	popover="auto"
+	popover
 	style="position-anchor:--user-anchor"
 >
+	<li>
+		<div
+			class="pointer-events-none flex flex-col items-start gap-0.5 bg-base-200 pt-2 pb-4 sm:hidden"
+		>
+			<div class="font-medium">{user.name}</div>
+			<span class:list={["badge badge-sm uppercase", ROLE_BADGES[user.role]]}
+				>{user.role}</span
+			>
+		</div>
+	</li>
 	<li>
 		<form
 			hx-post={actions.auth.logout}
@@ -47,7 +55,7 @@ const initial = user.name.charAt(0).toUpperCase();
 			action={actions.auth.logout}
 			method="post"
 		>
-			<button class="btn btn-error" type="submit">
+			<button class="btn btn-error btn-sm" type="submit">
 				<Icon name="lucide:log-out" size="size-5" />
 				Keluar
 			</button>

@@ -24,3 +24,11 @@
 @utility modal-box {
 	@apply max-h-9/10;
 }
+
+@utility toast {
+	@apply w-full sm:w-64;
+
+	> .alert {
+		@apply transition duration-300;
+	}
+}

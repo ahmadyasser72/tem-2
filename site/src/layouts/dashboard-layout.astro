@@ -5,6 +5,7 @@ import Icon from "~/components/ui/icon.astro";
 import type { Props as BaseProps } from "./base-layout.astro";
 import BaseLayout from "./base-layout.astro";
 import NavbarMenu from "./components/navbar-menu.astro";
+import NotificationDropdown from "./components/notification-dropdown.astro";
 import UserDropdown from "./components/user-dropdown.astro";
 
 interface Props extends BaseProps {
@@ -40,7 +41,16 @@ if (logoutResult && !logoutResult.error) {
 					<Icon name="lucide:menu" />
 				</label>
 
-				<div class="px-4">Indekos Ungu</div>
+				<div class="navbar-start px-4">
+					<a class="btn btn-ghost px-4 btn-lg max-sm:hidden" href="/dashboard"
+						>Indekos Ungu</a
+					>
+				</div>
+
+				<div class="navbar-end px-4">
+					<NotificationDropdown />
+					<UserDropdown user={user} />
+				</div>
 			</nav>
 			<div class="p-4">
 				<div class="flex flex-col gap-6">
@@ -74,10 +84,6 @@ if (logoutResult && !logoutResult.error) {
 				class="flex min-h-full w-64 flex-col border-r border-base-300/80 bg-base-100"
 			>
 				<NavbarMenu role={user.role} />
-
-				<div class="mt-auto border-t border-base-300 p-3">
-					<UserDropdown user={user} />
-				</div>
 			</div>
 		</div>
 	</div>

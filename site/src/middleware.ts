@@ -59,7 +59,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const { action } = getActionContext(context);
 	if (
 		context.url.pathname.startsWith("/dashboard") ||
-		(action && action.name.startsWith("manage."))
+		(action &&
+			(action.name.startsWith("manage.") || action.name.startsWith("push.")))
 	) {
 		const puppeteerToken = context.request.headers.get("x-puppeteer");
 		if (puppeteerToken && puppeteerToken === getPuppeteerToken()) {

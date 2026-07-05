@@ -39,22 +39,14 @@ const { title } = Astro.props;
 			node.addEventListener("close", () =>
 				setTimeout(() => node.remove(), 300),
 			);
+		} else if (node.matches("#alert-client")) {
+			// #alert-client is client-controlled, skip
+			node.remove();
 		} else if (
 			node.matches(".alert") &&
 			node.parentElement?.matches(".toast")
 		) {
-			const alert = node;
-			alert.classList.add("transition", "duration-300");
-			alert.addEventListener("transitionend", () => alert.remove());
-
-			const startTimer = () =>
-				setTimeout(() => alert.classList.add("opacity-0", "scale-25"), 5000);
-
-			let timeout = startTimer();
-			alert.addEventListener("mouseenter", () => {
-				clearTimeout(timeout);
-				timeout = startTimer();
-			});
+			processToast(node);
 		}
 	});
 
@@ -83,4 +75,81 @@ const { title } = Astro.props;
 		if (element instanceof HTMLElement)
 			element.scrollIntoView({ behavior: "smooth" });
 	});
+
+	const processToast = (alert: HTMLElement) => {
+		const closeButton = alert.querySelector<HTMLButtonElement>(".alert-close")!;
+		let timeout: ReturnType<typeof setTimeout> | undefined = undefined;
+
+		return new Promise<void>((resolve) => {
+			const clientOnly = alert.id === "alert-client";
+			if (clientOnly) alert.classList.toggle("hidden", false);
+
+			const remove = () => {
+				alert.addEventListener(
+					"transitionend",
+					() => {
+						if (clientOnly) {
+							alert.classList.toggle("hidden", true);
+							alert.classList.remove("opacity-0", "scale-25");
+						} else {
+							alert.remove();
+						}
+
+						resolve();
+					},
+					{ once: true },
+				);
+
+				alert.removeEventListener("mouseenter", persistOnHover);
+				alert.classList.add("opacity-0", "scale-25");
+			};
+
+			const autoRemove = () => setTimeout(remove, 5000);
+			const persistOnHover = () => {
+				clearTimeout(timeout);
+				alert.addEventListener(
+					"mouseleave",
+					() => {
+						timeout = autoRemove();
+					},
+					{ once: true },
+				);
+			};
+
+			timeout = autoRemove();
+			alert.addEventListener("mouseenter", persistOnHover);
+			closeButton.addEventListener("click", () => {
+				clearTimeout(timeout);
+				remove();
+			});
+		});
+	};
+
+	window.showClientSideToast = (type, title, description) => {
+		const alert = document.querySelector<HTMLElement>(".toast > #alert-client");
+		if (!alert || !alert.classList.contains("hidden")) return;
+
+		const alertTitle = alert.querySelector<HTMLElement>(".alert-title")!;
+		const alertDescription =
+			alert.querySelector<HTMLElement>(".alert-description")!;
+
+		alert.classList.toggle(`alert-${type}`, true);
+		if (!description) {
+			alertTitle.classList.toggle("hidden", true);
+			alertDescription.classList.toggle("text-sm", false);
+			alertDescription.innerText = title;
+		} else {
+			alertTitle.innerText = title;
+			alertDescription.innerText = description;
+		}
+
+		processToast(alert).finally(() => {
+			alert.classList.toggle(`alert-${type}`, false);
+
+			if (!description) {
+				alertTitle.classList.toggle("hidden", false);
+				alertDescription.classList.toggle("text-sm", true);
+			}
+		});
+	};
 </script>

@@ -1,0 +1,89 @@
+import { db, eq } from "@indekos/database";
+import {
+	auditDetail,
+	auditLogs,
+	pushSubscriptions,
+} from "@indekos/database/schema";
+import { initPush, sendPush } from "@indekos/utilities/push";
+
+import { defineAction } from "astro:actions";
+import { VAPID_PUBLIC_KEY } from "astro:env/client";
+import { VAPID_PRIVATE_KEY, VAPID_SUBJECT } from "astro:env/server";
+import { z } from "astro/zod";
+
+initPush(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+export const subscribe = defineAction({
+	accept: "json",
+	input: z.object({
+		endpoint: z.url(),
+		keys: z.object({ auth: z.string(), p256dh: z.string() }),
+	}),
+	handler: async (input, context) => {
+		const user = context.locals.user!;
+
+		await db.insert(pushSubscriptions).values({
+			userId: user.id,
+			endpoint: input.endpoint,
+			authKey: input.keys.auth,
+			p256dhKey: input.keys.p256dh,
+		});
+
+		await db.insert(auditLogs).values({
+			userId: user.id,
+			action: "CREATE",
+			tableName: "push_subscriptions",
+			details: auditDetail.create("Subscribed to push notifications", {
+				endpoint: input.endpoint,
+			}),
+		});
+
+		return { success: true };
+	},
+});
+
+export const unsubscribe = defineAction({
+	accept: "json",
+	input: z.object({ endpoint: z.url() }),
+	handler: async ({ endpoint }, context) => {
+		await db
+			.delete(pushSubscriptions)
+			.where(eq(pushSubscriptions.endpoint, endpoint));
+
+		await db.insert(auditLogs).values({
+			userId: context.locals.user!.id,
+			action: "DELETE",
+			tableName: "push_subscriptions",
+			details: auditDetail.delete("Unsubscribed from push notifications", {
+				endpoint,
+			}),
+		});
+
+		return { success: true };
+	},
+});
+
+export const test = defineAction({
+	accept: "json",
+	handler: async (_, context) => {
+		const user = context.locals.user!;
+
+		const result = await sendPush([user], {
+			title: "Test Notifikasi",
+			body: "Notifikasi berhasil dikirim! 🎉",
+		});
+
+		await db.insert(auditLogs).values({
+			userId: user.id,
+			action: "CREATE",
+			tableName: "notifications",
+			details: auditDetail.notification(
+				"Test push notification sent",
+				"push",
+				user.id,
+			),
+		});
+
+		return { sent: result.sent };
+	},
+});

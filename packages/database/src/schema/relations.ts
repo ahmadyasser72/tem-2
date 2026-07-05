@@ -12,6 +12,18 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.users.id,
 			to: r.complaints.resolvedBy,
 		}),
+		pushSubscriptions: r.many.pushSubscriptions({
+			from: r.users.id,
+			to: r.pushSubscriptions.userId,
+		}),
+	},
+
+	pushSubscriptions: {
+		user: r.one.users({
+			from: r.pushSubscriptions.userId,
+			to: r.users.id,
+			optional: true,
+		}),
 	},
 
 	tenants: {

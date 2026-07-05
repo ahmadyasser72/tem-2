@@ -161,6 +161,20 @@ export const botAuth = sqliteTable("bot_auth", {
 	value: text("value").notNull(),
 });
 
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	userId: integer("user_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	endpoint: text("endpoint").notNull().unique(),
+	authKey: text("auth_key").notNull(),
+	p256dhKey: text("p256dh_key").notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`)
+		.notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }),
+});
+
 export type User = typeof users.$inferSelect;
 export type Tenant = typeof tenants.$inferSelect;
 export type Room = typeof rooms.$inferSelect;
@@ -170,3 +184,4 @@ export type ChatbotMessage = typeof chatbotMessages.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type Complaint = typeof complaints.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

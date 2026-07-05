@@ -53,17 +53,17 @@ export const fetchTransactions = async (
 export const getTransactionStats = (
 	transactions: Awaited<ReturnType<typeof fetchTransactions>>,
 ): Stat[] => {
-	const byStatus = groupBy(transactions, ({ status }) =>
+	const { paid = [], unpaid = [] } = groupBy(transactions, ({ status }) =>
 		status === "paid" ? "paid" : "unpaid",
 	);
-	const totalRevenue = sumBy(byStatus.paid ?? [], ({ amount }) => amount);
-	const paidCount = byStatus.paid?.length ?? 0;
+	const totalRevenue = sumBy(paid, ({ amount }) => amount);
+	const paidCount = paid?.length;
 	const paidRate =
 		transactions.length > 0
 			? Math.round((paidCount / transactions.length) * 100)
 			: 0;
-	const unpaidCount = byStatus.unpaid?.length ?? 0;
-	const unpaidTotal = sumBy(byStatus.unpaid ?? [], ({ amount }) => amount);
+	const unpaidCount = unpaid.length;
+	const unpaidTotal = sumBy(unpaid, ({ amount }) => amount);
 
 	return [
 		{

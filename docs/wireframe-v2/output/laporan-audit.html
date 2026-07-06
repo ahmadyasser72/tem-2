@@ -1,158 +1,54 @@
 <!doctype html>
 <html lang="id" data-theme="wireframe">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
-		<title>Wireframe · Laporan Audit</title>
-		<link rel="stylesheet" href="../dist/style.css" />
-	</head>
-	<body class="bg-base-200 p-8">
-		<div class="report-paper">
-			<div class="kop-border">
-				<div class="avatar avatar-placeholder">
-					<div class="w-12 rounded-full bg-neutral text-neutral-content">
-						<span class="text-lg">KU</span>
-					</div>
-				</div>
-				<div class="flex-1 text-center">
-					<div class="text-lg font-bold tracking-wider uppercase">
-						Indekos Ungu
-					</div>
-					<hr class="my-1 border-base-content/20" />
-					<div class="kop-alamat">
-						Jl. Sejahtera, Komplek Damai, RT 002/RW 006, Kelurahan Mentaos, Kec.
-						Banjarbaru Utara, Kota Banjar Baru, Kalimantan Selatan 70714
-					</div>
-				</div>
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+	<title>Wireframe · Audit Log</title>
+	<link rel="stylesheet" href="../dist/style.css"/>
+</head>
+<body class="bg-base-200 p-8">
+	<div class="report-paper">
+		<div class="kop-border">
+			<div class="flex items-center justify-center">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-base-content/70"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 			</div>
-			<div class="mb-4 text-center">
-				<h2 class="text-sm font-bold tracking-wider uppercase underline">
-					Laporan Aktivitas Pengguna
-				</h2>
-				<p class="mt-1 text-xs opacity-60">
-					Aksi: create, update | Periode:
-					<span class="inline-block w-12 skeleton">&nbsp;</span> s/d
-					<span class="inline-block w-12 skeleton">&nbsp;</span>
-				</p>
+			<div class="flex-1 text-center">
+				<div class="text-lg font-bold tracking-wider uppercase">Indekos Ungu</div>
+				<hr class="my-1 border-base-content/20"/>
+				<div class="kop-alamat">Jl. Sejahtera, Komplek Damai, RT 002/RW 006, Kelurahan Mentaos, Kec. Banjarbaru Utara, Kota Banjar Baru, Kalimantan Selatan 70714</div>
 			</div>
-			<p class="mb-3 text-xs opacity-60">Dicetak: 06 Jul 2026 14:30</p>
-			<div class="mb-4 grid grid-cols-4 gap-3">
-				<div class="border border-base-300 p-2">
-					<div class="wf-label">Total Log</div>
-					<div class="text-lg font-bold">
-						<span class="inline-block w-12 skeleton">&nbsp;</span>
-					</div>
-					<div class="text-xs">Sejak awal</div>
-				</div>
-				<div class="border border-base-300 p-2">
-					<div class="wf-label">Hari Ini</div>
-					<div class="text-lg font-bold">
-						<span class="inline-block w-6 skeleton">&nbsp;</span>
-					</div>
-				</div>
-				<div class="border border-base-300 p-2">
-					<div class="wf-label">Minggu Ini</div>
-					<div class="text-lg font-bold">
-						<span class="inline-block w-6 skeleton">&nbsp;</span>
-					</div>
-				</div>
-				<div class="border border-base-300 p-2">
-					<div class="wf-label">Bulan Ini</div>
-					<div class="text-lg font-bold">
-						<span class="inline-block w-6 skeleton">&nbsp;</span>
-					</div>
-				</div>
-			</div>
+		</div>
+		<div class="mb-4 text-center">
+			<h2 class="text-sm font-bold tracking-wider uppercase underline">Laporan Audit Log</h2>
+			<p class="mt-1 text-xs opacity-60">Periode: Jan 2026 s/d Mar 2026</p>
+		</div>
+		<p class="mb-3 text-xs opacity-60">Dicetak: 06 Jul 2026 14:30</p>
+		<div class="mb-4 grid grid-cols-4 gap-3">
+			<div class="border border-base-300 p-2"><div class="wf-label">Total Log</div><div class="text-lg font-bold"><span class="inline-block w-8 skeleton">&nbsp;</span></div></div>
+			<div class="border border-base-300 p-2"><div class="wf-label">Hari Ini</div><div class="text-lg font-bold"><span class="inline-block w-6 skeleton">&nbsp;</span></div></div>
+			<div class="border border-base-300 p-2"><div class="wf-label">Bulan Ini</div><div class="text-lg font-bold"><span class="inline-block w-6 skeleton">&nbsp;</span></div></div>
+			<div class="border border-base-300 p-2"><div class="wf-label">Unique User</div><div class="text-lg font-bold"><span class="inline-block w-6 skeleton">&nbsp;</span></div></div>
+		</div>
+		<div class="overflow-x-auto">
 			<table class="report-table w-full border-collapse text-xs">
 				<thead>
 					<tr>
-						<th class="w-6 border border-base-300 p-1.5 text-center">No.</th>
-						<th class="border border-base-300 p-1.5">Waktu</th>
-						<th class="border border-base-300 p-1.5">Pengguna</th>
-						<th class="border border-base-300 p-1.5">Aksi</th>
-						<th class="border border-base-300 p-1.5">Tabel</th>
-						<th class="border border-base-300 p-1.5">ID Record</th>
+						<th class="w-[5%] border border-base-300 p-1.5 text-center">No.</th>
+						<th class="w-[20%] border border-base-300 p-1.5">Waktu Kejadian</th>
+						<th class="w-[18%] border border-base-300 p-1.5">Pengguna</th>
+						<th class="w-[14%] border border-base-300 p-1.5 text-center">Jenis Aksi</th>
+						<th class="w-[28%] border border-base-300 p-1.5">Tabel Target</th>
+						<th class="w-[15%] border border-base-300 p-1.5 text-center">ID Record</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td class="border border-base-300 p-1.5 text-center">1</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-20 skeleton">&nbsp;</span>
-						</td>
-					</tr>
-					<tr>
-						<td class="border border-base-300 p-1.5 text-center">2</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-20 skeleton">&nbsp;</span>
-						</td>
-					</tr>
-					<tr>
-						<td class="border border-base-300 p-1.5 text-center">3</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-24 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-14 skeleton">&nbsp;</span>
-						</td>
-						<td class="border border-base-300 p-1.5">
-							<span class="inline-block w-20 skeleton">&nbsp;</span>
-						</td>
-					</tr>
+					<tr><td class="border border-base-300 p-1.5 text-center">1</td><td class="border border-base-300 p-1.5"><span class="inline-block h-3 w-20 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-10 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-10 skeleton">&nbsp;</span></td></tr>
+					<tr><td class="border border-base-300 p-1.5 text-center">2</td><td class="border border-base-300 p-1.5"><span class="inline-block h-3 w-20 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-12 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-10 skeleton">&nbsp;</span></td></tr>
+					<tr><td class="border border-base-300 p-1.5 text-center">3</td><td class="border border-base-300 p-1.5"><span class="inline-block h-3 w-20 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-8 skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 truncate"><span class="inline-block h-3 w-full skeleton">&nbsp;</span></td><td class="border border-base-300 p-1.5 text-center"><span class="inline-block h-3 w-10 skeleton">&nbsp;</span></td></tr>
 				</tbody>
 			</table>
-			<div class="mt-8 grid grid-cols-2 gap-8 text-center text-xs">
-				<div>
-					<p class="font-bold">
-						Banjarbaru, <span class="inline-block w-16 skeleton">&nbsp;</span>
-					</p>
-					<p>Dibuat oleh</p>
-					<p class="opacity-60">(Staff/Admin)</p>
-					<div class="mt-6 border-t border-base-300 pt-1">
-						<span class="inline-block w-20 skeleton">&nbsp;</span>
-					</div>
-				</div>
-				<div>
-					<p class="font-bold">
-						Banjarbaru, <span class="inline-block w-16 skeleton">&nbsp;</span>
-					</p>
-					<p>Diketahui oleh</p>
-					<p class="opacity-60">(Pemilik Kos)</p>
-					<div class="mt-6 border-t border-base-300 pt-1">
-						<span class="inline-block w-20 skeleton">&nbsp;</span>
-					</div>
-				</div>
-			</div>
 		</div>
-	</body>
+		<div class="mt-1 text-right text-[9px] opacity-40">Hal. 1/1</div>
+	</div>
+</body>
 </html>

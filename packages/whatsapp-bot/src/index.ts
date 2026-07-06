@@ -28,13 +28,6 @@ import {
 import { pollNotifications } from "./polls/notifications";
 import { render } from "./template";
 
-interface PendingMessage {
-	tenant: Tenant;
-	text: string;
-}
-
-const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
 
 const conversationManager = new ConversationManager();
@@ -62,33 +55,12 @@ export const main = async () => {
 		logger: createLogger("whatsapp-bot"),
 	});
 
-	let lastSendTime = 0;
-	const sendMessage = sock.sendMessage;
-	sock.sendMessage = async (...args) => {
-		const now = Date.now();
-		const elapsed = now - lastSendTime;
-
-		if (elapsed < 1_000) {
-			const wait = 1_000 - elapsed;
-			console.warn("rate limit: waiting %d ms before next send", wait);
-			await Bun.sleep(wait);
-		}
-
-		const out = await sendMessage(...args);
-		lastSendTime = Date.now();
-		return out;
-	};
-
 	sock.ev.on("creds.update", saveCreds);
 
-	sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
-		if (connection === "open") {
-			console.log("WhatsApp connected");
-		} else {
-			console.warn("connection status: %s", connection);
-			if (lastDisconnect?.error) {
-				console.error("disconnect error:", lastDisconnect.error);
-			}
+	sock.ev.on("connection.update", (update) => {
+		const { lastDisconnect, connection } = update;
+		if (connection === "close") {
+			console.error("disconnect error:", lastDisconnect?.error);
 		}
 	});
 
@@ -96,7 +68,7 @@ export const main = async () => {
 		for (const message of messages) {
 			if (message.key.fromMe) continue;
 
-			const jid = message.key.remoteJidAlt;
+			const jid = message.key.remoteJidAlt!;
 			if (!jid?.endsWith("@s.whatsapp.net")) continue;
 
 			const imageMsg = message.message?.imageMessage;
@@ -120,7 +92,7 @@ export const main = async () => {
 					continue;
 				}
 
-				sock.sendMessage(jid, {
+				await sock.sendMessage(jid, {
 					text: render("unknown-number", {}),
 				});
 
@@ -153,7 +125,7 @@ export const main = async () => {
 						.set({ isVerified: true })
 						.where(eq(tenants.id, tenant.id));
 
-					sock.sendMessage(
+					await sock.sendMessage(
 						jid,
 						{
 							text: render("verification-success", {
@@ -163,7 +135,7 @@ export const main = async () => {
 						{ quoted: message },
 					);
 				} else {
-					sock.sendMessage(jid, {
+					await sock.sendMessage(jid, {
 						text: render("verification-prompt", { fullName: tenant.fullName }),
 					});
 				}
@@ -182,7 +154,7 @@ export const main = async () => {
 			}
 
 			// ── Tenant dikenal ──────────────────────────────────────
-			// 1. Active conversation session — proses langsung, no debounce
+			// 1. Active conversation session — proses langsung
 			if (conversationManager.hasActiveSession(jid)) {
 				const reply = await conversationManager.handleMessage(
 					jid,
@@ -196,7 +168,7 @@ export const main = async () => {
 						message: reply,
 					});
 
-					sock.sendMessage(jid, { text: reply }, { quoted: message });
+					await sock.sendMessage(jid, { text: reply }, { quoted: message });
 				}
 				continue;
 			}
@@ -217,41 +189,21 @@ export const main = async () => {
 						message: reply,
 					});
 
-					sock.sendMessage(jid, { text: reply }, { quoted: message });
+					await sock.sendMessage(jid, { text: reply }, { quoted: message });
 				}
 				continue;
 			}
 
-			// 3. Fallback: existing debounce + processCommand
-			pendingMessages.set(jid, { tenant, text });
+			// 3. Fallback — proses langsung
+			const responseText = await processCommand(tenant, text);
 
-			const existing = debounceTimers.get(jid);
-			if (existing) clearTimeout(existing);
+			await db.insert(chatbotMessages).values({
+				tenantId: tenant.id,
+				direction: "outgoing",
+				message: responseText,
+			});
 
-			debounceTimers.set(
-				jid,
-				setTimeout(async () => {
-					debounceTimers.delete(jid);
-
-					const data = pendingMessages.get(jid);
-					pendingMessages.delete(jid);
-					if (!data) return;
-
-					try {
-						const responseText = await processCommand(data.tenant, data.text);
-
-						await db.insert(chatbotMessages).values({
-							tenantId: data.tenant.id,
-							direction: "outgoing",
-							message: responseText,
-						});
-
-						sock.sendMessage(jid, { text: responseText }, { quoted: message });
-					} catch (err) {
-						console.error("message processing failed for %s:", jid, err);
-					}
-				}, 1_000),
-			);
+			await sock.sendMessage(jid, { text: responseText }, { quoted: message });
 		}
 	});
 

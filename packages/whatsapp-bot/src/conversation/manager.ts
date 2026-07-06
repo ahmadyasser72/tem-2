@@ -14,11 +14,16 @@ export class ConversationManager {
 		this.flows.set(flow.name, flow);
 	}
 
+	/** Check if session expired, cleanup if yes. */
+	private isExpired(session: ConversationSession): boolean {
+		return Date.now() - session.lastActivity > SESSION_TIMEOUT_MS;
+	}
+
 	/** True if JID has active (non-expired) session. */
 	hasActiveSession(jid: string): boolean {
 		const session = this.sessions.get(jid);
 		if (!session) return false;
-		if (Date.now() - session.lastActivity > SESSION_TIMEOUT_MS) {
+		if (this.isExpired(session)) {
 			this.endSession(jid);
 			return false;
 		}
@@ -54,7 +59,7 @@ export class ConversationManager {
 		if (!session) return null;
 
 		// Expired?
-		if (Date.now() - session.lastActivity > SESSION_TIMEOUT_MS) {
+		if (this.isExpired(session)) {
 			this.endSession(jid);
 			return null;
 		}
@@ -65,31 +70,28 @@ export class ConversationManager {
 			return null;
 		}
 
-		const step = flow.steps[session.step];
-		if (!step) {
+		const handler = flow.steps[session.step];
+		if (!handler) {
 			this.endSession(jid);
 			return null;
 		}
 
-		// Touch activity timestamp
-		session.lastActivity = Date.now();
-
-		const result = await step(input, session);
+		const result = await handler(input, session);
 
 		if (result.next === null) {
-			// End session
 			this.endSession(jid);
-		} else if (result.next !== undefined) {
-			// Advance to next step
+		} else if (result.next) {
 			session.step = result.next;
+			session.lastActivity = Date.now();
+		} else {
+			// Same step (retry/validation error)
+			session.lastActivity = Date.now();
 		}
-		// undefined = stay on same step (retry/error)
 
 		return result.reply;
 	}
 
-	/** Force end a session. */
-	endSession(jid: string): void {
+	private endSession(jid: string): void {
 		this.sessions.delete(jid);
 	}
 

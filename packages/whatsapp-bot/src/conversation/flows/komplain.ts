@@ -84,11 +84,22 @@ export const komplainFlow: FlowDef = {
 				where: { role: "staff" },
 			});
 
-			await sendPush(users, {
-				title: `Komplain Baru dari ${session.tenant.fullName}`,
-				body: input.image ? `${description} [dengan foto]` : description,
-				url: `/dashboard/complaints/${newComplaint.id}`,
-			});
+			// Notifikasi push — gagal notif jangan blokir balasan
+			try {
+				if (users.length > 0) {
+					await sendPush(users, {
+						title: `Komplain Baru dari ${session.tenant.fullName}`,
+						body: input.image ? `${description} [dengan foto]` : description,
+						url: `/dashboard/complaints/${newComplaint.id}`,
+					});
+				}
+			} catch (err) {
+				console.error(
+					"push notification failed for complaint %s:",
+					newComplaint.id,
+					err,
+				);
+			}
 
 			return {
 				reply: render("submit-complaint", {

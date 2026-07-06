@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id" data-theme="wireframe">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+		<title>Wireframe · Komplain</title>
+		<link rel="stylesheet" href="../dist/style.css" />
+	</head>
+	<body class="min-h-dvh bg-base-200">
+		<div class="mx-auto max-w-6xl p-4">
+			<h1 class="mb-1 text-2xl font-bold">📋 Komplain</h1>
+			<p class="mb-4 text-sm opacity-60">Kelola komplain dari penghuni</p>
+			<div class="card mb-4 border border-base-300 bg-base-100 p-4 shadow-sm">
+				<div class="flex flex-wrap items-end gap-4">
+					<div class="flex items-center gap-2">
+						<label class="wf-label">📅 Pilih Periode</label
+						><input
+							type="month"
+							class="input w-36 input-sm"
+							value="2026-01"
+							disabled
+						/><span class="text-sm">Sampai:</span
+						><input
+							type="month"
+							class="input w-36 input-sm"
+							value="2026-03"
+							disabled
+						/>
+					</div>
+					<div class="ml-auto flex items-center gap-2">
+						<button class="btn btn-sm">🔽 Filter</button
+						><label class="input input-sm"
+							>🔍<input type="search" placeholder="Cari komplain…" class="grow"
+						/></label>
+					</div>
+				</div>
+			</div>
+			<div
+				class="stats mb-4 w-full stats-vertical border border-base-300 shadow-sm sm:stats-horizontal"
+			>
+				<div class="stat">
+					<div class="stat-title">Total Komplain</div>
+					<div class="stat-value text-xl">
+						<span class="inline-block w-8 skeleton">&nbsp;</span>
+					</div>
+				</div>
+				<div class="stat">
+					<div class="stat-title">Terbuka</div>
+					<div class="stat-value text-xl">
+						<span class="inline-block w-6 skeleton">&nbsp;</span>
+					</div>
+				</div>
+				<div class="stat">
+					<div class="stat-title">Diproses</div>
+					<div class="stat-value text-xl">
+						<span class="inline-block w-6 skeleton">&nbsp;</span>
+					</div>
+				</div>
+				<div class="stat">
+					<div class="stat-title">Selesai</div>
+					<div class="stat-value text-xl">
+						<span class="inline-block w-6 skeleton">&nbsp;</span>
+					</div>
+				</div>
+			</div>
+			<div class="card border border-base-300 bg-base-100 p-4 shadow-sm">
+				<div class="space-y-3">
+					<div
+						class="card border border-l-4 border-base-300 border-l-red-500 bg-base-100 p-3"
+					>
+						<div class="flex justify-between">
+							<span class="font-bold"
+								><span class="inline-block w-32 skeleton">&nbsp;</span></span
+							><span class="badge badge-soft text-xs badge-error"
+								>🔴 Terbuka</span
+							>
+						</div>
+						<p class="mt-1 text-sm">
+							<span class="inline-block w-64 skeleton">&nbsp;</span>
+						</p>
+						<p class="mt-1 text-xs opacity-60">
+							<span class="inline-block w-24 skeleton">&nbsp;</span>
+						</p>
+					</div>
+					<div
+						class="card border border-l-4 border-base-300 border-l-yellow-500 bg-base-100 p-3"
+					>
+						<div class="flex justify-between">
+							<span class="font-bold"
+								><span class="inline-block w-32 skeleton">&nbsp;</span></span
+							><span class="badge badge-soft text-xs badge-warning"
+								>🟡 Diproses</span
+							>
+						</div>
+						<p class="mt-1 text-sm">
+							<span class="inline-block w-64 skeleton">&nbsp;</span>
+						</p>
+						<p class="mt-1 text-xs opacity-60">
+							<span class="inline-block w-24 skeleton">&nbsp;</span>
+						</p>
+					</div>
+					<div
+						class="card border border-l-4 border-base-300 border-l-green-500 bg-base-100 p-3"
+					>
+						<div class="flex justify-between">
+							<span class="font-bold"
+								><span class="inline-block w-32 skeleton">&nbsp;</span></span
+							><span class="badge badge-soft text-xs badge-success"
+								>🟢 Selesai</span
+							>
+						</div>
+						<p class="mt-1 text-sm">
+							<span class="inline-block w-64 skeleton">&nbsp;</span>
+						</p>
+						<p class="mt-1 text-xs opacity-60">
+							<span class="inline-block w-24 skeleton">&nbsp;</span>
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

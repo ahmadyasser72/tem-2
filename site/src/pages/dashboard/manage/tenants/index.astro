@@ -10,6 +10,8 @@ import ActionsMenu from "~/components/ui/actions-menu.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	fetchTenants,
 	getTenantsStats,
@@ -46,8 +48,13 @@ Astro.locals.actionResults.push(
 );
 
 const params = Astro.locals.parseQuery(tenantsQuerySchema);
-const tenants = await fetchTenants(params);
-const tenantsStats = getTenantsStats(tenants);
+const allTenants = await fetchTenants(params);
+const tenantsStats = getTenantsStats(allTenants);
+const { items: tenants, ...pagination } = paginateArray(
+	allTenants,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -80,10 +87,6 @@ const tenantsStats = getTenantsStats(tenants);
 
 	<div
 		class="flex items-center justify-end gap-2"
-		hx-include=".filter-tenants"
-		hx-select="#tenants-content-wrapper"
-		hx-swap="outerHTML transition:true"
-		hx-target="#tenants-content-wrapper"
 	>
 		<FilterPopover
 			name="tenants"
@@ -290,5 +293,11 @@ const tenantsStats = getTenantsStats(tenants);
 				}
 			</tbody>
 		</table>
+
+		<Pagination
+			baseUrl="/dashboard/manage/tenants"
+			filterClass="filter-tenants"
+			{...pagination}
+		/>
 	</div>
 </DashboardLayout>

@@ -13,6 +13,8 @@ import IconLoader from "~/components/ui/icon-loader.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	fetchTransactions,
 	getTransactionStats,
@@ -38,8 +40,13 @@ Astro.locals.actionResults.push(
 
 const params = Astro.locals.parseQuery(transactionQuerySchema);
 
-const invoices = await fetchTransactions(params);
-const transactionStats = getTransactionStats(invoices);
+const allInvoices = await fetchTransactions(params);
+const transactionStats = getTransactionStats(allInvoices);
+const { items: invoices, ...pagination } = paginateArray(
+	allInvoices,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -267,5 +274,11 @@ const transactionStats = getTransactionStats(invoices);
 				</tbody>
 			</table>
 		</div>
+
+		<Pagination
+			baseUrl="/dashboard/report/transactions"
+			filterClass="filter-transactions"
+			{...pagination}
+		/>
 	</div>
 </DashboardLayout>

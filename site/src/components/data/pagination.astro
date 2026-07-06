@@ -1,0 +1,107 @@
+---
+export interface Props {
+	baseUrl: string;
+	page: number;
+	totalPages: number;
+	total: number;
+	pageSize: number;
+	filterClass: string;
+}
+
+const { baseUrl, page, totalPages, total, pageSize, filterClass } = Astro.props;
+
+const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+const end = Math.min(page * pageSize, total);
+
+const pages: number[] = [];
+const startPage = Math.max(1, page - 2);
+const endPage = Math.min(totalPages, page + 2);
+for (let i = startPage; i <= endPage; i++) {
+	pages.push(i);
+}
+
+const hxTarget = `#${filterClass.replace("filter-", "")}-content-wrapper`;
+---
+
+{
+	total > 0 && (
+		<div class="flex items-center justify-between border-t border-base-200 pt-4">
+			<span class="text-sm text-base-content/60">
+				{start}–{end} dari {total}
+			</span>
+
+			<div class="join">
+				{page > 1 && (
+					<a
+						hx-get={`${baseUrl}?page=${page - 1}`}
+						hx-include={`.${filterClass}`}
+						hx-target={hxTarget}
+						hx-select={hxTarget}
+						hx-swap="outerHTML transition:true"
+						class="join-item btn btn-sm"
+					>
+						«
+					</a>
+				)}
+
+				{startPage > 1 && (
+					<a
+						hx-get={`${baseUrl}?page=1`}
+						hx-include={`.${filterClass}`}
+						hx-target={hxTarget}
+						hx-select={hxTarget}
+						hx-swap="outerHTML transition:true"
+						class="join-item btn btn-sm"
+					>
+						1
+					</a>
+				)}
+				{startPage > 2 && (
+					<span class="join-item btn btn-sm btn-disabled">…</span>
+				)}
+
+				{pages.map((p) => (
+					<a
+						hx-get={`${baseUrl}?page=${p}`}
+						hx-include={`.${filterClass}`}
+						hx-target={hxTarget}
+						hx-select={hxTarget}
+						hx-swap="outerHTML transition:true"
+						class:list={["join-item btn btn-sm", p === page && "btn-active"]}
+					>
+						{p}
+					</a>
+				))}
+
+				{endPage < totalPages - 1 && (
+					<span class="join-item btn btn-sm btn-disabled">…</span>
+				)}
+				{endPage < totalPages && (
+					<a
+						hx-get={`${baseUrl}?page=${totalPages}`}
+						hx-include={`.${filterClass}`}
+						hx-target={hxTarget}
+						hx-select={hxTarget}
+						hx-swap="outerHTML transition:true"
+						class="join-item btn btn-sm"
+					>
+						{totalPages}
+					</a>
+				)}
+
+				{page < totalPages && (
+					<a
+						hx-get={`${baseUrl}?page=${page + 1}`}
+						hx-include={`.${filterClass}`}
+						hx-target={hxTarget}
+						hx-select={hxTarget}
+						hx-swap="outerHTML transition:true"
+						class="join-item btn btn-sm"
+					>
+						»
+					</a>
+				)}
+			</div>
+		</div>
+	)
+}

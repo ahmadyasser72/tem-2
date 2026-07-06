@@ -9,6 +9,8 @@ import SearchInput from "~/components/data/search-input.astro";
 import Stats from "~/components/data/stats.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	ACTION_BADGES,
 	AUDIT_ACTIONS,
@@ -26,8 +28,13 @@ Astro.locals.actionResults.push({
 
 const params = Astro.locals.parseQuery(auditQuerySchema);
 
-const auditLogs = await fetchAuditLogs(params);
-const auditStats = getAuditStats(auditLogs);
+const allAuditLogs = await fetchAuditLogs(params);
+const auditStats = getAuditStats(allAuditLogs);
+const { items: auditLogs, ...pagination } = paginateArray(
+	allAuditLogs,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -149,5 +156,11 @@ const auditStats = getAuditStats(auditLogs);
 				}
 			</tbody>
 		</table>
+
+		<Pagination
+			baseUrl="/dashboard/log/audit"
+			filterClass="filter-audit"
+			{...pagination}
+		/>
 	</div>
 </DashboardLayout>

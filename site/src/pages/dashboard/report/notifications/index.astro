@@ -11,6 +11,8 @@ import Stats from "~/components/data/stats.astro";
 import Alert from "~/components/ui/alert.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	fetchNotifications,
 	getNotificationStats,
@@ -29,8 +31,13 @@ Astro.locals.actionResults.push({
 
 const params = Astro.locals.parseQuery(notificationQuerySchema);
 
-const notifications = await fetchNotifications(params);
-const notificationStats = getNotificationStats(notifications);
+const allNotifications = await fetchNotifications(params);
+const notificationStats = getNotificationStats(allNotifications);
+const { items: notifications, ...pagination } = paginateArray(
+	allNotifications,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -157,5 +164,11 @@ const notificationStats = getNotificationStats(notifications);
 				}
 			</tbody>
 		</table>
+
+		<Pagination
+			baseUrl="/dashboard/report/notifications"
+			filterClass="filter-notifications"
+			{...pagination}
+		/>
 	</div>
 </DashboardLayout>

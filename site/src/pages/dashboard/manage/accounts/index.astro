@@ -9,6 +9,8 @@ import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { ROLE_BADGES } from "~/lib/auth";
 import { createActionResult } from "~/lib/form-result";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import { accountsQuerySchema, fetchAccounts } from "./_data";
 
 Astro.locals.actionResults.push(
@@ -30,7 +32,12 @@ Astro.locals.actionResults.push(
 );
 
 const params = Astro.locals.parseQuery(accountsQuerySchema);
-const accounts = await fetchAccounts(params);
+const allAccounts = await fetchAccounts(params);
+const { items: accounts, ...pagination } = paginateArray(
+	allAccounts,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -53,10 +60,6 @@ const accounts = await fetchAccounts(params);
 
 	<div
 		class="flex items-center justify-end gap-2"
-		hx-include=".filter-accounts"
-		hx-select="#accounts-content-wrapper"
-		hx-swap="outerHTML transition:true"
-		hx-target="#accounts-content-wrapper"
 	>
 		<FilterPopover
 			name="accounts"
@@ -154,5 +157,11 @@ const accounts = await fetchAccounts(params);
 				}
 			</tbody>
 		</table>
+
+		<Pagination
+			baseUrl="/dashboard/manage/accounts"
+			filterClass="filter-accounts"
+			{...pagination}
+		/>
 	</div>
 </DashboardLayout>

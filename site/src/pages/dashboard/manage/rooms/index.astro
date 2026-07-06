@@ -10,6 +10,8 @@ import ActionsMenu from "~/components/ui/actions-menu.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	fetchRooms,
 	getRoomStats,
@@ -39,8 +41,13 @@ Astro.locals.actionResults.push(
 );
 
 const params = Astro.locals.parseQuery(roomQuerySchema);
-const rooms = await fetchRooms(params);
-const roomStats = getRoomStats(rooms);
+const allRooms = await fetchRooms(params);
+const roomStats = getRoomStats(allRooms);
+const { items: rooms, ...pagination } = paginateArray(
+	allRooms,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -73,10 +80,6 @@ const roomStats = getRoomStats(rooms);
 
 	<div
 		class="flex items-center justify-end gap-2"
-		hx-include=".filter-rooms"
-		hx-select="#rooms-content-wrapper"
-		hx-swap="outerHTML transition:true"
-		hx-target="#rooms-content-wrapper"
 	>
 		<FilterPopover
 			name="rooms"
@@ -207,4 +210,10 @@ const roomStats = getRoomStats(rooms);
 			)
 		}
 	</div>
+
+	<Pagination
+		baseUrl="/dashboard/manage/rooms"
+		filterClass="filter-rooms"
+		{...pagination}
+	/>
 </DashboardLayout>

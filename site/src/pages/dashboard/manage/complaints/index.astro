@@ -10,6 +10,8 @@ import Stats from "~/components/data/stats.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
 import { createActionResult } from "~/lib/form-result";
+import { paginateArray } from "~/lib/query";
+import Pagination from "~/components/data/pagination.astro";
 import {
 	COMPLAINT_STATUS_BADGES,
 	COMPLAINT_STATUS_BORDERS,
@@ -33,8 +35,13 @@ Astro.locals.actionResults.push(
 );
 
 const params = Astro.locals.parseQuery(complaintQuerySchema);
-const complaints = await fetchComplaints(params);
-const complaintStats = getComplaintStats(complaints);
+const allComplaints = await fetchComplaints(params);
+const complaintStats = getComplaintStats(allComplaints);
+const { items: complaints, ...pagination } = paginateArray(
+	allComplaints,
+	params.page,
+	params.pageSize,
+);
 ---
 
 <DashboardLayout
@@ -216,4 +223,10 @@ const complaintStats = getComplaintStats(complaints);
 			)
 		}
 	</div>
+
+	<Pagination
+		baseUrl="/dashboard/manage/complaints"
+		filterClass="filter-complaints"
+		{...pagination}
+	/>
 </DashboardLayout>

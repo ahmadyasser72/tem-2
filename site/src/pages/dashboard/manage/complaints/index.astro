@@ -97,6 +97,7 @@ const complaintStats = getComplaintStats(complaints);
 				({
 					id,
 					description,
+					imagePath,
 					status,
 					createdAt,
 					tenantName,
@@ -140,6 +141,11 @@ const complaintStats = getComplaintStats(complaints);
 									</div>
 									<p class="text-base font-bold text-base-content">
 										{description}
+										{imagePath && (
+											<span class="ml-2 text-lg" title="Disertai foto">
+												📷
+											</span>
+										)}
 									</p>
 									{resolveNotes && (
 										<div class="mt-2 max-w-xl rounded border border-success/20 bg-success/5 p-2.5 text-xs">
@@ -191,22 +197,17 @@ const complaintStats = getComplaintStats(complaints);
 											class="btn btn-outline btn-sm btn-warning"
 										>
 											<Icon name="lucide:loader" />
-											Tandai Proses
+											Proses
 										</button>
 									)}
-									{isResolvable ? (
+									{isResolvable && (
 										<button
 											hx-get={`/dashboard/manage/complaints/modal/resolve/${id}`}
 											class="btn btn-outline btn-sm btn-success"
 										>
 											<Icon name="lucide:circle-check" />
-											Tandai Selesai
-										</button>
-									) : (
-										<span class="flex items-center gap-1 text-xs font-bold text-success">
-											<Icon name="lucide:circle-check" />
 											Selesai
-										</span>
+										</button>
 									)}
 								</div>
 							</div>

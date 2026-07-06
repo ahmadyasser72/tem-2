@@ -11,6 +11,7 @@ export const partial = true;
 
 const complaint = await db.query.complaints.findFirst({
 	where: { id: Number(Astro.params.id) },
+	columns: { id: true, imagePath: true },
 });
 
 if (!complaint) Astro.response.status = 404;
@@ -29,6 +30,16 @@ if (!complaint) Astro.response.status = 404;
 					akan berubah dari <span class="font-bold text-error">Terbuka</span>{" "}
 					menjadi <span class="font-bold text-warning">Proses</span>.
 				</p>
+
+				{complaint.imagePath && (
+					<div class="mb-4">
+						<img
+							class="max-h-64 w-full rounded object-contain"
+							src={`/api/uploads/${complaint.imagePath}`}
+							alt="Foto komplain"
+						/>
+					</div>
+				)}
 
 				<ModalForm
 					action={actions.manage.complaints.process}

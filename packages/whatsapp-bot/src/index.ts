@@ -8,7 +8,7 @@ import {
 } from "@indekos/database/schema";
 import { createLogger } from "@indekos/utilities/logger";
 
-import { makeWASocket } from "baileys";
+import { downloadMediaMessage, makeWASocket } from "baileys";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -20,6 +20,7 @@ import { submitComplaint } from "./commands/submit-complaint";
 import { tenantInfo } from "./commands/tenant-info";
 import { komplainFlow } from "./conversation/flows/komplain";
 import { ConversationManager } from "./conversation/manager";
+import type { MessageInput } from "./conversation/types";
 import {
 	pollInProgressComplaints,
 	pollResolvedComplaints,
@@ -35,6 +36,9 @@ interface PendingMessage {
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
+
+const conversationManager = new ConversationManager();
+conversationManager.registerFlow(komplainFlow);
 
 export const main = async () => {
 	const botUser = await db.query.users.findFirst({
@@ -75,10 +79,6 @@ export const main = async () => {
 		return out;
 	};
 
-	// Conversation flow engine
-	const conversationManager = new ConversationManager();
-	conversationManager.registerFlow(komplainFlow);
-
 	sock.ev.on("creds.update", saveCreds);
 
 	sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
@@ -99,8 +99,14 @@ export const main = async () => {
 			const jid = message.key.remoteJidAlt;
 			if (!jid?.endsWith("@s.whatsapp.net")) continue;
 
-			const text = message.message?.conversation?.trim() || "";
-			if (!text) continue;
+			const imageMsg = message.message?.imageMessage;
+			const text = (
+				message.message?.conversation ||
+				imageMsg?.caption ||
+				""
+			).trim();
+
+			if (!text && !imageMsg) continue;
 
 			const lower = text.toLowerCase().trim();
 			const phone = jid.replace("@s.whatsapp.net", "");
@@ -109,7 +115,6 @@ export const main = async () => {
 			});
 
 			if (!tenant) {
-				// Nomor tidak dikenal — cooldown 30 detik per nomor
 				const cooldownUntil = unknownCooldowns.get(jid);
 				if (cooldownUntil && Date.now() < cooldownUntil) {
 					continue;
@@ -119,7 +124,6 @@ export const main = async () => {
 					text: render("unknown-number", {}),
 				});
 
-				// Cooldown 30 detik sebelum bisa reply nomor yg sama lagi
 				unknownCooldowns.set(jid, Date.now() + 30_000);
 
 				await db.insert(auditLogs).values({
@@ -138,7 +142,7 @@ export const main = async () => {
 			await db.insert(chatbotMessages).values({
 				tenantId: tenant.id,
 				direction: "incoming",
-				message: text,
+				message: text || "📷 [gambar]",
 			});
 
 			// Tenant belum verifikasi — cek konfirmasi "YA"
@@ -166,10 +170,24 @@ export const main = async () => {
 				continue;
 			}
 
+			// Build message input — download image if present
+			const messageInput: MessageInput = { text };
+			if (imageMsg) {
+				try {
+					const buffer = await downloadMediaMessage(message, "buffer", {});
+					messageInput.image = { buffer, mimetype: imageMsg.mimetype! };
+				} catch (err) {
+					console.error("failed to download image for %s:", jid, err);
+				}
+			}
+
 			// ── Tenant dikenal ──────────────────────────────────────
 			// 1. Active conversation session — proses langsung, no debounce
 			if (conversationManager.hasActiveSession(jid)) {
-				const reply = await conversationManager.handleMessage(jid, text);
+				const reply = await conversationManager.handleMessage(
+					jid,
+					messageInput,
+				);
 
 				if (reply) {
 					await db.insert(chatbotMessages).values({
@@ -187,7 +205,10 @@ export const main = async () => {
 			if (lower === "komplain") {
 				conversationManager.startSession(jid, tenant, "komplain");
 
-				const reply = await conversationManager.handleMessage(jid, text);
+				const reply = await conversationManager.handleMessage(
+					jid,
+					messageInput,
+				);
 
 				if (reply) {
 					await db.insert(chatbotMessages).values({

@@ -1,6 +1,6 @@
 import type { Tenant } from "@indekos/database/schema";
 
-import type { ConversationSession, FlowDef } from "./types";
+import type { ConversationSession, FlowDef, MessageInput } from "./types";
 
 const SESSION_TIMEOUT_MS = 5 * 60 * 1_000; // 5 menit inactivity
 const CLEANUP_INTERVAL_MS = 30 * 1_000; // 30 detik
@@ -46,7 +46,10 @@ export class ConversationManager {
 	 * Route message to active session step handler.
 	 * Returns reply string, or null if no active session.
 	 */
-	async handleMessage(jid: string, text: string): Promise<string | null> {
+	async handleMessage(
+		jid: string,
+		input: MessageInput,
+	): Promise<string | null> {
 		const session = this.sessions.get(jid);
 		if (!session) return null;
 
@@ -62,28 +65,31 @@ export class ConversationManager {
 			return null;
 		}
 
-		const stepHandler = flow.steps[session.step];
-		if (!stepHandler) {
+		const step = flow.steps[session.step];
+		if (!step) {
 			this.endSession(jid);
 			return null;
 		}
 
-		const result = await stepHandler(text, session);
+		// Touch activity timestamp
+		session.lastActivity = Date.now();
+
+		const result = await step(input, session);
 
 		if (result.next === null) {
+			// End session
 			this.endSession(jid);
-		} else if (result.next) {
+		} else if (result.next !== undefined) {
+			// Advance to next step
 			session.step = result.next;
-			session.lastActivity = Date.now();
-		} else {
-			// Stay on same step (validation error / retry)
-			session.lastActivity = Date.now();
 		}
+		// undefined = stay on same step (retry/error)
 
 		return result.reply;
 	}
 
-	private endSession(jid: string): void {
+	/** Force end a session. */
+	endSession(jid: string): void {
 		this.sessions.delete(jid);
 	}
 
@@ -92,12 +98,12 @@ export class ConversationManager {
 			const now = Date.now();
 			for (const [jid, session] of this.sessions) {
 				if (now - session.lastActivity > SESSION_TIMEOUT_MS) {
-					this.endSession(jid);
+					this.sessions.delete(jid);
 				}
 			}
 
-			if (this.sessions.size === 0 && this.cleanupTimer) {
-				clearInterval(this.cleanupTimer);
+			if (this.sessions.size === 0) {
+				clearInterval(this.cleanupTimer!);
 				this.cleanupTimer = null;
 			}
 		}, CLEANUP_INTERVAL_MS);

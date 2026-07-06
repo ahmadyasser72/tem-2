@@ -9,6 +9,14 @@ export interface ConversationSession {
 	data: Record<string, unknown>;
 }
 
+export interface MessageInput {
+	text: string;
+	image?: {
+		buffer: Buffer;
+		mimetype: string;
+	};
+}
+
 export interface StepResult {
 	reply: string;
 	/** null = end session, undefined = stay on same step (retry/error), string = next step id */
@@ -16,7 +24,7 @@ export interface StepResult {
 }
 
 export type StepHandler = (
-	input: string,
+	input: MessageInput,
 	session: ConversationSession,
 ) => StepResult | Promise<StepResult>;
 

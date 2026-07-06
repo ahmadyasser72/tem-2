@@ -24,7 +24,7 @@ export const submitComplaint = async (
 		.returning({ id: complaints.id, createdAt: complaints.createdAt });
 
 	const users = await db.query.users.findMany({
-		where: { role: { in: ["staff", "owner"] } },
+		where: { role: "staff" },
 	});
 
 	await sendPush(users, {

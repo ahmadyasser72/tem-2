@@ -44,19 +44,20 @@ try {
 			else el = ".max-w-6xl";
 
 			const elHandle = await page.$(el);
-			if (!elHandle) {
-				console.error("✗ no match:", rel);
-				fail++;
-				continue;
-			}
+			if (!elHandle) { console.error("✗ no match:", rel); fail++; continue; }
 			const box = await elHandle.boundingBox();
-			if (!box) {
-				console.error("✗ no box:", rel);
-				fail++;
-				continue;
-			}
+			if (!box) { console.error("✗ no box:", rel); fail++; continue; }
 
-			await page.screenshot({ path: outPath, clip: { ...box } });
+			const pad = 10;
+			await page.screenshot({
+				path: outPath,
+				clip: {
+					x: Math.max(0, box.x - pad),
+					y: Math.max(0, box.y - pad),
+					width: box.width + pad * 2,
+					height: box.height + pad * 2,
+				},
+			});
 			console.log("✓", rel);
 			ok++;
 		} finally {

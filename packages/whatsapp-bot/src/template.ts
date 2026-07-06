@@ -93,6 +93,7 @@ interface TemplateParams {
 		dueDate: string | null;
 		paymentUrl: string | null;
 	};
+	"complaint-prompt": Record<string, never>;
 	"unknown-number": Record<string, never>;
 	"unknown-command": Record<string, never>;
 	"verification-success": {

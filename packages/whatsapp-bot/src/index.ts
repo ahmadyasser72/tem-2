@@ -18,6 +18,8 @@ import { listComplaints } from "./commands/list-complaints";
 import { paymentHistory } from "./commands/payment-history";
 import { submitComplaint } from "./commands/submit-complaint";
 import { tenantInfo } from "./commands/tenant-info";
+import { komplainFlow } from "./conversation/flows/komplain";
+import { ConversationManager } from "./conversation/manager";
 import {
 	pollInProgressComplaints,
 	pollResolvedComplaints,
@@ -72,6 +74,10 @@ export const main = async () => {
 		lastSendTime = Date.now();
 		return out;
 	};
+
+	// Conversation flow engine
+	const conversationManager = new ConversationManager();
+	conversationManager.registerFlow(komplainFlow);
 
 	sock.ev.on("creds.update", saveCreds);
 
@@ -160,7 +166,42 @@ export const main = async () => {
 				continue;
 			}
 
-			// Tenant dikenal — debounce 5 detik, simpan pesan terbaru
+			// ── Tenant dikenal ──────────────────────────────────────
+			// 1. Active conversation session — proses langsung, no debounce
+			if (conversationManager.hasActiveSession(jid)) {
+				const reply = await conversationManager.handleMessage(jid, text);
+
+				if (reply) {
+					await db.insert(chatbotMessages).values({
+						tenantId: tenant.id,
+						direction: "outgoing",
+						message: reply,
+					});
+
+					sock.sendMessage(jid, { text: reply }, { quoted: message });
+				}
+				continue;
+			}
+
+			// 2. Pesan trigger flow interaktif — start session + proses
+			if (lower === "komplain") {
+				conversationManager.startSession(jid, tenant, "komplain");
+
+				const reply = await conversationManager.handleMessage(jid, text);
+
+				if (reply) {
+					await db.insert(chatbotMessages).values({
+						tenantId: tenant.id,
+						direction: "outgoing",
+						message: reply,
+					});
+
+					sock.sendMessage(jid, { text: reply }, { quoted: message });
+				}
+				continue;
+			}
+
+			// 3. Fallback: existing debounce + processCommand
 			pendingMessages.set(jid, { tenant, text });
 
 			const existing = debounceTimers.get(jid);

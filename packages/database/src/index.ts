@@ -1,4 +1,5 @@
 import path from "node:path";
+import { MONOREPO_ROOT } from "@indekos/utilities/monorepo";
 
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
@@ -18,6 +19,8 @@ export const {
 
 export { eq, ne, and, inArray, sql } from "drizzle-orm";
 
-export const DB_PATH =
-	process.env.DATABASE_PATH ?? path.join(import.meta.dirname, "../db.sqlite");
+export const DB_PATH = path.resolve(
+	MONOREPO_ROOT,
+	process.env.DATABASE_PATH ?? "db.sqlite",
+);
 export const db = drizzle(DB_PATH, { schema, relations });

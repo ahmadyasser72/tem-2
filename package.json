@@ -20,9 +20,7 @@
 		"scheduler:trigger": "bun --cwd=packages/scheduler run trigger",
 		"format": "prettier . --write",
 		"format:check": "prettier . --check",
-		"docs:build-css": "bunx @tailwindcss/cli -i docs/wireframe-v2/src/style.css -o docs/wireframe-v2/dist/style.css",
-		"docs:dump-diagrams": "bun ./docs/scripts/dump.ts",
-		"docs:export-diagrams": "bun ./docs/scripts/export.ts"
+		"docs:build-css": "bunx @tailwindcss/cli -i docs/wireframe-v2/src/style.css -o docs/wireframe-v2/dist/style.css"
 	},
 	"devDependencies": {
 		"@ianvs/prettier-plugin-sort-imports": "4.7.1",

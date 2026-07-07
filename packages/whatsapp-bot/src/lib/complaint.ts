@@ -93,7 +93,7 @@ export const submitComplaintResponse = async (
 	if (!description || description.length < 5) {
 		if (image) {
 			// Image without text = valid (min description bypassed)
-			const trimmed = text.replace(/^komplain\s*/i, "").trim() || "Foto";
+			const trimmed = description || "Foto";
 			const complaint = await createComplaint(tenant, trimmed, image);
 			await notifyStaffNewComplaint(tenant, complaint);
 

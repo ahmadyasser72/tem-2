@@ -2,7 +2,7 @@ import { db } from "@indekos/database";
 import type { Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 
-import { render } from "../template";
+import { render } from "~/template";
 import { STATUS_LABEL } from "./constants";
 
 export const checkComplaint = async (

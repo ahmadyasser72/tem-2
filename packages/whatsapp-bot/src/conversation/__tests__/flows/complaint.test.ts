@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
-import { complaintFlow } from "../../flows/complaint";
-import type { ConversationSession, MessageInput } from "../../types";
+import { complaintFlow } from "~/conversation/flows/complaint";
+import type { ConversationSession, MessageInput } from "~/conversation/types";
 
 const mockCreateComplaint = mock(
 	async (_tenant: any, _description: string, _image?: any) => ({
@@ -14,12 +14,12 @@ const mockRender = mock(
 	(template: string, _data?: any) => `rendered:${template}`,
 );
 
-mock.module("../../../lib/complaint", () => ({
+mock.module("~/lib/complaint", () => ({
 	createComplaint: mockCreateComplaint,
 	notifyStaffNewComplaint: mockNotifyStaff,
 }));
 
-mock.module("../../../template", () => ({
+mock.module("~/template", () => ({
 	render: mockRender,
 }));
 
@@ -191,7 +191,7 @@ describe("komplainFlow", () => {
 			const result = await complaintFlow.steps.collect(text("ab"), session);
 
 			expect(result.reply).toContain("min 5 karakter");
-			expect(result.next).toBeNull();
+			expect(result.next).toBeUndefined();
 		});
 
 		it("processes complaint with valid text and notifies staff", async () => {

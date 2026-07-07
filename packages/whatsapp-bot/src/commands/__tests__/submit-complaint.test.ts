@@ -1,9 +1,8 @@
+import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { db } from "@indekos/database";
 import { tenants, users } from "@indekos/database/schema";
 
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-
-import type { ActiveTenant } from "../../conversation/types";
+import type { ActiveTenant } from "~/conversation/types";
 import { submitComplaint } from "../submit-complaint";
 
 const mockSendPush = mock(() => Promise.resolve({ sent: 0 }));

@@ -6,12 +6,11 @@ import { UPLOADS_DIR } from "@indekos/utilities/database";
 import { formatDate } from "@indekos/utilities/date";
 import { sendPush } from "@indekos/utilities/push";
 
-import type { ActiveTenant, MessageInput } from "../conversation/types";
-import { render } from "../template";
+import type { ActiveTenant, MessageInput } from "~/conversation/types";
+import { render } from "~/template";
 
 export const saveComplaintImage = async (
-	buffer: Buffer,
-	mimetype: string,
+	{ buffer, mimetype }: NonNullable<MessageInput["image"]>,
 	complaintId: number,
 ) => {
 	const ALLOWED_IMAGE_EXT = new Set(["jpeg", "jpg", "png", "gif", "webp"]);
@@ -40,11 +39,7 @@ export const createComplaint = async (
 	let imagePath: string | null = null;
 	if (image) {
 		try {
-			imagePath = await saveComplaintImage(
-				image.buffer,
-				image.mimetype,
-				newComplaint.id,
-			);
+			imagePath = await saveComplaintImage(image, newComplaint.id);
 
 			await db
 				.update(complaints)

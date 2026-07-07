@@ -1,6 +1,6 @@
-import type { ConversationSession } from "../conversation/types";
-import { submitComplaintResponse } from "../lib/complaint";
-import { render } from "../template";
+import type { ConversationSession } from "~/conversation/types";
+import { submitComplaintResponse } from "~/lib/complaint";
+import { render } from "~/template";
 
 export const submitComplaint = async (
 	tenant: ConversationSession["tenant"],

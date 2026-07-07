@@ -44,7 +44,7 @@ export class ConversationManager {
 			step: flow.initialStep,
 			lastActivity: Date.now(),
 			data: {},
-    });
+		});
 
 		if (!this.cleanupTimer) this.startCleanup();
 	}

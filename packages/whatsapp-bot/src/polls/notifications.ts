@@ -11,7 +11,7 @@ import { formatCurrency } from "@indekos/utilities/transforms";
 
 import type { WASocket } from "baileys";
 
-import { render } from "../template";
+import { render } from "~/template";
 
 export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 	const pending = await db.query.notifications.findMany({

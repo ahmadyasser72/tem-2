@@ -1,8 +1,12 @@
 import { formatDate } from "@indekos/utilities/date";
 
-import { createComplaint, notifyStaffNewComplaint } from "../../lib/complaint";
-import { render } from "../../template";
-import type { ConversationSession, FlowDef, MessageInput } from "../types";
+import type {
+	ConversationSession,
+	FlowDef,
+	MessageInput,
+} from "~/conversation/types";
+import { createComplaint, notifyStaffNewComplaint } from "~/lib/complaint";
+import { render } from "~/template";
 
 const completeComplaint = async (
 	session: ConversationSession,

@@ -2,7 +2,7 @@
 import type { PaginationResult } from "~/lib/query";
 import { getToolbarProps } from "./filter-toolbar.astro";
 
-export interface Props extends Omit<PaginationResult<any>, "items"> {
+export interface Props extends Omit<PaginationResult<unknown>, "items"> {
 	name: string;
 }
 

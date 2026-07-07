@@ -56,6 +56,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		return parsed;
 	};
 
+	const user = await context.session?.get("user");
+	if (user) context.locals.user = { ...user, allowEdit: user.role !== "owner" };
+
 	const { action } = getActionContext(context);
 	if (
 		context.url.pathname.startsWith("/dashboard") ||
@@ -79,15 +82,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			return next();
 		}
 
-		const user = await context.session?.get("user");
 		if (!user) {
 			console.warn("middleware: unauthenticated access", {
 				path: context.url.pathname,
 			});
+
 			return context.redirect(new URL("/login", context.url).pathname);
 		}
-
-		context.locals.user = { ...user, allowEdit: user.role !== "owner" };
 	}
 
 	// Action helpers

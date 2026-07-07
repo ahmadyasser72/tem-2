@@ -40,12 +40,7 @@ export const komplainFlow: FlowDef = {
 				input.image,
 			);
 
-			await notifyStaffNewComplaint(
-				session.tenant,
-				description,
-				input.image,
-				complaint.imagePath,
-			);
+			await notifyStaffNewComplaint(session.tenant, complaint);
 
 			return {
 				reply: render("submit-complaint", {

@@ -22,7 +22,7 @@ export default defineConfig({
 			UPLOADS_DIR: envField.string({
 				access: "secret",
 				context: "server",
-				default: "./uploads",
+				default: "uploads",
 			}),
 			DUITKU_MERCHANT_CODE: envField.string({
 				access: "secret",

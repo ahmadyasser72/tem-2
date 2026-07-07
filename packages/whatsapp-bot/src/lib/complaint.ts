@@ -1,26 +1,25 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { db, eq } from "@indekos/database";
-import { complaints, type Tenant } from "@indekos/database/schema";
+import {
+	complaints,
+	type Complaint,
+	type Tenant,
+} from "@indekos/database/schema";
+import { UPLOADS_DIR } from "@indekos/utilities/database";
 import { formatDate } from "@indekos/utilities/date";
 import { sendPush } from "@indekos/utilities/push";
 
 import { render } from "../template";
 
-type ImageData = { buffer: Buffer; mimetype: string };
-
-const getUploadsDir = () =>
-	process.env.UPLOADS_DIR || path.resolve(process.cwd(), "../../site/uploads");
-
 export const saveComplaintImage = async (
 	buffer: Buffer,
 	mimetype: string,
 	complaintId: number,
-): Promise<string> => {
+) => {
 	const ext = mimetype.split("/")[1] ?? "jpg";
 	const filename = `complaints/${complaintId}.${ext}`;
-	const uploadsDir = getUploadsDir();
-	const filePath = path.join(uploadsDir, filename);
+	const filePath = path.join(UPLOADS_DIR, filename);
 
 	await fs.mkdir(path.dirname(filePath), { recursive: true });
 	await Bun.write(filePath, buffer);
@@ -31,39 +30,37 @@ export const saveComplaintImage = async (
 export const createComplaint = async (
 	tenant: Tenant,
 	description: string,
-	image?: ImageData,
-): Promise<{ id: number; createdAt: Date; imagePath?: string }> => {
+	image?: { buffer: Buffer; mimetype: string },
+) => {
 	const [newComplaint] = await db
 		.insert(complaints)
-		.values({
-			tenantId: tenant.id,
-			description,
-			status: "open",
-		})
+		.values({ tenantId: tenant.id, description, status: "open" })
 		.returning({ id: complaints.id, createdAt: complaints.createdAt });
 
-	let imagePath: string | undefined = undefined;
+	let imagePath: string | null = null;
 	if (image) {
-		imagePath = await saveComplaintImage(
-			image.buffer,
-			image.mimetype,
-			newComplaint.id,
-		);
+		try {
+			imagePath = await saveComplaintImage(
+				image.buffer,
+				image.mimetype,
+				newComplaint.id,
+			);
 
-		await db
-			.update(complaints)
-			.set({ imagePath })
-			.where(eq(complaints.id, newComplaint.id));
+			await db
+				.update(complaints)
+				.set({ imagePath })
+				.where(eq(complaints.id, newComplaint.id));
+		} catch (err) {
+			console.error("failed to save complaint image:", err);
+		}
 	}
 
-	return { id: newComplaint.id, createdAt: newComplaint.createdAt, imagePath };
+	return { ...newComplaint, description, imagePath };
 };
 
 export const notifyStaffNewComplaint = async (
 	tenant: Tenant,
-	description: string,
-	image?: ImageData,
-	imagePath?: string,
+	complaint: Pick<Complaint, "description" | "imagePath">,
 ) => {
 	const users = await db.query.users.findMany({
 		where: { role: "staff" },
@@ -74,9 +71,9 @@ export const notifyStaffNewComplaint = async (
 	try {
 		await sendPush(users, {
 			title: `Komplain Baru dari ${tenant.fullName}`,
-			body: image ? `${description} [dengan foto]` : description,
+			body: complaint.description,
 			url: "/dashboard/complaints",
-			imagePath,
+			imagePath: complaint.imagePath ?? undefined,
 		});
 	} catch (err) {
 		console.error("push notification failed:", err);
@@ -86,8 +83,8 @@ export const notifyStaffNewComplaint = async (
 export const submitComplaintResponse = async (
 	tenant: Tenant,
 	text: string,
-	image?: ImageData,
-): Promise<string> => {
+	image?: { buffer: Buffer; mimetype: string },
+) => {
 	const description = text.replace(/^komplain\s*/i, "").trim();
 
 	if (!description || description.length < 5) {
@@ -95,12 +92,7 @@ export const submitComplaintResponse = async (
 			// Image without text = valid (min description bypassed)
 			const trimmed = text.replace(/^komplain\s*/i, "").trim() || "Foto";
 			const complaint = await createComplaint(tenant, trimmed, image);
-			await notifyStaffNewComplaint(
-				tenant,
-				trimmed,
-				image,
-				complaint.imagePath,
-			);
+			await notifyStaffNewComplaint(tenant, complaint);
 
 			return render("submit-complaint", {
 				id: complaint.id,
@@ -113,12 +105,7 @@ export const submitComplaintResponse = async (
 	}
 
 	const complaint = await createComplaint(tenant, description, image);
-	await notifyStaffNewComplaint(
-		tenant,
-		description,
-		image,
-		complaint.imagePath,
-	);
+	await notifyStaffNewComplaint(tenant, complaint);
 
 	return render("submit-complaint", {
 		id: complaint.id,

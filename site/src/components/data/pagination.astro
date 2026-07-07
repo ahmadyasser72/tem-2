@@ -101,7 +101,7 @@ const hxVals = (p: number) => JSON.stringify({ page: p, "page-size": pageSize })
 				hx-get
 				class="select w-max select-sm sm:max-w-28"
 				name="page-size"
-				hx-vals={JSON.stringify({ page: 1, "page-size": pageSize })}
+				hx-vals={hxVals(1)}
 			>
 				{[10, 25, 50, 100].map((size) => (
 					<option value={size} selected={size === pageSize}>

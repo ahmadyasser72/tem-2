@@ -8,10 +8,52 @@ export const komplainFlow: FlowDef = {
 	name: "komplain",
 	initialStep: "prompt",
 	steps: {
-		prompt: async () => ({
-			reply: render("complaint-prompt", {}),
-			next: "collect",
-		}),
+		prompt: async (input, session) => {
+			const text = input.text.trim();
+			const lower = text.toLowerCase();
+
+			// Initial message already has content — handle it directly
+			// so image/text is not lost waiting for collect
+			if (input.image || text) {
+				if (lower === "batal") {
+					return {
+						reply: "❌ Komplain dibatalkan.",
+						next: null,
+					};
+				}
+
+				const description = input.image ? text || "Foto" : text;
+
+				if (!input.image && description.length < 5) {
+					return {
+						reply:
+							"✏️ Deskripsi terlalu pendek (min 5 karakter). Coba lagi atau ketik *batal* untuk membatalkan.",
+					};
+				}
+
+				const complaint = await createComplaint(
+					session.tenant,
+					description,
+					input.image,
+				);
+
+				await notifyStaffNewComplaint(session.tenant, complaint);
+
+				return {
+					reply: render("submit-complaint", {
+						id: complaint.id,
+						description,
+						createdAt: formatDate(complaint.createdAt),
+					}),
+					next: null,
+				};
+			}
+
+			return {
+				reply: render("complaint-prompt", {}),
+				next: "collect",
+			};
+		},
 
 		collect: async (input: MessageInput, session) => {
 			const text = input.text.trim();

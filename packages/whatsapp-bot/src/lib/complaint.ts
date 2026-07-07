@@ -62,13 +62,13 @@ export const notifyStaffNewComplaint = async (
 	tenant: Tenant,
 	complaint: Pick<Complaint, "description" | "imagePath">,
 ) => {
-	const users = await db.query.users.findMany({
-		where: { role: "staff" },
-	});
-
-	if (users.length === 0) return;
-
 	try {
+		const users = await db.query.users.findMany({
+			where: { role: "staff" },
+		});
+
+		if (users.length === 0) return;
+
 		await sendPush(users, {
 			title: `Komplain Baru dari ${tenant.fullName}`,
 			body: complaint.description,

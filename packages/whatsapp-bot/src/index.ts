@@ -168,7 +168,10 @@ export const main = async () => {
 			if (imageMessage) {
 				try {
 					const buffer = await downloadMediaMessage(message, "buffer", {});
-					messageInput.image = { buffer, mimetype: imageMessage.mimetype! };
+					messageInput.image = {
+						buffer,
+						mimetype: imageMessage.mimetype ?? "image/jpeg",
+					};
 				} catch (err) {
 					console.error("failed to download image for %s:", jid, err);
 				}

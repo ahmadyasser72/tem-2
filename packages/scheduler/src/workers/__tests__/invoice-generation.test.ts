@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
 import {
 	leases,
@@ -8,12 +7,36 @@ import {
 	type User,
 } from "@indekos/database/schema";
 
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
+
 import { runInvoiceGeneration } from "../invoice-generation";
+
+const mockGeneratePaymentLink = mock(() =>
+	Promise.resolve({
+		paymentUrl:
+			"https://sandbox.duitku.com/redirect_checkout?reference=MOCK123",
+		reference: "MOCK123",
+		alreadyExists: false,
+	}),
+);
+
+mock.module("@indekos/database/duitku/invoice-payment", () => ({
+	generatePaymentLink: mockGeneratePaymentLink,
+}));
 
 let systemUser: User;
 let leaseId: number;
 
 beforeAll(async () => {
+	process.env.SITE_URL = "http://localhost:4321";
 	db.run("BEGIN");
 
 	systemUser =
@@ -63,7 +86,12 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
+	delete process.env.SITE_URL;
 	db.run("ROLLBACK");
+});
+
+beforeEach(() => {
+	mockGeneratePaymentLink.mockClear();
 });
 
 describe("runInvoiceGeneration", () => {
@@ -77,6 +105,13 @@ describe("runInvoiceGeneration", () => {
 		expect(invoice).not.toBeUndefined();
 		expect(invoice!.amount).toBe(250_000);
 		expect(invoice!.status).toBe("unpaid");
+
+		expect(mockGeneratePaymentLink).toHaveBeenCalledTimes(1);
+		expect(mockGeneratePaymentLink).toHaveBeenCalledWith(
+			expect.any(Number),
+			"http://localhost:4321",
+			systemUser.id,
+		);
 	});
 
 	it("does not create invoice on wrong day", async () => {

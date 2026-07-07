@@ -147,6 +147,7 @@ export const complaints = sqliteTable("complaints", {
 		.notNull()
 		.references(() => tenants.id),
 	description: text("description").notNull(),
+	imagePath: text("image_path"),
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),
 	processedAt: integer("processed_at", { mode: "timestamp" }),
 	resolvedBy: integer("resolved_by").references(() => users.id),

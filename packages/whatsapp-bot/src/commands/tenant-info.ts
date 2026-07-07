@@ -3,7 +3,7 @@ import type { Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 import { formatCurrency } from "@indekos/utilities/transforms";
 
-import { render } from "../template";
+import { render } from "~/template";
 
 export const tenantInfo = async (tenant: Tenant): Promise<string> => {
 	const activeLease = await db.query.leases.findFirst({

@@ -4,11 +4,15 @@ import {
 	auditLogs,
 	chatbotMessages,
 	tenants,
-	type Tenant,
 } from "@indekos/database/schema";
 import { createLogger } from "@indekos/utilities/logger";
 
-import { makeWASocket } from "baileys";
+import {
+	DisconnectReason,
+	downloadMediaMessage,
+	makeWASocket,
+	type WAMessage,
+} from "baileys";
 
 import { useSqliteAuthState } from "./auth";
 import { checkBills } from "./commands/check-bills";
@@ -18,6 +22,9 @@ import { listComplaints } from "./commands/list-complaints";
 import { paymentHistory } from "./commands/payment-history";
 import { submitComplaint } from "./commands/submit-complaint";
 import { tenantInfo } from "./commands/tenant-info";
+import { complaintFlow } from "./conversation/flows/complaint";
+import { ConversationManager } from "./conversation/manager";
+import type { ConversationSession, MessageInput } from "./conversation/types";
 import {
 	pollInProgressComplaints,
 	pollResolvedComplaints,
@@ -25,14 +32,10 @@ import {
 import { pollNotifications } from "./polls/notifications";
 import { render } from "./template";
 
-interface PendingMessage {
-	tenant: Tenant;
-	text: string;
-}
-
-const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const pendingMessages = new Map<string, PendingMessage>();
 const unknownCooldowns = new Map<string, number>();
+
+const conversationManager = new ConversationManager();
+conversationManager.registerFlow(complaintFlow);
 
 export const main = async () => {
 	const botUser = await db.query.users.findFirst({
@@ -73,47 +76,79 @@ export const main = async () => {
 		return out;
 	};
 
+	const replyAndLog = async (
+		jid: string,
+		tenantId: number,
+		message: string,
+		quoted?: WAMessage,
+	) => {
+		await db.insert(chatbotMessages).values({
+			tenantId,
+			message,
+			direction: "outgoing",
+		});
+
+		await sock.sendMessage(jid, { text: message }, { quoted });
+	};
+
 	sock.ev.on("creds.update", saveCreds);
 
 	sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
 		if (connection === "open") {
 			console.log("WhatsApp connected");
-		} else {
-			console.warn("connection status: %s", connection);
-			if (lastDisconnect?.error) {
-				console.error("disconnect error:", lastDisconnect.error);
-			}
+			return;
+		}
+
+		console.warn("connection status: %s", connection);
+		if (lastDisconnect?.error) {
+			console.error("disconnect error:", lastDisconnect.error);
+		}
+
+		// Reconnect unless logged out
+		if (
+			connection === "close" &&
+			(lastDisconnect?.error as any)?.output?.statusCode !==
+				DisconnectReason.loggedOut
+		) {
+			console.log("reconnecting...");
+			main(); // re-runs full setup (new socket, re-attaches listeners)
 		}
 	});
 
 	sock.ev.on("messages.upsert", async ({ messages }) => {
-		for (const message of messages) {
-			if (message.key.fromMe) continue;
+		const handleMessage = async (message: WAMessage) => {
+			if (message.key.fromMe) return;
 
-			const jid = message.key.remoteJidAlt;
-			if (!jid?.endsWith("@s.whatsapp.net")) continue;
+			const jid = message.key.remoteJidAlt ?? message.key.remoteJid;
+			if (!jid || !jid?.endsWith("@s.whatsapp.net")) return;
 
-			const text = message.message?.conversation?.trim() || "";
-			if (!text) continue;
+			const imageMessage = message.message?.imageMessage;
+			const text = (
+				message.message?.conversation ||
+				imageMessage?.caption ||
+				""
+			).trim();
+
+			if (!text && !imageMessage) return;
 
 			const lower = text.toLowerCase().trim();
 			const phone = jid.replace("@s.whatsapp.net", "");
 			const tenant = await db.query.tenants.findFirst({
 				where: { phoneNumber: phone },
+				with: {
+					lease: {
+						columns: {},
+						with: { room: true },
+					},
+				},
 			});
 
 			if (!tenant) {
-				// Nomor tidak dikenal — cooldown 30 detik per nomor
 				const cooldownUntil = unknownCooldowns.get(jid);
-				if (cooldownUntil && Date.now() < cooldownUntil) {
-					continue;
-				}
+				if (cooldownUntil && Date.now() < cooldownUntil) return;
 
-				sock.sendMessage(jid, {
-					text: render("unknown-number", {}),
-				});
+				await sock.sendMessage(jid, { text: render("unknown-number", {}) });
 
-				// Cooldown 30 detik sebelum bisa reply nomor yg sama lagi
 				unknownCooldowns.set(jid, Date.now() + 30_000);
 
 				await db.insert(auditLogs).values({
@@ -126,13 +161,13 @@ export const main = async () => {
 					),
 				});
 
-				continue;
+				return;
 			}
 
 			await db.insert(chatbotMessages).values({
 				tenantId: tenant.id,
 				direction: "incoming",
-				message: text,
+				message: imageMessage ? ["📷 [gambar]", text].join("\n") : text,
 			});
 
 			// Tenant belum verifikasi — cek konfirmasi "YA"
@@ -143,53 +178,88 @@ export const main = async () => {
 						.set({ isVerified: true })
 						.where(eq(tenants.id, tenant.id));
 
-					sock.sendMessage(
+					await replyAndLog(
 						jid,
-						{
-							text: render("verification-success", {
-								fullName: tenant.fullName,
-							}),
-						},
-						{ quoted: message },
+						tenant.id,
+						render("verification-success", { fullName: tenant.fullName }),
+						message,
 					);
 				} else {
-					sock.sendMessage(jid, {
-						text: render("verification-prompt", { fullName: tenant.fullName }),
-					});
+					await replyAndLog(
+						jid,
+						tenant.id,
+						render("verification-prompt", { fullName: tenant.fullName }),
+						message,
+					);
 				}
-				continue;
+
+				return;
 			}
 
-			// Tenant dikenal — debounce 5 detik, simpan pesan terbaru
-			pendingMessages.set(jid, { tenant, text });
+			// Build message input — download image if present
+			const messageInput: MessageInput = { text };
+			if (imageMessage) {
+				try {
+					const buffer = await downloadMediaMessage(
+						message,
+						"buffer",
+						{},
+						{
+							reuploadRequest: (message) => sock.updateMediaMessage(message),
+							logger: sock.logger,
+						},
+					);
+					messageInput.image = {
+						buffer,
+						mimetype: imageMessage.mimetype ?? "image/jpeg",
+					};
+				} catch (err) {
+					console.error("failed to download image for %s:", jid, err);
+				}
+			}
 
-			const existing = debounceTimers.get(jid);
-			if (existing) clearTimeout(existing);
+			if (conversationManager.hasActiveSession(jid)) {
+				const reply = await conversationManager.handleMessage(
+					jid,
+					messageInput,
+				);
+				if (reply) await replyAndLog(jid, tenant.id, reply, message);
 
-			debounceTimers.set(
-				jid,
-				setTimeout(async () => {
-					debounceTimers.delete(jid);
+				return;
+			}
 
-					const data = pendingMessages.get(jid);
-					pendingMessages.delete(jid);
-					if (!data) return;
+			if (lower === "komplain") {
+				conversationManager.startSession(jid, tenant, "complaint");
 
-					try {
-						const responseText = await processCommand(data.tenant, data.text);
+				const reply = await conversationManager.handleMessage(
+					jid,
+					messageInput,
+				);
+				if (reply) await replyAndLog(jid, tenant.id, reply, message);
 
-						await db.insert(chatbotMessages).values({
-							tenantId: data.tenant.id,
-							direction: "outgoing",
-							message: responseText,
-						});
+				return;
+			}
 
-						sock.sendMessage(jid, { text: responseText }, { quoted: message });
-					} catch (err) {
-						console.error("message processing failed for %s:", jid, err);
-					}
-				}, 1_000),
+			const responseText = await processCommand(
+				tenant,
+				text,
+				messageInput.image,
 			);
+
+			await replyAndLog(jid, tenant.id, responseText, message);
+		};
+
+		for (const message of messages) {
+			try {
+				await handleMessage(message);
+			} catch (error) {
+				console.error(
+					"failed to process message %s from %s:",
+					message.key.id,
+					message.key.remoteJidAlt ?? message.key.remoteJid,
+					error,
+				);
+			}
 		}
 	});
 
@@ -205,8 +275,9 @@ export const main = async () => {
 };
 
 const processCommand = async (
-	tenant: Tenant,
+	tenant: ConversationSession["tenant"],
 	text: string,
+	image?: { buffer: Buffer; mimetype: string },
 ): Promise<string> => {
 	const lower = text.toLowerCase().trim();
 
@@ -222,7 +293,7 @@ const processCommand = async (
 	}
 
 	if (lower === "komplain" || lower.startsWith("komplain ")) {
-		return submitComplaint(tenant, text);
+		return submitComplaint(tenant, text, image);
 	}
 
 	if (lower === "tagihan") {

@@ -3,7 +3,7 @@ import { auditDetail, auditLogs, complaints } from "@indekos/database/schema";
 
 import type { WASocket } from "baileys";
 
-import { render } from "../template";
+import { render } from "~/template";
 
 export const pollInProgressComplaints = async (
 	sock: WASocket,

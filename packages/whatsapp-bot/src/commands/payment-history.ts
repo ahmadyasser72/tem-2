@@ -6,7 +6,7 @@ import {
 	formatInvoiceNumber,
 } from "@indekos/utilities/transforms";
 
-import { render } from "../template";
+import { render } from "~/template";
 
 export const paymentHistory = async (tenant: Tenant): Promise<string> => {
 	const lease = await db.query.leases.findFirst({

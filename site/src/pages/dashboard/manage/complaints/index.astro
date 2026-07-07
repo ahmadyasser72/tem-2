@@ -97,6 +97,7 @@ const complaintStats = getComplaintStats(complaints);
 				({
 					id,
 					description,
+					imagePath,
 					status,
 					createdAt,
 					tenantName,
@@ -111,11 +112,21 @@ const complaintStats = getComplaintStats(complaints);
 					return (
 						<div
 							class:list={[
-								"card border border-l-4 border-base-200 bg-base-100 shadow-sm transition-all hover:shadow-md",
+								"card card-side border border-l-4 border-base-200 bg-base-100 shadow-sm transition-all hover:shadow-md",
 								COMPLAINT_STATUS_BORDERS[status],
-								{ "opacity-65": !isResolvable },
+								!isResolvable && "opacity-65",
 							]}
 						>
+							{imagePath && (
+								<figure>
+									<img
+										class="object-fit w-36 rounded-l-box"
+										src={`/api/uploads/${imagePath}`}
+										alt="Foto komplain"
+									/>
+								</figure>
+							)}
+
 							<div class="card-body justify-between gap-4 p-5 md:flex-row md:items-center">
 								<div class="flex flex-1 flex-col gap-2">
 									<div class="flex flex-wrap items-center gap-2">
@@ -138,8 +149,11 @@ const complaintStats = getComplaintStats(complaints);
 											{tenantName}
 										</span>
 									</div>
-									<p class="text-base font-bold text-base-content">
+									<p class="inline-flex items-center text-base font-bold text-base-content">
 										{description}
+										{imagePath && (
+											<Icon class="ml-2" name="lucide:image" size="size-5" />
+										)}
 									</p>
 									{resolveNotes && (
 										<div class="mt-2 max-w-xl rounded border border-success/20 bg-success/5 p-2.5 text-xs">

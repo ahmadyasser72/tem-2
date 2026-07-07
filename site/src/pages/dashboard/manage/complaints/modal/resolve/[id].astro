@@ -31,6 +31,16 @@ if (!complaint) Astro.response.status = 404;
 					ditangani.
 				</p>
 
+				{complaint.imagePath && (
+					<div class="mb-4">
+						<img
+							class="max-h-64 w-full rounded object-contain"
+							src={`/api/uploads/${complaint.imagePath}`}
+							alt="Foto komplain"
+						/>
+					</div>
+				)}
+
 				<ModalForm
 					action={actions.manage.complaints.resolve}
 					modalId="resolve_complaint"

@@ -9,7 +9,7 @@ import {
 
 import { sumBy } from "es-toolkit";
 
-import { render } from "../template";
+import { render } from "~/template";
 
 export const checkBills = async (tenant: Tenant): Promise<string> => {
 	const lease = await db.query.leases.findFirst({

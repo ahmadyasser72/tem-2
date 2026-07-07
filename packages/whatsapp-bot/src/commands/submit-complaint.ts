@@ -1,41 +1,13 @@
-import { db } from "@indekos/database";
-import { complaints, type Tenant } from "@indekos/database/schema";
-import { formatDate } from "@indekos/utilities/date";
-import { sendPush } from "@indekos/utilities/push";
-
-import { render } from "../template";
+import type { ConversationSession } from "~/conversation/types";
+import { submitComplaintResponse } from "~/lib/complaint";
+import { render } from "~/template";
 
 export const submitComplaint = async (
-	tenant: Tenant,
+	tenant: ConversationSession["tenant"],
 	text: string,
+	image?: { buffer: Buffer; mimetype: string },
 ): Promise<string> => {
-	const complaintDescription = text.replace(/^komplain\s*/i, "").trim();
-	if (!complaintDescription || complaintDescription.length < 5) {
-		return render("submit-complaint-format", {});
-	}
+	if (!tenant.lease) return render("no-lease-complaint", {});
 
-	const [newComplaint] = await db
-		.insert(complaints)
-		.values({
-			tenantId: tenant.id,
-			description: complaintDescription,
-			status: "open",
-		})
-		.returning({ id: complaints.id, createdAt: complaints.createdAt });
-
-	const users = await db.query.users.findMany({
-		where: { role: { in: ["staff", "owner"] } },
-	});
-
-	await sendPush(users, {
-		title: `Komplain Baru dari ${tenant.fullName}`,
-		body: complaintDescription,
-		url: `/dashboard/complaints/${newComplaint.id}`,
-	});
-
-	return render("submit-complaint", {
-		id: newComplaint.id,
-		description: complaintDescription,
-		createdAt: formatDate(newComplaint.createdAt),
-	});
+	return submitComplaintResponse(tenant, text, image);
 };

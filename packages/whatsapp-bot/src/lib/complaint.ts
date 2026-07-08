@@ -20,7 +20,7 @@ export const saveComplaintImage = async (
 	const filename = `complaints/${complaintId}.${ext}`;
 	const filePath = path.join(UPLOADS_DIR, filename);
 
-	await fs.mkdir(path.dirname(filePath), { recursive: true });
+	await fs.mkdir(path.dirname(filePath));
 	await Bun.write(filePath, buffer);
 
 	return filename;

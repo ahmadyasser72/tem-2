@@ -5,11 +5,7 @@ import Icon from "~/components/ui/icon.astro";
 import { ROLE_BADGES } from "~/lib/auth";
 import { createActionResult } from "~/lib/form-result";
 
-export interface Props {
-	user: NonNullable<App.Locals["user"]>;
-}
-
-const { user } = Astro.props;
+const user = Astro.locals.user!;
 const initial = user.name.charAt(0).toUpperCase();
 
 Astro.locals.actionResults.push(

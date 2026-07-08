@@ -1,6 +1,4 @@
 ---
-import type { User } from "@indekos/database/schema";
-
 import Icon from "~/components/ui/icon.astro";
 
 interface MenuItem {
@@ -9,89 +7,83 @@ interface MenuItem {
 	href: `/dashboard${string}`;
 }
 
-export interface Props {
-	role?: User["role"];
-}
+const role = Astro.locals.user!.role;
 
-const { role = "staff" } = Astro.props;
-
-const ALL = {
+const MENU_ITEMS = {
 	dashboard: {
 		icon: "lucide:layout-grid",
 		label: "Dashboard",
 		href: "/dashboard",
 	},
+	accountManagement: {
+		icon: "lucide:user",
+		label: "Manajemen Akun",
+		href: "/dashboard/manage/accounts",
+	},
+	roomManagement: {
+		icon: "lucide:briefcase",
+		label: "Manajemen Kamar",
+		href: "/dashboard/manage/rooms",
+	},
+	tenantManagement: {
+		icon: "lucide:user",
+		label: "Manajemen Penghuni",
+		href: "/dashboard/manage/tenants",
+	},
+	complaintManagement: {
+		icon: "lucide:file-text",
+		label: "Manajemen Komplain",
+		href: "/dashboard/manage/complaints",
+	},
+	transactionReport: {
+		icon: "lucide:calendar",
+		label: "Laporan Transaksi",
+		href: "/dashboard/report/transactions",
+	},
+	notificationReport: {
+		icon: "lucide:bell",
+		label: "Laporan Notifikasi",
+		href: "/dashboard/report/notifications",
+	},
+	chatbotLog: {
+		icon: "lucide:message-square",
+		label: "Log Chatbot",
+		href: "/dashboard/log/chatbot",
+	},
+	auditLog: {
+		icon: "lucide:clock",
+		label: "Log Audit",
+		href: "/dashboard/log/audit",
+	},
+} satisfies Record<string, MenuItem>;
 
-	manajemen: [
-		{
-			icon: "lucide:user",
-			label: "Manajemen Akun",
-			href: "/dashboard/manage/accounts",
-		},
-		{
-			icon: "lucide:briefcase",
-			label: "Manajemen Kamar",
-			href: "/dashboard/manage/rooms",
-		},
-		{
-			icon: "lucide:user",
-			label: "Manajemen Penghuni",
-			href: "/dashboard/manage/tenants",
-		},
-		{
-			icon: "lucide:file-text",
-			label: "Manajemen Komplain",
-			href: "/dashboard/manage/complaints",
-		},
-	],
+const ROLE_MENUS = {
+	admin: {
+		dashboard: MENU_ITEMS.dashboard,
+		manajemen: [MENU_ITEMS.accountManagement],
+		laporan: [MENU_ITEMS.auditLog],
+	},
+	staff: {
+		dashboard: MENU_ITEMS.dashboard,
+		manajemen: [
+			MENU_ITEMS.roomManagement,
+			MENU_ITEMS.tenantManagement,
+			MENU_ITEMS.complaintManagement,
+		],
+		laporan: [
+			MENU_ITEMS.transactionReport,
+			MENU_ITEMS.notificationReport,
+			MENU_ITEMS.chatbotLog,
+			MENU_ITEMS.auditLog,
+		],
+	},
+	get owner(): Record<string, MenuItem | MenuItem[]> {
+		return ROLE_MENUS.staff;
+	},
+	system: {},
+} satisfies Record<typeof role, Record<string, MenuItem | MenuItem[]>>;
 
-	laporan: [
-		{
-			icon: "lucide:calendar",
-			label: "Laporan Transaksi",
-			href: "/dashboard/report/transactions",
-		},
-		{
-			icon: "lucide:bell",
-			label: "Laporan Notifikasi",
-			href: "/dashboard/report/notifications",
-		},
-		{
-			icon: "lucide:message-square",
-			label: "Log Chatbot",
-			href: "/dashboard/log/chatbot",
-		},
-		{
-			icon: "lucide:clock",
-			label: "Log Audit",
-			href: "/dashboard/log/audit",
-		},
-	],
-} satisfies Record<string, MenuItem | MenuItem[]>;
-
-const MENU = (() => {
-	switch (role) {
-		case "admin":
-			return {
-				dashboard: ALL.dashboard,
-				manajemen: [
-					ALL.manajemen[0], // only Manajemen Akun
-				],
-			};
-		case "owner":
-			return {
-				dashboard: ALL.dashboard,
-				laporan: ALL.laporan,
-			};
-		case "staff":
-		default:
-			return {
-				dashboard: ALL.dashboard,
-				manajemen: ALL.manajemen.slice(1), // exclude Manajemen Akun
-				laporan: ALL.laporan,
-			};
-	}
-})();
+const MENU = ROLE_MENUS[role] ?? ROLE_MENUS.staff;
 ---
 
 <ul class="menu flex-1 p-4">

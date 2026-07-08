@@ -1,7 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { db, eq } from "@indekos/database";
-import { complaints, type Complaint } from "@indekos/database/schema";
+import {
+	auditDetail,
+	auditLogs,
+	complaints,
+	type Complaint,
+} from "@indekos/database/schema";
 import { UPLOADS_DIR } from "@indekos/utilities/database";
 import { formatDate } from "@indekos/utilities/date";
 import { sendPush } from "@indekos/utilities/push";
@@ -50,6 +55,24 @@ export const createComplaint = async (
 		}
 	}
 
+	const botUser = await db.query.users.findFirst({
+		where: { username: "bot-wa" },
+	});
+	if (botUser) {
+		const preview =
+			description.slice(0, 50) + (description.length > 50 ? "..." : "");
+		await db.insert(auditLogs).values({
+			userId: botUser.id,
+			action: "CREATE",
+			tableName: "complaints",
+			recordId: newComplaint.id,
+			details: auditDetail.create(
+				`${tenant.fullName} (${tenant.lease.room.roomNumber}) membuat keluhan: ${preview}`,
+				{ tenantId: tenant.id, description, status: "open", imagePath },
+			),
+		});
+	}
+
 	return { ...newComplaint, description, imagePath };
 };
 
@@ -70,6 +93,21 @@ export const notifyStaffNewComplaint = async (
 			url: "/dashboard/manage/complaints",
 			imagePath: complaint.imagePath ?? undefined,
 		});
+
+		const botWaUser = await db.query.users.findFirst({
+			where: { username: "bot-wa" },
+		});
+		if (botWaUser) {
+			await db.insert(auditLogs).values({
+				userId: botWaUser.id,
+				action: "CREATE",
+				tableName: "push_history",
+				details: auditDetail.notification(
+					`Mengirim notifikasi keluhan ${tenant.fullName} (${tenant.lease.room.roomNumber}) baru ke staff`,
+					"push",
+				),
+			});
+		}
 	} catch (err) {
 		console.error("push notification failed:", err);
 	}
@@ -78,7 +116,7 @@ export const notifyStaffNewComplaint = async (
 export const submitComplaintResponse = async (
 	tenant: ActiveTenant,
 	text: string,
-	image?: { buffer: Buffer; mimetype: string },
+	image?: MessageInput["image"],
 ) => {
 	const description = text.replace(/^komplain\s*/i, "").trim();
 

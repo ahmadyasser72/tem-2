@@ -36,9 +36,9 @@ export const runMonthlyReport = async (systemUser: User, now?: Date) => {
 	await db.insert(auditLogs).values({
 		userId: systemUser.id,
 		action: "CREATE",
-		tableName: "notifications",
+		tableName: "push_history",
 		details: auditDetail.notification(
-			`Monthly report: ${paid.length} paid, ${unpaid.length} unpaid`,
+			`Laporan bulanan: ${paid.length} terbayar, ${unpaid.length} tertunggak`,
 			"push",
 		),
 	});

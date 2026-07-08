@@ -38,7 +38,7 @@ export const subscribe = defineAction({
 			userId: user.id,
 			action: "CREATE",
 			tableName: "push_subscriptions",
-			details: auditDetail.create("Subscribed to push notifications", {
+			details: auditDetail.create("Mengaktifkan notifikasi", {
 				endpoint: input.endpoint,
 			}),
 		});
@@ -58,7 +58,7 @@ export const unsubscribe = defineAction({
 			userId: context.locals.user!.id,
 			action: "DELETE",
 			tableName: "push_subscriptions",
-			details: auditDetail.delete("Unsubscribed from push notifications", {
+			details: auditDetail.delete("Menonaktifkan notifikasi", {
 				endpoint,
 			}),
 		});
@@ -96,12 +96,8 @@ export const test = defineAction({
 		await db.insert(auditLogs).values({
 			userId: user.id,
 			action: "CREATE",
-			tableName: "notifications",
-			details: auditDetail.notification(
-				"Test push notification sent",
-				"push",
-				user.id,
-			),
+			tableName: "push_history",
+			details: auditDetail.notification("Menguji notifikasi", "push", user.id),
 		});
 	},
 });

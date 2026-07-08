@@ -28,7 +28,7 @@ export const runOverdueCheck = async (systemUser: User, now?: Date) => {
 			action: "UPDATE",
 			tableName: "invoices",
 			details: auditDetail.cron(
-				`Cron marked ${overdue.length} invoice(s) as overdue`,
+				`Cron menandai ${overdue.length} invoice sebagai jatuh tempo`,
 				"invoices",
 				ids,
 			),

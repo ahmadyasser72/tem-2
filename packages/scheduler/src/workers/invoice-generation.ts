@@ -63,7 +63,7 @@ export const runInvoiceGeneration = async (systemUser: User, now?: Date) => {
 			action: "CREATE",
 			tableName: "invoices",
 			details: auditDetail.cron(
-				`Cron created ${newInvoices.length} invoice(s)`,
+				`Cron membuat ${newInvoices.length} invoice(s)`,
 				"invoices",
 				newInvoices.map(({ id }) => id),
 			),

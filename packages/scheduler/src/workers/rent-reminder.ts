@@ -41,7 +41,7 @@ export const runRentReminder = async (systemUser: User, now?: Date) => {
 			action: "CREATE",
 			tableName: "notifications",
 			details: auditDetail.cron(
-				`Cron created ${newNotifications.length} payment reminder notification(s)`,
+				`Cron membuat ${newNotifications.length} notifikasi pengingat pembayaran`,
 				"notifications",
 				newNotifications.map(({ id }) => id),
 			),

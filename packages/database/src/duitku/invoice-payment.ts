@@ -88,7 +88,7 @@ export const generatePaymentLink = async (
 			tableName: "invoices",
 			recordId: invoiceId,
 			details: auditDetail.payment(
-				`Generate payment link Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${room.roomNumber}) - ${formatCurrency(invoice.amount)}`,
+				`Generate tautan pembayaran Duitku: Ref ${result.reference} untuk ${tenant.fullName} (${room.roomNumber}) - ${formatCurrency(invoice.amount)}`,
 				invoice.amount,
 				result.reference,
 			),

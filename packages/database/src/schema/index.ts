@@ -15,10 +15,10 @@ export const INVOICE_STATUS = ["unpaid", "paid", "overdue"] as const;
 export const CHATBOT_DIRECTIONS = ["incoming", "outgoing"] as const;
 export const NOTIFICATION_TYPES = [
 	"reminder",
+	"overdue_reminder",
 	"payment_success",
 	"welcome",
 	"phone_change",
-	"custom",
 ] as const;
 export const NOTIFICATION_STATUS = ["pending", "sent", "failed"] as const;
 export const COMPLAINT_STATUS = ["open", "in_progress", "resolved"] as const;

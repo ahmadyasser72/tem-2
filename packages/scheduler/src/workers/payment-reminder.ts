@@ -9,26 +9,43 @@ import dayjs from "@indekos/utilities/date";
 
 import { logger } from "../logger";
 
-export const runRentReminder = async (systemUser: User, now?: Date) => {
+export const runPaymentReminder = async (systemUser: User, now?: Date) => {
 	const ref = now ?? new Date();
-	const threeDaysLater = dayjs(ref).add(3, "days").toDate();
 
 	const dueInvoices = await db.query.invoices.findMany({
+		columns: { id: true },
 		where: {
 			status: "unpaid",
-			dueDate: { gte: ref, lte: threeDaysLater },
+			dueDate: {
+				gte: ref,
+				// remind tenants 3 days before due
+				lte: dayjs(ref).add(3, "days").endOf("day").toDate(),
+			},
+			NOT: {
+				notifications: {
+					type: "reminder",
+					// skip if already sent within the last 23 hours
+					status: { NOT: "sent" },
+					createdAt: { gte: dayjs(ref).subtract(23, "hours").toDate() },
+				},
+			},
 		},
 		with: {
-			lease: { with: { tenant: true } },
+			lease: { columns: { tenantId: true } },
 		},
 	});
+
+	if (dueInvoices.length === 0) {
+		logger.info({ count: 0 }, "Reminders created");
+		return;
+	}
 
 	if (dueInvoices.length > 0) {
 		const newNotifications = await db
 			.insert(notifications)
 			.values(
 				dueInvoices.map((invoice) => ({
-					tenantId: invoice.lease.tenant.id,
+					tenantId: invoice.lease.tenantId,
 					invoiceId: invoice.id,
 					type: "reminder" as const,
 					status: "pending" as const,

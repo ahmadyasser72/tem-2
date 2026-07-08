@@ -1,15 +1,23 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { db } from "@indekos/database";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from "bun:test";
+import { db, eq } from "@indekos/database";
 import {
 	invoices,
 	leases,
+	notifications,
 	rooms,
 	tenants,
 	users,
 	type User,
 } from "@indekos/database/schema";
 
-import { runRentReminder } from "../rent-reminder";
+import { runPaymentReminder } from "../payment-reminder";
 
 let systemUser: User;
 let tenantId: number;
@@ -66,7 +74,7 @@ beforeAll(async () => {
 	await db.insert(invoices).values({
 		leaseId: lease.id,
 		amount: 250_000,
-		dueDate: new Date("2026-06-12"), // 3 days from June 9
+		dueDate: new Date("2026-07-11"),
 		status: "unpaid",
 	});
 });
@@ -75,9 +83,15 @@ afterAll(() => {
 	db.run("ROLLBACK");
 });
 
-describe("runRentReminder", () => {
+beforeEach(async () => {
+	// Clear notifications before each test to avoid state pollution
+	await db.delete(notifications).where(eq(notifications.type, "reminder"));
+});
+
+describe("runPaymentReminder", () => {
 	it("creates notification for upcoming due invoice", async () => {
-		await runRentReminder(systemUser, new Date("2026-06-09"));
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
 
 		const notif = await db.query.notifications.findFirst({
 			where: { tenantId, type: "reminder" },
@@ -86,22 +100,48 @@ describe("runRentReminder", () => {
 		expect(notif!.status).toBe("pending");
 	});
 
-	it("does not create notification for invoice outside 3-day window", async () => {
-		// Due June 12, check on June 1 (11 days away)
-		const before = await db.query.notifications.findMany({
+	it("deduplicates within 24 hours", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
+
+		// 12 hours later, still within 24 hour window
+		const later = new Date("2026-07-09T04:00:00Z");
+		await runPaymentReminder(systemUser, later);
+
+		const notifs = await db.query.notifications.findMany({
 			where: { tenantId, type: "reminder" },
 		});
+		expect(notifs).toHaveLength(1);
+	});
 
-		await runRentReminder(systemUser, new Date("2026-06-01"));
+	it("creates new reminder after 24 hours", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
+
+		// 25 hours later, outside 24 hour window
+		const next = new Date("2026-07-09T17:00:00Z");
+		await runPaymentReminder(systemUser, next);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "reminder" },
+		});
+		expect(notifs).toHaveLength(2);
+		expect(notifs.every((n) => n.status === "pending")).toBe(true);
+	});
+
+	it("does not create notification for invoice outside 3-day window", async () => {
+		const tooEarly = new Date("2026-07-01T00:00:00Z");
+		await runPaymentReminder(systemUser, tooEarly);
 
 		const after = await db.query.notifications.findMany({
 			where: { tenantId, type: "reminder" },
 		});
-		expect(after).toHaveLength(before.length);
+		expect(after).toHaveLength(0);
 	});
 
 	it("creates audit log for reminders", async () => {
-		await runRentReminder(systemUser, new Date("2026-06-09"));
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
 
 		const audit = await db.query.auditLogs.findFirst({
 			where: { action: "CREATE", tableName: "notifications" },

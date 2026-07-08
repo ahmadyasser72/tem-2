@@ -6,6 +6,7 @@ import { actions } from "astro:actions";
 import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
+import Icon from "~/components/ui/icon.astro";
 import NotFound from "~/components/ui/not-found.astro";
 import { ROLE_BADGES } from "~/lib/auth";
 
@@ -52,50 +53,57 @@ if (!user) Astro.response.status = 404;
 					</div>
 				</div>
 
-				<ModalForm
-					action={actions.auth.updateProfile}
-					modalId="profile"
-					submitLabel="Simpan Perubahan"
-					target="#user-profile"
-				>
-					<FormField
-						helperText="Nama yang ditampilkan di sistem"
-						label="Nama Tampilan"
+				{user.role === "admin" ? (
+					<div class="alert alert-error" role="alert">
+						<Icon name="lucide:triangle-alert" size="size-5" />
+						<span>Akun admin tidak dapat diedit.</span>
+					</div>
+				) : (
+					<ModalForm
+						action={actions.auth.updateProfile}
+						modalId="profile"
+						submitLabel="Simpan Perubahan"
+						target="#user-profile"
 					>
-						<input
-							class="input w-full"
-							name="display_name"
-							type="text"
-							value={user.displayName ?? ""}
-							placeholder="Masukkan nama..."
-							required
-						/>
-					</FormField>
+						<FormField
+							helperText="Nama yang ditampilkan di sistem"
+							label="Nama Tampilan"
+						>
+							<input
+								class="input w-full"
+								name="display_name"
+								type="text"
+								value={user.displayName ?? ""}
+								placeholder="Masukkan nama..."
+								required
+							/>
+						</FormField>
 
-					<FormField label="Username">
-						<input
-							class="input w-full"
-							name="username"
-							type="text"
-							value={user.username}
-							placeholder="Masukkan username..."
-							required
-						/>
-					</FormField>
+						<FormField label="Username">
+							<input
+								class="input w-full"
+								name="username"
+								type="text"
+								value={user.username}
+								placeholder="Masukkan username..."
+								required
+							/>
+						</FormField>
 
-					<FormField
-						helperText="Biarkan kosong jika tidak ingin mengganti"
-						label="Kata Sandi Baru"
-					>
-						<input
-							class="input w-full"
-							name="password"
-							type="password"
-							autocomplete="new-password"
-							placeholder="Masukkan password..."
-						/>
-					</FormField>
-				</ModalForm>
+						<FormField
+							helperText="Biarkan kosong jika tidak ingin mengganti"
+							label="Kata Sandi Baru"
+						>
+							<input
+								class="input w-full"
+								name="password"
+								type="password"
+								autocomplete="new-password"
+								placeholder="Masukkan password..."
+							/>
+						</FormField>
+					</ModalForm>
+				)}
 			</div>
 		) : (
 			<NotFound label="Profil" />

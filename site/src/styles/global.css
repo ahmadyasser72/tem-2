@@ -32,3 +32,9 @@
 		@apply transition duration-300;
 	}
 }
+
+@utility btn {
+	> iconify-icon {
+		@apply pointer-events-none;
+	}
+}

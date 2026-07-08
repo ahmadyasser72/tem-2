@@ -1,31 +1,49 @@
 import { db, inArray } from "@indekos/database";
-import { pushSubscriptions, type User } from "@indekos/database/schema";
+import {
+	pushHistory,
+	pushSubscriptions,
+	type PushData,
+	type User,
+} from "@indekos/database/schema";
 
-import { groupBy, mapValues } from "es-toolkit";
+import { groupBy } from "es-toolkit";
 import webpush from "web-push";
 
 import dayjs from "./date";
 
 export const sendPush = async (
-	users: Pick<User, "id">[],
-	data: { title: string; body: string; url?: string; imagePath?: string },
+	to: (Pick<User, "id"> | string)[],
+	data: PushData,
 ) => {
+	if (to.length === 0) return;
+
 	const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
 	if (!VAPID_SUBJECT || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY)
 		throw new Error("VAPID_* is not set");
 
+	const users = [] as number[];
+	const endpoints = [] as string[];
+	for (const target of to) {
+		if (typeof target === "string") endpoints.push(target);
+		else users.push(target.id);
+	}
+
 	const subscriptions = await db.query.pushSubscriptions.findMany({
 		where: {
-			user: {
-				id: { in: users.map(({ id }) => id) },
-				lastAccessed: {
-					gte: dayjs().startOf("day").subtract(1, "day").toDate(),
+			OR: [
+				{
+					user: {
+						id: { in: users },
+						lastAccessed: {
+							gte: dayjs().startOf("day").subtract(1, "day").toDate(),
+						},
+					},
 				},
-			},
+				{ endpoint: { in: endpoints } },
+			],
 		},
 	});
-
-	if (subscriptions.length === 0) return { sent: 0 };
+	if (subscriptions.length === 0) return;
 
 	const results = await Promise.allSettled(
 		subscriptions.map((sub) =>
@@ -58,9 +76,14 @@ export const sendPush = async (
 		await db.delete(pushSubscriptions).where(
 			inArray(
 				pushSubscriptions.endpoint,
-				grouped.invalid.map(([id]) => subscriptions[id].endpoint),
+				grouped.invalid.map(([idx]) => subscriptions[idx].endpoint),
 			),
 		);
-
-	return mapValues(grouped, (items) => items.map(([id]) => id));
+	if (grouped.sent?.length > 0)
+		await db.insert(pushHistory).values(
+			grouped.sent.map(([idx]) => ({
+				endpoint: subscriptions[idx].endpoint,
+				data,
+			})),
+		);
 };

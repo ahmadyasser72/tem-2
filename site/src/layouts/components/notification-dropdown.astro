@@ -1,51 +1,148 @@
 ---
+import { db, eq } from "@indekos/database";
+import { pushHistory } from "@indekos/database/schema";
+import dayjs from "@indekos/utilities/date";
+
 import Icon from "~/components/ui/icon.astro";
 
 const pushEndpoint = await Astro.session?.get("pushEndpoint");
 const pushActive = !!pushEndpoint;
+
+const [recentNotifications, allNotifications] = pushActive
+	? await Promise.all([
+			db.query.pushHistory.findMany({
+				columns: { id: true, data: true, createdAt: true },
+				where: { endpoint: pushEndpoint },
+				limit: 5,
+				orderBy: { createdAt: "desc" },
+			}),
+			db.$count(pushHistory, eq(pushHistory.endpoint, pushEndpoint)),
+		])
+	: [[], 0];
 ---
 
-<button
-	class="btn btn-square btn-ghost"
+<div
+	hx-get
+	hx-trigger="load delay:30s"
+	class="indicator"
 	id="notification-popover-button"
-	popovertarget="notification-popover"
+	hx-headers="js:{ 'push-endpoint': localStorage.subscriptionEndpoint ?? '' }"
+	hx-select="#notification-popover-button"
+	hx-swap="innerHTML transition:true"
 >
-	<Icon
-		name={pushActive ? "lucide:bell-ring" : "lucide:bell-off"}
-		size="size-5"
-	/>
-</button>
-<ul
+	{
+		allNotifications > 0 && (
+			<span class="indicator-item badge px-1.5 badge-sm indicator-start badge-info">
+				{allNotifications}
+			</span>
+		)
+	}
+
+	<button class="btn btn-square btn-ghost" popovertarget="notification-popover">
+		<Icon
+			name={allNotifications > 0
+				? "lucide:bell-ring"
+				: pushActive
+					? "lucide:bell"
+					: "lucide:bell-off"}
+			size="size-5"
+		/>
+	</button>
+</div>
+<div
 	hx-get
 	hx-trigger="intersect"
-	class="menu dropdown dropdown-end dropdown-bottom mt-2 w-64 menu-sm bg-base-100 p-2 shadow-sm"
+	class="dropdown dropdown-end mt-2 w-80 rounded-box bg-base-100 shadow-xl"
 	id="notification-popover"
+	hx-disabled-elt="#push-toggle, #push-test"
 	hx-headers="js:{ 'push-endpoint': localStorage.subscriptionEndpoint ?? '' }"
-	hx-select="#notification-popover > li"
+	hx-indicator="#notification-popover-loader"
+	hx-select="#notification-popover-wrapper"
+	hx-select-oob="#notification-popover-button"
 	popover
 	style="position-anchor:--user-anchor"
 >
-	<li class="htmx-indicator">
-		<button class="btn btn-sm" disabled>
-			<Icon name="svg-spinners:90-ring-with-bg" /> Loading
-		</button>
-	</li>
+	<div class="contents" id="notification-popover-wrapper">
+		<div class="flex items-center justify-between border-b border-base-200 p-4">
+			<div>
+				<h3 class="font-semibold">Notifikasi</h3>
+				<p class="text-xs text-base-content/60">Riwayat notifikasi</p>
+			</div>
 
-	<li class="htmx-indicator-replace">
-		<button
-			id="push-toggle"
-			data-active={pushActive}
-			class:list={["btn btn-sm", pushActive ? "btn-error" : "btn-primary"]}
-		>
-			{pushActive ? "Nonaktifkan Notifikasi" : "Aktifkan Notifikasi"}
-		</button>
-	</li>
-	<li class="htmx-indicator-replace">
-		<button class="btn btn-sm" id="push-test" disabled={!pushActive}>
-			Kirim Test Notifikasi
-		</button>
-	</li>
-</ul>
+			<button
+				id="push-toggle"
+				data-active={pushActive}
+				class:list={["btn btn-xs", pushActive ? "btn-error" : "btn-primary"]}
+			>
+				{pushActive ? "Nonaktifkan" : "Aktifkan"}
+			</button>
+		</div>
+
+		<div class="htmx-indicator peer p-4" id="notification-popover-loader">
+			<button
+				class="btn pointer-events-none w-full btn-ghost text-base-content/60"
+			>
+				<Icon name="svg-spinners:90-ring-with-bg" />
+				Loading...
+			</button>
+		</div>
+
+		<ul class="list max-h-80 overflow-y-auto peer-[.htmx-request]:max-h-0">
+			{
+				recentNotifications.length > 0 ? (
+					recentNotifications.map(({ id, data, createdAt }) => (
+						<li class="list-row">
+							<div>
+								{data.imagePath ? (
+									<img
+										class="size-12 rounded-box object-cover"
+										src={`/api/uploads/${data.imagePath}`}
+									/>
+								) : (
+									<div class="flex size-12 items-center justify-center rounded-box bg-base-200">
+										<Icon
+											class="size-5 text-base-content/60"
+											name="lucide:bell"
+										/>
+									</div>
+								)}
+							</div>
+
+							<div>
+								<div>{data.title}</div>
+								<div class="text-xs text-base-content/60">{data.body}</div>
+								<div class="text-xs text-base-content/50">
+									{dayjs(createdAt).fromNow()}
+								</div>
+							</div>
+
+							<button
+								class="btn btn-square self-center btn-ghost btn-sm"
+								data-delete-history={id}
+							>
+								<Icon name="lucide:x" />
+							</button>
+						</li>
+					))
+				) : (
+					<li class="p-4 text-center text-sm text-base-content/60">
+						- Belum ada notifikasi -
+					</li>
+				)
+			}
+		</ul>
+
+		<div class="flex gap-2 border-t border-base-200 p-3">
+			<button
+				class="btn flex-1 btn-outline btn-sm"
+				id="push-test"
+				disabled={!pushActive}
+			>
+				Kirim Test
+			</button>
+		</div>
+	</div>
+</div>
 
 <script>
 	import { actions } from "astro:actions";
@@ -66,10 +163,11 @@ const pushActive = !!pushEndpoint;
 	);
 
 	htmx.onLoad(async (node) => {
-		if (!(node instanceof HTMLElement)) return;
-
-		const pushToggle = node.querySelector<HTMLButtonElement>("#push-toggle");
-		const pushTest = node.querySelector<HTMLButtonElement>("#push-test");
+		if (
+			!(node instanceof HTMLElement) ||
+			node.id !== "notification-popover-wrapper"
+		)
+			return;
 
 		const syncLocalSubscription = (subscription: PushSubscription | null) => {
 			if (subscription?.endpoint)
@@ -79,99 +177,114 @@ const pushActive = !!pushEndpoint;
 
 		if (!sw) {
 			syncLocalSubscription(null);
-			pushToggle?.addEventListener("click", () => {
+			node.querySelector("#push-toggle")?.addEventListener("click", () => {
 				showClientSideToast("error", "Browser tidak mendukung.");
 			});
 
 			return;
 		}
 
-		if (pushToggle) {
-			let subscription = await sw.pushManager.getSubscription();
-			syncLocalSubscription(subscription);
+		let subscription = await sw.pushManager.getSubscription();
+		syncLocalSubscription(subscription);
 
-			const subscribe = async () => {
-				const permission =
-					Notification.permission === "default"
-						? await Notification.requestPermission()
-						: Notification.permission;
-				if (permission !== "granted") {
-					showClientSideToast("error", "Akses notifikasi ditolak.");
-					return;
-				}
+		const subscribe = async () => {
+			const permission =
+				Notification.permission === "default"
+					? await Notification.requestPermission()
+					: Notification.permission;
+			if (permission !== "granted") {
+				showClientSideToast("error", "Akses notifikasi ditolak.");
+				return;
+			}
 
-				subscription = await sw.pushManager.subscribe({
-					userVisibleOnly: true,
-					applicationServerKey: VAPID_PUBLIC_KEY,
-				});
+			subscription = await sw.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: VAPID_PUBLIC_KEY,
+			});
 
-				const { error } = await actions.push.subscribe(
-					subscription.toJSON() as never,
-				);
-				if (error) {
-					console.error("Failed to save subscription:", error);
-					await subscription.unsubscribe();
-					subscription = null;
-					showClientSideToast(
-						"error",
-						"Gagal mendaftarkan notifikasi browser. " + error.message,
-					);
-					return error;
-				}
-			};
-
-			const unsubscribe = async () => {
-				if (!subscription) return;
-
-				const { error } = await actions.push.unsubscribe({
-					endpoint: subscription.endpoint,
-				});
-				if (error) {
-					console.error("Failed to remove subscription:", error);
-					showClientSideToast("error", "Gagal menghapus notifikasi browser.");
-					return error;
-				}
-
+			const { error } = await actions.push.subscribe(
+				subscription.toJSON() as never,
+			);
+			if (error) {
+				console.error("Failed to save subscription:", error);
 				await subscription.unsubscribe();
 				subscription = null;
-			};
+				showClientSideToast(
+					"error",
+					"Gagal mendaftarkan notifikasi browser. " + error.message,
+				);
+				return error;
+			}
+		};
 
-			pushToggle.addEventListener("click", async () => {
-				pushToggle.disabled = true;
+		const unsubscribe = async () => {
+			if (!subscription) return;
 
-				const subscribed = pushToggle.dataset.active === "true";
+			const { error } = await actions.push.unsubscribe({
+				endpoint: subscription.endpoint,
+			});
+			if (error) {
+				console.error("Failed to remove subscription:", error);
+				showClientSideToast("error", "Gagal menghapus notifikasi browser.");
+				return error;
+			}
+
+			await subscription.unsubscribe();
+			subscription = null;
+		};
+
+		node.addEventListener("click", async (event) => {
+			if (!(event.target instanceof HTMLButtonElement)) return;
+
+			const updateUI = () =>
+				htmx.ajax("get", document.URL, {
+					select: "#notification-popover-wrapper",
+					selectOOB: "#notification-popover-button",
+					target: "#notification-popover",
+					swap: "innerHTML transition:true",
+					headers: {
+						"push-endpoint": localStorage.getItem("subscriptionEndpoint") ?? "",
+					},
+				});
+
+			if (event.target.id === "push-toggle") {
+				event.target.disabled = true;
+
+				const subscribed = event.target.dataset.active === "true";
 				const error = await (subscribed ? unsubscribe : subscribe)();
 				if (!error) {
 					syncLocalSubscription(subscription);
-					await htmx.ajax("get", document.URL, {
-						select: "#notification-popover > li",
-						selectOOB: "#notification-popover-button",
-						target: "#notification-popover",
-						headers: {
-							"push-endpoint":
-								localStorage.getItem("subscriptionEndpoint") ?? "",
-						},
-					});
+					await updateUI();
 				}
 
-				pushToggle.disabled = false;
-			});
-		}
-
-		if (pushTest) {
-			pushTest.addEventListener("click", async () => {
-				pushTest.disabled = true;
+				event.target.disabled = false;
+			} else if (event.target.id === "push-test") {
+				event.target.disabled = true;
 
 				const { error } = await actions.push.test();
 				if (error) {
-					console.error("Failed to send test notification:", error.message);
+					console.error("Failed to send test notification:", error);
 					showClientSideToast("error", "Gagal kirim test notifikasi.");
 				} else {
+					await updateUI();
 					showClientSideToast("info", "Notifikasi test dikirim!");
 				}
 
-				pushTest.disabled = false;
-			});
-		}
+				event.target.disabled = false;
+			} else if (event.target.matches("[data-delete-history]")) {
+				const id = event.target.dataset.deleteHistory;
+
+				const { error } = await actions.push.deleteHistory({ id });
+				if (error) {
+					console.error(
+						"Failed to delete notification history:",
+						error.message,
+					);
+					showClientSideToast("error", "Gagal menghapus riwayat notifikasi.");
+				} else {
+					await updateUI();
+				}
+			}
+		});
 	});
 </script>

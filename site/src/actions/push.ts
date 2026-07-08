@@ -1,7 +1,8 @@
-import { db, eq } from "@indekos/database";
+import { and, db, eq } from "@indekos/database";
 import {
 	auditDetail,
 	auditLogs,
+	pushHistory,
 	pushSubscriptions,
 } from "@indekos/database/schema";
 import { sendPush } from "@indekos/utilities/push";
@@ -64,12 +65,30 @@ export const unsubscribe = defineAction({
 	},
 });
 
+export const deleteHistory = defineAction({
+	accept: "json",
+	input: z.object({ id: z.coerce.number() }),
+	handler: async ({ id }, context) => {
+		const endpoint = await context.session?.get("pushEndpoint");
+		if (!endpoint)
+			throw new ActionError({
+				code: "FORBIDDEN",
+				message: "Pendaftaran notifikasi tidak dikenal.",
+			});
+
+		await db
+			.delete(pushHistory)
+			.where(and(eq(pushHistory.endpoint, endpoint), eq(pushHistory.id, id)));
+	},
+});
+
 export const test = defineAction({
 	accept: "json",
 	handler: async (_, context) => {
 		const user = context.locals.user!;
+		const endpoint = await context.session?.get("pushEndpoint");
 
-		const result = await sendPush([user], {
+		await sendPush([endpoint!], {
 			title: "Test Notifikasi",
 			body: "Notifikasi berhasil dikirim! 🎉",
 		});

@@ -32,6 +32,13 @@ export const AUDIT_ACTIONS = [
 	"LOGIN",
 ] as const;
 
+export interface PushData {
+	title: string;
+	body: string;
+	url?: string;
+	imagePath?: string;
+}
+
 export const users = sqliteTable("users", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	username: text("username").notNull().unique(),
@@ -174,7 +181,17 @@ export const pushSubscriptions = sqliteTable("push_subscriptions", {
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.default(sql`(unixepoch())`)
 		.notNull(),
-	updatedAt: integer("updated_at", { mode: "timestamp" }),
+});
+
+export const pushHistory = sqliteTable("push_history", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	endpoint: text("endpoint")
+		.notNull()
+		.references(() => pushSubscriptions.endpoint, { onDelete: "cascade" }),
+	data: text({ mode: "json" }).$type<PushData>().notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`)
+		.notNull(),
 });
 
 export type User = typeof users.$inferSelect;

@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
@@ -8,6 +9,7 @@ dayjs.locale("id");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault("Asia/Makassar");
+dayjs.extend(relativeTime);
 
 export const formatDate = (
 	date: Date | string | number | null | undefined,

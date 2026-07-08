@@ -1,4 +1,5 @@
 ---
+import { config } from "@indekos/utilities/brand";
 import { formatDate } from "@indekos/utilities/date";
 
 import FilterPopover from "~/components/data/filter-popover.astro";
@@ -24,7 +25,7 @@ const chatbotStats = getChatbotStats(chatbotLogs);
 
 <DashboardLayout
 	title="Log Chatbot"
-	description="Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem Chatbot Indekos Ungu"
+	description={`Riwayat interaksi percakapan WhatsApp antara penghuni dan sistem Chatbot ${config.siteName}`}
 	pageTitle="Log Percakapan Chatbot"
 >
 	<Fragment slot="page-action">

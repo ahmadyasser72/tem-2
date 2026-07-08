@@ -1,0 +1,78 @@
+---
+import { config } from "@indekos/utilities/brand";
+
+import { actions } from "astro:actions";
+
+import FormField from "~/components/form/form-field.astro";
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import Icon from "~/components/ui/icon.astro";
+
+export const partial = true;
+
+const user = Astro.locals.user!;
+---
+
+<Modal id="brand" title="Pengaturan Branding" icon="lucide:palette">
+	{
+		user.role !== "admin" && user.role !== "owner" ? (
+			<div class="alert alert-error" role="alert">
+				<Icon name="lucide:triangle-alert" size="size-5" />
+				<span>Hanya admin dan owner yang dapat mengatur branding.</span>
+			</div>
+		) : (
+			<ModalForm
+				action={actions.brand.update}
+				modalId="brand"
+				submitLabel="Simpan Perubahan"
+				target="#dashboard-content"
+			>
+				<FormField
+					helperText="Nama situs yang ditampilkan di seluruh sistem"
+					label="Nama Situs"
+				>
+					<input
+						class="input w-full"
+						name="siteName"
+						type="text"
+						value={config.siteName}
+						placeholder="Masukkan nama situs..."
+						required
+					/>
+				</FormField>
+
+				<FormField helperText="Tagline atau moto situs" label="Tagline">
+					<input
+						class="input w-full"
+						name="siteTagline"
+						type="text"
+						value={config.siteTagline}
+						placeholder="Masukkan tagline..."
+						required
+					/>
+				</FormField>
+
+				<FormField helperText="Alamat lengkap bisnis" label="Alamat">
+					<textarea
+						class="textarea w-full"
+						name="address"
+						placeholder="Masukkan alamat..."
+						required
+						set:text={config.address}
+					/>
+				</FormField>
+
+				<FormField helperText="Nomor telepon kontak" label="Nomor Telepon">
+					<input
+						class="input w-full"
+						name="phone"
+						type="tel"
+						value={config.phone}
+						placeholder="Masukkan nomor telepon..."
+						required
+					/>
+				</FormField>
+			</ModalForm>
+		)
+	}
+</Modal>

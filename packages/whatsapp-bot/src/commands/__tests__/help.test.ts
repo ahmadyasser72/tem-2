@@ -1,3 +1,5 @@
+import { config } from "@indekos/utilities/brand";
+
 import { describe, expect, it } from "bun:test";
 
 import { help } from "../help";
@@ -13,7 +15,7 @@ const mockTenant = {
 describe("help", () => {
 	it("returns bot commands list with greeting", () => {
 		const result = help(mockTenant);
-		expect(result).toContain("Indekos Ungu");
+		expect(result).toContain(config.siteName);
 		expect(result).toContain("Budi");
 		expect(result).toContain("*tagihan*");
 		expect(result).toContain("*riwayat*");
@@ -25,5 +27,10 @@ describe("help", () => {
 		const result = help(mockTenant);
 		expect(result).toContain("*info*");
 		expect(result).toContain("*komplainku*");
+	});
+
+	it("uses brand config from global config", () => {
+		const result = help(mockTenant);
+		expect(result).toContain(config.siteName);
 	});
 });

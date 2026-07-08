@@ -1,4 +1,5 @@
 import path from "node:path";
+import { config } from "@indekos/utilities/brand";
 
 import { Eta } from "eta";
 
@@ -111,4 +112,4 @@ interface TemplateParams {
 export const render = <K extends keyof TemplateParams>(
 	name: K,
 	params: TemplateParams[K],
-) => eta.render(`./${name}`, params).trimEnd();
+) => eta.render(`./${name}`, { ...params, config }).trimEnd();

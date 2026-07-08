@@ -1,4 +1,4 @@
-*🤖 Indekos Ungu*
+*🤖 <%= it.config.siteName %>*
 
 Halo, <%= it.fullName %> 👋
 

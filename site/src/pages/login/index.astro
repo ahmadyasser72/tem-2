@@ -1,4 +1,6 @@
 ---
+import { config } from "@indekos/utilities/brand";
+
 import { actions } from "astro:actions";
 
 import IconLoader from "~/components/ui/icon-loader.astro";
@@ -20,8 +22,8 @@ if (loginResult && !loginResult.error) {
 			<div class="card-body">
 				<div class="text-center">
 					<Icon class="text-purple-600" name="lucide:house" size="size-24" />
-					<h1 class="text-2xl font-bold">Indekos Ungu</h1>
-					<p class="text-sm opacity-50">Sistem Manajemen Indekos</p>
+					<h1 class="text-2xl font-bold">{config.siteName}</h1>
+					<p class="text-sm opacity-50">{config.siteTagline}</p>
 				</div>
 
 				<form

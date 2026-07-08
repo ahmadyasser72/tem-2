@@ -58,9 +58,21 @@ Astro.locals.actionResults.push(
 		</div>
 	</li>
 	<li>
-		<button hx-get="/dashboard/modal/profile" class="btn justify-start btn-sm">
+		<button
+			hx-get="/dashboard/modal/profile"
+			class="btn justify-start btn-ghost btn-sm"
+		>
 			<Icon name="lucide:user-circle" size="size-5" />
 			Profil
+		</button>
+	</li>
+	<li>
+		<button
+			hx-get="/dashboard/modal/brand"
+			class="btn justify-start btn-ghost btn-sm"
+		>
+			<Icon name="lucide:palette" size="size-5" />
+			Branding
 		</button>
 	</li>
 	<li>
@@ -70,7 +82,7 @@ Astro.locals.actionResults.push(
 			action={actions.auth.logout}
 			method="post"
 		>
-			<button class="btn justify-start btn-error btn-sm" type="submit">
+			<button class="btn justify-start btn-soft btn-error btn-sm" type="submit">
 				<Icon name="lucide:log-out" size="size-5" />
 				Keluar
 			</button>

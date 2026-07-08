@@ -1,5 +1,6 @@
 ---
 import { db } from "@indekos/database";
+import { config } from "@indekos/utilities/brand";
 import dayjs, { formatDate } from "@indekos/utilities/date";
 
 import "~/styles/report.css";
@@ -55,13 +56,11 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 				</div>
 				<div class="flex-1 text-center">
 					<div class="text-xl font-bold tracking-wide uppercase">
-						Indekos Ungu
+						{config.siteName}
 					</div>
 					<div class="my-1 border-b border-black"></div>
 					<div class="text-[11px] opacity-70">
-						Jl. Sejahtera, Komplek Damai, RT 002/RW 006, Kelurahan Mentaos, Kec.
-						Banjarbaru Utara, Kota Banjar Baru, Kalimantan Selatan 70714 · Telp:
-						+62 896-7268-4032
+						{config.address} · Telp: {config.phone}
 					</div>
 				</div>
 			</div>

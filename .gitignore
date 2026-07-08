@@ -22,6 +22,8 @@ logs/
 .DS_Store
 .idea/
 *.tsbuildinfo
+
+/brand.json
 /db.sqlite
 /test.db.sqlite
 /site/uploads/

@@ -1,4 +1,6 @@
 ---
+import { config } from "@indekos/utilities/brand";
+
 import { actions } from "astro:actions";
 
 import Icon from "~/components/ui/icon.astro";
@@ -30,7 +32,7 @@ if (logoutResult && !logoutResult.error) {
 <BaseLayout {...Astro.props}>
 	<div class="drawer lg:drawer-open">
 		<input class="drawer-toggle" id="dashboard-drawer" type="checkbox" />
-		<div class="drawer-content">
+		<div class="drawer-content" id="dashboard-content">
 			<nav class="navbar w-full bg-base-200">
 				<label
 					class="btn btn-square btn-ghost lg:hidden"
@@ -42,7 +44,7 @@ if (logoutResult && !logoutResult.error) {
 
 				<div class="navbar-start px-4">
 					<a class="btn btn-ghost px-4 btn-lg max-sm:hidden" href="/dashboard"
-						>Indekos Ungu</a
+						>{config.siteName}</a
 					>
 				</div>
 

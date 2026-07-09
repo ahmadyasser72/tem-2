@@ -16,7 +16,6 @@ import {
 	fetchAuditLogs,
 	getAuditStats,
 } from "./_data";
-import DetailColumn from "./_detail-column.astro";
 
 Astro.locals.actionResults.push({
 	action: actions.manage.audit.remove,
@@ -132,16 +131,37 @@ const auditStats = getAuditStats(auditLogs);
 										{recordId ?? "-"}
 									</span>
 								</td>
-								<DetailColumn {details} />
+								<td class="max-w-xs truncate overflow-hidden">
+									{details?.description ?? "-"}
+								</td>
 								<td class="text-right">
-									{Astro.locals.user?.allowEdit && (
-										<button
-											hx-get={`/dashboard/log/audit/modal/delete/${id}`}
-											class="btn btn-square btn-ghost text-error btn-xs"
-										>
-											<Icon name="lucide:x" />
-										</button>
-									)}
+									<div class="flex justify-end gap-0.5">
+										{details &&
+											(((details.type === "create" ||
+												details.type === "update" ||
+												details.type === "delete") &&
+												details.changes?.length) ||
+												details.type === "cron" ||
+												(details.type === "reject" && details.reason) ||
+												details.type === "payment" ||
+												details.type === "notification") && (
+												<button
+													hx-get={`/dashboard/log/audit/modal/detail/${id}`}
+													class="btn btn-square btn-ghost btn-xs"
+												>
+													<Icon name="lucide:eye" />
+												</button>
+											)}
+
+										{Astro.locals.user?.allowEdit && (
+											<button
+												hx-get={`/dashboard/log/audit/modal/delete/${id}`}
+												class="btn btn-square btn-ghost text-error btn-xs"
+											>
+												<Icon name="lucide:x" />
+											</button>
+										)}
+									</div>
 								</td>
 							</tr>
 						),

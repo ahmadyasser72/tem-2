@@ -1,0 +1,73 @@
+---
+import { db } from "@indekos/database";
+import type { AuditDetails } from "@indekos/database/schema";
+import { formatInvoiceNumber } from "@indekos/utilities/transforms";
+
+import { groupBy } from "es-toolkit";
+
+import { NOTIFICATION_TYPE_LABELS } from "~/pages/dashboard/report/notifications/_data";
+
+interface Props {
+	details: Extract<AuditDetails, { type: "cron" }>;
+}
+
+const { details } = Astro.props;
+
+const data = await (async () => {
+	const filter = {
+		id: { in: details.ids },
+	};
+
+	if (details.table === "invoices") {
+		const invoices = await db.query.invoices.findMany({
+			columns: { id: true, dueDate: true },
+			where: filter,
+		});
+
+		return {
+			table: "invoices" as const,
+			items: invoices.map(formatInvoiceNumber),
+		};
+	} else {
+		const notifications = await db.query.notifications.findMany({
+			columns: { type: true },
+			where: filter,
+			with: { tenant: { columns: { fullName: true } } },
+		});
+
+		return {
+			table: "notifications" as const,
+			items: Object.values(groupBy(notifications, ({ type }) => type)),
+		};
+	}
+})();
+---
+
+<div class="space-y-1">
+	<div>
+		Cron membuat
+		<b
+			>{
+				data.table === "invoices"
+					? "Invoice dan Link Pembayaran"
+					: "Notifikasi pengingat sewa"
+			}</b
+		>
+	</div>
+
+	{
+		data.table === "invoices" ? (
+			<div>
+				<b>Invoice:</b>
+				{data.items.join(", ")}
+			</div>
+		) : (
+			data.items.map((items) => (
+				<div>
+					<b>{NOTIFICATION_TYPE_LABELS[items[0].type]}</b>
+					{items.map(({ tenant }) => tenant.fullName).join(", ")}
+				</div>
+			))
+		)
+	}
+</div>

@@ -105,6 +105,7 @@ export const notifyStaffNewComplaint = async (
 				details: auditDetail.notification(
 					`Mengirim notifikasi keluhan ${tenant.fullName} (${tenant.lease.room.roomNumber}) baru ke staff`,
 					"push",
+					users.map(({ id }) => id),
 				),
 			});
 		}

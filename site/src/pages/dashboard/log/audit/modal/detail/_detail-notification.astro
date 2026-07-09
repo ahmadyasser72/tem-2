@@ -1,0 +1,52 @@
+---
+import { db } from "@indekos/database";
+import type { AuditDetails } from "@indekos/database/schema";
+
+interface Props {
+	details: Extract<AuditDetails, { type: "notification" }>;
+}
+
+const { details } = Astro.props;
+
+const receipents = await (async () => {
+	const filter = {
+		id: Array.isArray(details.recipientId)
+			? { in: details.recipientId }
+			: details.recipientId,
+	};
+
+	if (details.channel === "push") {
+		const users = await db.query.users.findMany({
+			columns: { username: true, displayName: true },
+			where: filter,
+		});
+
+		return users.map(({ username, displayName }) => displayName ?? username);
+	} else if (details.channel === "whatsapp") {
+		const tenants = await db.query.tenants.findMany({
+			columns: { fullName: true },
+			where: filter,
+		});
+
+		return tenants.map(({ fullName }) => fullName);
+	}
+
+	return [];
+})();
+---
+
+<div class="space-y-1">
+	<div>
+		<b>Channel:</b>
+		{details.channel}
+	</div>
+
+	{
+		receipents.length > 0 && (
+			<div>
+				<b>Penerima:</b>
+				{receipents.join(", ")}{" "}
+			</div>
+		)
+	}
+</div>

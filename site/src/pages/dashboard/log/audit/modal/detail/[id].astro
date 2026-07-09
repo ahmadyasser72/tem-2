@@ -1,0 +1,69 @@
+---
+import { db } from "@indekos/database";
+
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
+import DetailCron from "./_detail-cron.astro";
+import DetailCrud from "./_detail-crud.astro";
+import DetailNotification from "./_detail-notification.astro";
+
+export const partial = true;
+
+const log = await db.query.auditLogs.findFirst({
+	where: { id: Number(Astro.params.id) },
+});
+
+const details = log?.details;
+const hasMoreDetails =
+	details &&
+	(((details.type === "create" ||
+		details.type === "update" ||
+		details.type === "delete") &&
+		details.changes?.length) ||
+		details.type === "cron" ||
+		(details.type === "reject" && details.reason) ||
+		details.type === "payment" ||
+		details.type === "notification");
+
+if (!hasMoreDetails) Astro.response.status = 404;
+---
+
+<Modal id="audit_detail" title="Detail Audit" icon="lucide:file-text">
+	{
+		hasMoreDetails ? (
+			<div class="space-y-4 text-sm">
+				{(details.type === "create" ||
+					details.type === "update" ||
+					details.type === "delete") &&
+					details.changes?.length && <DetailCrud {details} />}
+
+				{details.type === "cron" && <DetailCron {details} />}
+
+				{details.type === "reject" && details.reason && (
+					<div>
+						<b>Alasan:</b>
+						{details.reason}
+					</div>
+				)}
+
+				{details.type === "payment" && (
+					<div class="space-y-1">
+						<div>
+							<b>Nominal:</b>
+							{details.amount}
+						</div>
+
+						<div>
+							<b>Ref:</b>
+							{details.reference}
+						</div>
+					</div>
+				)}
+
+				{details.type === "notification" && <DetailNotification {details} />}
+			</div>
+		) : (
+			<NotFound label="Audit Detail" />
+		)
+	}
+</Modal>

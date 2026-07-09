@@ -13,24 +13,18 @@ export type AuditDetails =
 			table: CronTable;
 			ids: number[];
 	  }
-	| {
-			type: "bot";
-			description: string;
-			source: string;
-			messagePreview?: string;
-	  }
 	| { type: "reject"; description: string; reason?: string }
 	| {
 			type: "payment";
 			description: string;
-			amount?: number;
-			reference?: string;
+			amount: number;
+			reference: string;
 	  }
 	| {
 			type: "notification";
 			description: string;
-			channel?: string;
-			recipientId?: number;
+			channel: "push" | "whatsapp";
+			recipientId: number | number[];
 	  }
 	| {
 			type: "generic";
@@ -75,12 +69,6 @@ export const auditDetail = {
 		ids: number[],
 	): AuditDetails => ({ type: "cron", description, table, ids }),
 
-	bot: (
-		description: string,
-		source: string,
-		messagePreview?: string,
-	): AuditDetails => ({ type: "bot", description, source, messagePreview }),
-
 	reject: (description: string, reason?: string): AuditDetails => ({
 		type: "reject",
 		description,
@@ -89,14 +77,14 @@ export const auditDetail = {
 
 	payment: (
 		description: string,
-		amount?: number,
-		reference?: string,
+		amount: number,
+		reference: string,
 	): AuditDetails => ({ type: "payment", description, amount, reference }),
 
 	notification: (
 		description: string,
-		channel?: string,
-		recipientId?: number,
+		channel: "push" | "whatsapp",
+		recipientId: number | number[],
 	): AuditDetails => ({
 		type: "notification",
 		description,

@@ -40,6 +40,7 @@ export const runMonthlyReport = async (systemUser: User, now?: Date) => {
 		details: auditDetail.notification(
 			`Laporan bulanan: ${paid.length} terbayar, ${unpaid.length} tertunggak`,
 			"push",
+			users.map(({ id }) => id),
 		),
 	});
 

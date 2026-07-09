@@ -1,0 +1,55 @@
+---
+import type { AuditDetails } from "@indekos/database/schema";
+
+interface Props {
+	details: Extract<AuditDetails, { type: "create" | "update" | "delete" }>;
+}
+
+const { details } = Astro.props;
+---
+
+<div class:list={["grid gap-2", details.changes!.length >= 2 && "grid-cols-2"]}>
+	<h3
+		class:list={["font-semibold", details.changes!.length >= 2 && "col-span-2"]}
+	>
+		{details.changes!.length} perubahan
+	</h3>
+
+	{
+		details.changes!.map((change) => (
+			<div class="overflow-hidden rounded-box border">
+				<div class="p-2">
+					<code>{change.path.join(".")}</code>
+				</div>
+
+				{change.type === "CHANGE" && (
+					<>
+						<pre
+							class="bg-error px-3 py-2 text-xs break-all whitespace-pre-wrap text-error-content"
+							set:text={`- ${change.oldValue}`}
+						/>
+
+						<pre
+							class="bg-success px-3 py-2 text-xs break-all whitespace-pre-wrap text-success-content"
+							set:text={`+ ${change.value}`}
+						/>
+					</>
+				)}
+
+				{change.type === "CREATE" && (
+					<pre
+						class="bg-success px-3 py-2 text-xs break-all whitespace-pre-wrap text-success-content"
+						set:text={`+ ${change.value}`}
+					/>
+				)}
+
+				{change.type === "REMOVE" && (
+					<pre
+						class="bg-error px-3 py-2 text-xs break-all whitespace-pre-wrap text-error-content"
+						set:text={`- ${change.oldValue}`}
+					/>
+				)}
+			</div>
+		))
+	}
+</div>

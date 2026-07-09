@@ -6,8 +6,15 @@ import { defineConfig, envField } from "astro/config";
 // https://astro.build/config
 export default defineConfig({
 	output: "server",
-	adapter: node({ mode: "middleware" }),
+	adapter: node({ mode: "standalone" }),
 	security: { allowedDomains: [{ hostname: "cat.opah-barley.ts.net" }] },
+	vite: {
+		plugins: [tailwindcss()],
+		server: {
+			allowedHosts: ["cat.opah-barley.ts.net"],
+			hmr: false,
+		},
+	},
 
 	env: {
 		schema: {
@@ -43,12 +50,5 @@ export default defineConfig({
 		},
 	},
 
-	vite: {
-		plugins: [tailwindcss()],
-		server: {
-			allowedHosts: ["cat.opah-barley.ts.net"],
-			hmr: false,
-		},
-	},
 	devToolbar: { enabled: false },
 });

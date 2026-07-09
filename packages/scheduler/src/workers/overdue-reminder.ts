@@ -20,8 +20,7 @@ export const runOverdueReminder = async (systemUser: User, now?: Date) => {
 			NOT: {
 				notifications: {
 					type: "overdue_reminder",
-					// skip if already sent within the last 23 hours
-					status: { NOT: "sent" },
+					status: { NOT: "failed" },
 					createdAt: { gte: dayjs(ref).subtract(23, "hours").toDate() },
 				},
 			},
@@ -36,30 +35,28 @@ export const runOverdueReminder = async (systemUser: User, now?: Date) => {
 		return;
 	}
 
-	if (overdueInvoices.length > 0) {
-		const newNotifications = await db
-			.insert(notifications)
-			.values(
-				overdueInvoices.map((invoice) => ({
-					tenantId: invoice.lease.tenantId,
-					invoiceId: invoice.id,
-					type: "overdue_reminder" as const,
-					status: "pending" as const,
-				})),
-			)
-			.returning({ id: notifications.id });
+	const newNotifications = await db
+		.insert(notifications)
+		.values(
+			overdueInvoices.map((invoice) => ({
+				tenantId: invoice.lease.tenantId,
+				invoiceId: invoice.id,
+				type: "overdue_reminder" as const,
+				status: "pending" as const,
+			})),
+		)
+		.returning({ id: notifications.id });
 
-		await db.insert(auditLogs).values({
-			userId: systemUser.id,
-			action: "CREATE",
-			tableName: "notifications",
-			details: auditDetail.cron(
-				`Cron membuat ${newNotifications.length} notifikasi pengingat invoice jatuh tempo`,
-				"notifications",
-				newNotifications.map(({ id }) => id),
-			),
-		});
-	}
+	await db.insert(auditLogs).values({
+		userId: systemUser.id,
+		action: "CREATE",
+		tableName: "notifications",
+		details: auditDetail.cron(
+			`Cron membuat ${newNotifications.length} notifikasi pengingat invoice jatuh tempo`,
+			"notifications",
+			newNotifications.map(({ id }) => id),
+		),
+	});
 
 	logger.info({ count: overdueInvoices.length }, "Overdue reminders created");
 };

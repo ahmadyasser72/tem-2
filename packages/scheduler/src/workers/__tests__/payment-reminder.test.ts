@@ -21,6 +21,8 @@ import { runPaymentReminder } from "../payment-reminder";
 
 let systemUser: User;
 let tenantId: number;
+let leaseId: number;
+let invoiceId: number;
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -70,13 +72,20 @@ beforeAll(async () => {
 		})
 		.returning({ id: leases.id });
 
+	leaseId = lease.id;
+
 	// Invoice due within 3 days from ref date
-	await db.insert(invoices).values({
-		leaseId: lease.id,
-		amount: 250_000,
-		dueDate: new Date("2026-07-11"),
-		status: "unpaid",
-	});
+	const [invoice] = await db
+		.insert(invoices)
+		.values({
+			leaseId: lease.id,
+			amount: 250_000,
+			dueDate: new Date("2026-07-11"),
+			status: "unpaid",
+		})
+		.returning({ id: invoices.id });
+
+	invoiceId = invoice.id;
 });
 
 afterAll(() => {
@@ -89,41 +98,41 @@ beforeEach(async () => {
 });
 
 describe("runPaymentReminder", () => {
-	it("creates notification for upcoming due invoice", async () => {
+	it("rule 1: no existing reminder -> queue one pending", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runPaymentReminder(systemUser, now);
 
 		const notif = await db.query.notifications.findFirst({
-			where: { tenantId, type: "reminder" },
+			where: { tenantId, type: "reminder", invoiceId },
 		});
 		expect(notif).not.toBeUndefined();
 		expect(notif!.status).toBe("pending");
 	});
 
-	it("deduplicates within 24 hours", async () => {
+	it("rule 2: recent pending reminder (<23h) -> do not queue", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runPaymentReminder(systemUser, now);
 
-		// 12 hours later, still within 24 hour window
+		// 12 hours later, still within 23 hour window
 		const later = new Date("2026-07-09T04:00:00Z");
 		await runPaymentReminder(systemUser, later);
 
 		const notifs = await db.query.notifications.findMany({
-			where: { tenantId, type: "reminder" },
+			where: { tenantId, type: "reminder", invoiceId },
 		});
 		expect(notifs).toHaveLength(1);
 	});
 
-	it("creates new reminder after 24 hours", async () => {
+	it("rule 6: pending reminder older than 23h -> queue new", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runPaymentReminder(systemUser, now);
 
-		// 25 hours later, outside 24 hour window
-		const next = new Date("2026-07-09T17:00:00Z");
+		// 24 hours later, outside 23 hour window
+		const next = new Date("2026-07-10T16:00:00Z");
 		await runPaymentReminder(systemUser, next);
 
 		const notifs = await db.query.notifications.findMany({
-			where: { tenantId, type: "reminder" },
+			where: { tenantId, type: "reminder", invoiceId },
 		});
 		expect(notifs).toHaveLength(2);
 		expect(notifs.every((n) => n.status === "pending")).toBe(true);
@@ -134,7 +143,7 @@ describe("runPaymentReminder", () => {
 		await runPaymentReminder(systemUser, tooEarly);
 
 		const after = await db.query.notifications.findMany({
-			where: { tenantId, type: "reminder" },
+			where: { tenantId, type: "reminder", invoiceId },
 		});
 		expect(after).toHaveLength(0);
 	});
@@ -144,12 +153,79 @@ describe("runPaymentReminder", () => {
 		await runPaymentReminder(systemUser, now);
 
 		const audit = await db.query.auditLogs.findFirst({
-			where: { action: "CREATE", tableName: "notifications" },
+			where: {
+				action: "CREATE",
+				tableName: "notifications",
+				userId: systemUser.id,
+			},
 		});
 		expect(audit).not.toBeUndefined();
 		expect(audit!.details).toMatchObject({
 			type: "cron",
 			table: "notifications",
 		});
+	});
+
+	it("rule 3: recent sent reminder (<23h) -> do not queue", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
+
+		// Mark first reminder as sent
+		await db
+			.update(notifications)
+			.set({ status: "sent" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 12 hours later, still within 23 hour window
+		const later = new Date("2026-07-09T04:00:00Z");
+		await runPaymentReminder(systemUser, later);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(1);
+	});
+
+	it("rule 5: sent reminder older than 23h -> queue new", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
+
+		// Mark first reminder as sent
+		await db
+			.update(notifications)
+			.set({ status: "sent" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 24 hours later, outside 23 hour window
+		const next = new Date("2026-07-10T16:00:00Z");
+		await runPaymentReminder(systemUser, next);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(2);
+		expect(notifs[1].status).toBe("pending");
+	});
+
+	it("rule 4: recent failed reminder (<23h) -> queue new pending", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runPaymentReminder(systemUser, now);
+
+		// Mark first reminder as failed
+		await db
+			.update(notifications)
+			.set({ status: "failed" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 12 hours later, still within 23 hour window
+		const later = new Date("2026-07-09T04:00:00Z");
+		await runPaymentReminder(systemUser, later);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "reminder", invoiceId },
+		});
+		// Should queue new one since failed reminders don't block
+		expect(notifs).toHaveLength(2);
+		expect(notifs[1].status).toBe("pending");
 	});
 });

@@ -21,6 +21,8 @@ import { runOverdueReminder } from "../overdue-reminder";
 
 let systemUser: User;
 let leaseId: number;
+let invoiceId: number;
+let tenantId: number;
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -69,14 +71,20 @@ beforeAll(async () => {
 		.returning({ id: leases.id });
 
 	leaseId = lease.id;
+	tenantId = tenant.id;
 
 	// Overdue invoice (status already marked overdue)
-	await db.insert(invoices).values({
-		leaseId: lease.id,
-		amount: 300_000,
-		dueDate: new Date("2026-03-10"),
-		status: "overdue",
-	});
+	const [invoice] = await db
+		.insert(invoices)
+		.values({
+			leaseId: lease.id,
+			amount: 300_000,
+			dueDate: new Date("2026-03-10"),
+			status: "overdue",
+		})
+		.returning({ id: invoices.id });
+
+	invoiceId = invoice.id;
 
 	// Paid invoice — should not create notification
 	await db.insert(invoices).values({
@@ -100,39 +108,43 @@ beforeEach(async () => {
 });
 
 describe("runOverdueReminder", () => {
-	it("creates notifications for overdue invoices only", async () => {
+	it("rule 1: no existing reminder -> queue one pending", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runOverdueReminder(systemUser, now);
 
-		const notifs = await db.query.notifications.findMany();
-		expect(notifs.length).toBe(1);
-		expect(notifs[0].type).toBe("overdue_reminder");
-		expect(notifs[0].status).toBe("pending");
-		expect(notifs[0].invoiceId).toBeDefined();
+		const notif = await db.query.notifications.findFirst({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		expect(notif).not.toBeUndefined();
+		expect(notif!.status).toBe("pending");
 	});
 
-	it("deduplicates within 24 hours", async () => {
+	it("rule 2: recent pending reminder (<23h) -> do not queue", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runOverdueReminder(systemUser, now);
 
-		// 12 hours later, still within 24 hour window
+		// 12 hours later, still within 23 hour window
 		const later = new Date("2026-07-09T04:00:00Z");
 		await runOverdueReminder(systemUser, later);
 
-		const notifs = await db.query.notifications.findMany();
-		expect(notifs.length).toBe(1);
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(1);
 	});
 
-	it("creates new reminder after 24 hours", async () => {
+	it("rule 6: pending reminder older than 23h -> queue new", async () => {
 		const now = new Date("2026-07-08T16:00:00Z");
 		await runOverdueReminder(systemUser, now);
 
-		// 25 hours later, outside 24 hour window
-		const next = new Date("2026-07-09T17:00:00Z");
+		// 24 hours later, outside 23 hour window
+		const next = new Date("2026-07-10T17:00:00Z");
 		await runOverdueReminder(systemUser, next);
 
-		const notifs = await db.query.notifications.findMany();
-		expect(notifs.length).toBe(2);
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(2);
 		expect(notifs.every((n) => n.status === "pending")).toBe(true);
 	});
 
@@ -149,6 +161,7 @@ describe("runOverdueReminder", () => {
 		await runOverdueReminder(systemUser, now);
 
 		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder" },
 			columns: { invoiceId: true },
 		});
 		const invoiceIds = new Set(notifs.map((n) => n.invoiceId));
@@ -160,8 +173,71 @@ describe("runOverdueReminder", () => {
 		await runOverdueReminder(systemUser, now);
 
 		const logs = await db.query.auditLogs.findMany({
-			where: { tableName: "notifications" },
+			where: { tableName: "notifications", userId: systemUser.id },
 		});
 		expect(logs.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("rule 3: recent sent reminder (<23h) -> do not queue", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runOverdueReminder(systemUser, now);
+
+		// Mark first reminder as sent
+		await db
+			.update(notifications)
+			.set({ status: "sent" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 12 hours later, still within 23 hour window
+		const later = new Date("2026-07-09T04:00:00Z");
+		await runOverdueReminder(systemUser, later);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(1);
+	});
+
+	it("rule 5: sent reminder older than 23h -> queue new", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runOverdueReminder(systemUser, now);
+
+		// Mark first reminder as sent
+		await db
+			.update(notifications)
+			.set({ status: "sent" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 24 hours later, outside 23 hour window
+		const next = new Date("2026-07-10T16:00:00Z");
+		await runOverdueReminder(systemUser, next);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		expect(notifs).toHaveLength(2);
+		expect(notifs[1].status).toBe("pending");
+	});
+
+	it("rule 4: recent failed reminder (<23h) -> queue new pending", async () => {
+		const now = new Date("2026-07-08T16:00:00Z");
+		await runOverdueReminder(systemUser, now);
+
+		// Mark first reminder as failed
+		await db
+			.update(notifications)
+			.set({ status: "failed" })
+			.where(eq(notifications.invoiceId, invoiceId));
+
+		// 12 hours later, still within 23 hour window
+		const later = new Date("2026-07-09T04:00:00Z");
+		await runOverdueReminder(systemUser, later);
+
+		const notifs = await db.query.notifications.findMany({
+			where: { tenantId, type: "overdue_reminder", invoiceId },
+		});
+		// Should queue new one since failed reminders don't block
+		expect(notifs).toHaveLength(2);
+		expect(notifs[1].status).toBe("pending");
 	});
 });

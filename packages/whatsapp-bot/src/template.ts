@@ -1,8 +1,8 @@
 import path from "node:path";
 import { config } from "@indekos/utilities/brand";
+import type { Logger } from "@indekos/utilities/logger";
 
 import { Eta } from "eta";
-import type { Logger } from "pino";
 
 const eta = new Eta({
 	views: path.join(import.meta.dirname, "templates"),

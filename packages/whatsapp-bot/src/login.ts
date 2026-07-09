@@ -1,11 +1,12 @@
+import { createLogger } from "@indekos/utilities/logger";
+
 import { DisconnectReason, makeWASocket } from "baileys";
 import open from "open";
-import pino from "pino";
 import { renderSVG } from "uqr";
 
 import { useSqliteAuthState } from "./auth";
 
-const log = pino({ level: "info" }).child({ submodule: "auth:login" });
+const log = createLogger("whatsapp-bot").child({ submodule: "auth:login" });
 
 const login = async () => {
 	log.info("initiating whatsapp authentication");

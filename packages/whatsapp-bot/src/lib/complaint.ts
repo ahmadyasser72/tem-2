@@ -9,9 +9,8 @@ import {
 } from "@indekos/database/schema";
 import { UPLOADS_DIR } from "@indekos/utilities/database";
 import { formatDate } from "@indekos/utilities/date";
+import type { Logger } from "@indekos/utilities/logger";
 import { sendPush } from "@indekos/utilities/push";
-
-import type { Logger } from "pino";
 
 import type { ActiveTenant, MessageInput } from "~/conversation/types";
 import { render } from "~/template";

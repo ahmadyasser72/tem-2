@@ -1,6 +1,5 @@
 import { formatDate } from "@indekos/utilities/date";
-
-import type { Logger } from "pino";
+import type { Logger } from "@indekos/utilities/logger";
 
 import type {
 	ConversationSession,

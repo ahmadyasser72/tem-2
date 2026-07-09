@@ -1,6 +1,5 @@
 import type { Room, Tenant } from "@indekos/database/schema";
-
-import type { Logger } from "pino";
+import type { Logger } from "@indekos/utilities/logger";
 
 export interface ActiveTenant extends Tenant {
 	lease: { room: Room };

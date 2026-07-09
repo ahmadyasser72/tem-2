@@ -1,9 +1,8 @@
 import { db } from "@indekos/database";
 import { botAuth } from "@indekos/database/schema";
+import { createLogger } from "@indekos/utilities/logger";
 
-import pino from "pino";
-
-const log = pino({ level: "info" }).child({ submodule: "auth:logout" });
+const log = createLogger("whatsapp-bot").child({ submodule: "auth:logout" });
 
 const logout = async () => {
 	log.info("initiating whatsapp session logout");

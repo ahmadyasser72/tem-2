@@ -1,8 +1,8 @@
 import { db, eq } from "@indekos/database";
 import { auditDetail, auditLogs, complaints } from "@indekos/database/schema";
+import type { Logger } from "@indekos/utilities/logger";
 
 import type { WASocket } from "baileys";
-import type { Logger } from "pino";
 
 import { render } from "~/template";
 

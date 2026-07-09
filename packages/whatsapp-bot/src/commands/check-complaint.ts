@@ -1,17 +1,15 @@
 import { db } from "@indekos/database";
-import type { Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
-
-import type { Logger } from "pino";
 
 import { render } from "~/template";
 import { STATUS_LABEL } from "./constants";
+import type { CommandHandlerFunction } from "./types";
 
-export const checkComplaint = async (
-	tenant: Tenant,
-	complaintId: number,
-	options?: { logger?: Logger },
-): Promise<string> => {
+export const checkComplaint: CommandHandlerFunction<[number]> = async (
+	tenant,
+	complaintId,
+	options,
+) => {
 	const log = options?.logger?.child({ submodule: "commands:check-complaint" });
 
 	log?.debug(

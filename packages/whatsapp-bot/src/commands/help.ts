@@ -1,10 +1,7 @@
-import type { Tenant } from "@indekos/database/schema";
-
-import type { Logger } from "pino";
-
 import { render } from "~/template";
+import type { CommandHandlerFunction } from "./types";
 
-export const help = (tenant: Tenant, options?: { logger?: Logger }): string => {
+export const help: CommandHandlerFunction = (tenant, options) => {
 	const log = options?.logger?.child({ submodule: "commands:help" });
 
 	log?.debug({ tenantId: tenant.id }, "rendering help message");

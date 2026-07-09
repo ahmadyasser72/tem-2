@@ -1,19 +1,17 @@
 import { db } from "@indekos/database";
-import type { Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 import {
 	formatCurrency,
 	formatInvoiceNumber,
 } from "@indekos/utilities/transforms";
 
-import type { Logger } from "pino";
-
 import { render } from "~/template";
+import type { CommandHandlerFunction } from "./types";
 
-export const paymentHistory = async (
-	tenant: Tenant,
-	options?: { logger?: Logger },
-): Promise<string> => {
+export const paymentHistory: CommandHandlerFunction = async (
+	tenant,
+	options,
+) => {
 	const log = options?.logger?.child({
 		submodule: "commands:payment-history",
 	});

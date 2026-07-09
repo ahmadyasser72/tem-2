@@ -1,15 +1,11 @@
-import type { Logger } from "pino";
-
-import type { ConversationSession } from "~/conversation/types";
+import type { MessageInput } from "~/conversation/types";
 import { submitComplaintResponse } from "~/lib/complaint";
 import { render } from "~/template";
+import type { CommandHandlerFunction } from "./types";
 
-export const submitComplaint = async (
-	tenant: ConversationSession["tenant"],
-	text: string,
-	image?: { buffer: Buffer; mimetype: string },
-	options?: { logger?: Logger },
-): Promise<string> => {
+export const submitComplaint: CommandHandlerFunction<
+	[string, MessageInput["image"]]
+> = async (tenant, text, image, options) => {
 	const log = options?.logger?.child({
 		submodule: "commands:submit-complaint",
 	});

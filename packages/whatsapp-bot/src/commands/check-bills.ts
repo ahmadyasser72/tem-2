@@ -1,6 +1,5 @@
 import { db } from "@indekos/database";
 import { getPaymentUrlFromReference } from "@indekos/database/duitku";
-import type { Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 import {
 	formatCurrency,
@@ -8,14 +7,11 @@ import {
 } from "@indekos/utilities/transforms";
 
 import { sumBy } from "es-toolkit";
-import type { Logger } from "pino";
 
 import { render } from "~/template";
+import type { CommandHandlerFunction } from "./types";
 
-export const checkBills = async (
-	tenant: Tenant,
-	options?: { logger?: Logger },
-): Promise<string> => {
+export const checkBills: CommandHandlerFunction = async (tenant, options) => {
 	const log = options?.logger?.child({ submodule: "commands:check-bills" });
 
 	log?.debug(

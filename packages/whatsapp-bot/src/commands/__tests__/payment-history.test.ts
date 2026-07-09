@@ -1,16 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import {
-	invoices,
-	leases,
-	rooms,
-	tenants,
-	type Tenant,
-} from "@indekos/database/schema";
+import { invoices, leases, rooms, tenants } from "@indekos/database/schema";
 
+import type { ConversationSession } from "~/conversation/types";
 import { paymentHistory } from "../payment-history";
 
-let testTenant: Tenant;
+let testTenant: ConversationSession["tenant"];
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -64,6 +59,7 @@ beforeAll(async () => {
 
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
+		with: { lease: { columns: {}, with: { room: true } } },
 	}))!;
 });
 
@@ -85,7 +81,7 @@ describe("paymentHistory", () => {
 });
 
 describe("paymentHistory no lease", () => {
-	let tenantNoLease: Tenant;
+	let tenantNoLease: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [tenant] = await db
@@ -98,6 +94,7 @@ describe("paymentHistory no lease", () => {
 
 		tenantNoLease = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 
@@ -108,7 +105,7 @@ describe("paymentHistory no lease", () => {
 });
 
 describe("paymentHistory no paid invoices", () => {
-	let tenantNoPaid: Tenant;
+	let tenantNoPaid: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [room] = await db
@@ -150,6 +147,7 @@ describe("paymentHistory no paid invoices", () => {
 
 		tenantNoPaid = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 

@@ -1,15 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import {
-	complaints,
-	tenants,
-	users,
-	type Tenant,
-} from "@indekos/database/schema";
+import { complaints, tenants, users } from "@indekos/database/schema";
 
+import type { ConversationSession } from "~/conversation/types";
 import { checkComplaint } from "../check-complaint";
 
-let testTenant: Tenant;
+let testTenant: ConversationSession["tenant"];
 let complaintId: number;
 
 beforeAll(async () => {
@@ -34,6 +30,7 @@ beforeAll(async () => {
 
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
+		with: { lease: { columns: {}, with: { room: true } } },
 	}))!;
 	complaintId = complaint.id;
 });

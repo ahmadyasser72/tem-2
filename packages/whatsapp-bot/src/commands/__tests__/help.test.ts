@@ -1,14 +1,16 @@
 import { describe, expect, it } from "bun:test";
 import { config } from "@indekos/utilities/brand";
 
+import type { ConversationSession } from "~/conversation/types";
 import { help } from "../help";
 
-const mockTenant = {
+const mockTenant: ConversationSession["tenant"] = {
 	id: 1,
 	fullName: "Budi",
 	phoneNumber: "08123456789",
 	originRegion: "Jakarta",
 	isVerified: true,
+	lease: null,
 };
 
 describe("help", () => {

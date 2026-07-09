@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import { complaints, tenants, type Tenant } from "@indekos/database/schema";
+import { complaints, tenants } from "@indekos/database/schema";
 
+import type { ConversationSession } from "~/conversation/types";
 import { listComplaints } from "../list-complaints";
 
-let testTenant: Tenant;
+let testTenant: ConversationSession["tenant"];
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -33,6 +34,7 @@ beforeAll(async () => {
 
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
+		with: { lease: { columns: {}, with: { room: true } } },
 	}))!;
 });
 
@@ -56,7 +58,7 @@ describe("listComplaints", () => {
 });
 
 describe("listComplaints no complaints", () => {
-	let tenantNoComplaints: Tenant;
+	let tenantNoComplaints: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [tenant] = await db
@@ -69,6 +71,7 @@ describe("listComplaints no complaints", () => {
 
 		tenantNoComplaints = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 

@@ -1,16 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import {
-	invoices,
-	leases,
-	rooms,
-	tenants,
-	type Tenant,
-} from "@indekos/database/schema";
+import { invoices, leases, rooms, tenants } from "@indekos/database/schema";
 
+import type { ConversationSession } from "~/conversation/types";
 import { tenantInfo } from "../tenant-info";
 
-let testTenant: Tenant;
+let testTenant: ConversationSession["tenant"];
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -44,6 +39,7 @@ beforeAll(async () => {
 
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
+		with: { lease: { columns: {}, with: { room: true } } },
 	}))!;
 });
 
@@ -78,7 +74,7 @@ describe("tenantInfo", () => {
 });
 
 describe("tenantInfo with unpaid invoices", () => {
-	let tenantWithBills: Tenant;
+	let tenantWithBills: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [room] = await db
@@ -119,6 +115,7 @@ describe("tenantInfo with unpaid invoices", () => {
 
 		tenantWithBills = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 
@@ -130,7 +127,7 @@ describe("tenantInfo with unpaid invoices", () => {
 });
 
 describe("tenantInfo no lease", () => {
-	let tenantNoLease: Tenant;
+	let tenantNoLease: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [tenant] = await db
@@ -143,6 +140,7 @@ describe("tenantInfo no lease", () => {
 
 		tenantNoLease = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 
@@ -153,7 +151,7 @@ describe("tenantInfo no lease", () => {
 });
 
 describe("tenantInfo with end date", () => {
-	let tenantWithEnd: Tenant;
+	let tenantWithEnd: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [room] = await db
@@ -184,6 +182,7 @@ describe("tenantInfo with end date", () => {
 
 		tenantWithEnd = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 

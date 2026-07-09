@@ -1,16 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import {
-	invoices,
-	leases,
-	rooms,
-	tenants,
-	type Tenant,
-} from "@indekos/database/schema";
+import { invoices, leases, rooms, tenants } from "@indekos/database/schema";
 
+import type { ConversationSession } from "~/conversation/types";
 import { checkBills } from "../check-bills";
 
-let testTenant: Tenant;
+let testTenant: ConversationSession["tenant"];
 
 beforeAll(async () => {
 	db.run("BEGIN");
@@ -54,6 +49,7 @@ beforeAll(async () => {
 
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
+		with: { lease: { columns: {}, with: { room: true } } },
 	}))!;
 });
 
@@ -81,7 +77,7 @@ describe("checkBills", () => {
 });
 
 describe("checkBills no lease", () => {
-	let tenantNoLease: Tenant;
+	let tenantNoLease: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [tenant] = await db
@@ -94,6 +90,7 @@ describe("checkBills no lease", () => {
 
 		tenantNoLease = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 
@@ -104,7 +101,7 @@ describe("checkBills no lease", () => {
 });
 
 describe("checkBills all paid", () => {
-	let tenantAllPaid: Tenant;
+	let tenantAllPaid: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [room] = await db
@@ -147,6 +144,7 @@ describe("checkBills all paid", () => {
 
 		tenantAllPaid = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 
@@ -162,7 +160,7 @@ describe("checkBills all paid", () => {
 });
 
 describe("checkBills with payment link", () => {
-	let tenantWithLink: Tenant;
+	let tenantWithLink: ConversationSession["tenant"];
 
 	beforeAll(async () => {
 		const [room] = await db
@@ -204,6 +202,7 @@ describe("checkBills with payment link", () => {
 
 		tenantWithLink = (await db.query.tenants.findFirst({
 			where: { id: tenant.id },
+			with: { lease: { columns: {}, with: { room: true } } },
 		}))!;
 	});
 

@@ -4,7 +4,7 @@ import { render } from "~/template";
 import type { CommandHandlerFunction } from "./types";
 
 export const submitComplaint: CommandHandlerFunction<
-	[string, MessageInput["image"]]
+	[string, MessageInput["image"]?]
 > = async (tenant, text, image, options) => {
 	const log = options?.logger?.child({
 		submodule: "commands:submit-complaint",

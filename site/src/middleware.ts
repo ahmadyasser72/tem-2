@@ -8,7 +8,6 @@ import { defineMiddleware } from "astro:middleware";
 import { z } from "astro/zod";
 
 import { logAudit } from "~/lib/audit-log";
-import { getPuppeteerToken } from "~/lib/pdf";
 
 const baseLogger = createLogger("site-middleware");
 
@@ -104,34 +103,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		(action &&
 			(action.name.startsWith("manage.") || action.name.startsWith("push.")))
 	) {
-		const puppeteerToken = context.request.headers.get("x-puppeteer");
-		if (puppeteerToken && puppeteerToken === getPuppeteerToken()) {
-			const userId = context.url.searchParams.get("user");
-
-			context.locals.logger.info(
-				{ puppeteerTargetUserId: userId },
-				"middleware: verified puppeteer token hook signature",
-			);
-
-			const user = await db.query.users.findFirst({
-				columns: { id: true, username: true, displayName: true, role: true },
-				where: { id: userId ? Number(userId) : undefined, role: "staff" },
-			});
-
-			context.locals.user = {
-				id: user?.id ?? 0,
-				name: user?.displayName ?? user?.username ?? "Staff",
-				role: user?.role ?? "staff",
-				lastAccessed: null,
-			};
-
-			return next();
-		}
-
 		if (!user) {
 			context.locals.logger.warn(
 				"middleware: unauthenticated gate blocking access, redirecting to login",
 			);
+
 			return context.redirect(new URL("/login", context.url).pathname);
 		}
 	}

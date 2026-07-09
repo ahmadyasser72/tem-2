@@ -29,6 +29,17 @@
 	}
 }
 
-@page {
+body {
 	margin: 2cm 1.5cm 1.5cm 2cm;
+}
+
+@media print {
+	body {
+		margin: 0;
+	}
+
+	@page {
+		size: a4 landscape;
+		margin: 2cm 1.5cm 1.5cm 2cm;
+	}
 }

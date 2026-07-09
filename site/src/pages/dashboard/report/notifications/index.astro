@@ -33,9 +33,9 @@ const notificationStats = getNotificationStats(notifications);
 		<a
 			class="btn btn-outline btn-sm"
 			id="notifications-print"
-			href={`/dashboard/report/notifications/report/download${Astro.url.search}`}
+			href={`/dashboard/report/notifications/report/html${Astro.url.search}`}
 			hx-swap-oob="true"
-			download
+			target="_blank"
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>

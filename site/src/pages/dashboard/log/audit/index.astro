@@ -38,9 +38,9 @@ const auditStats = getAuditStats(auditLogs);
 		<a
 			class="btn btn-outline btn-sm"
 			id="audit-print"
-			href={`/dashboard/log/audit/report/download${Astro.url.search}`}
+			href={`/dashboard/log/audit/report/html${Astro.url.search}`}
 			hx-swap-oob="true"
-			download
+			target="_blank"
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>

@@ -51,9 +51,9 @@ const roomStats = getRoomStats(rooms);
 		<a
 			class="btn btn-outline btn-sm"
 			id="rooms-print"
-			href={`/dashboard/manage/rooms/report/download${Astro.url.search}`}
+			href={`/dashboard/manage/rooms/report/html${Astro.url.search}`}
 			hx-swap-oob="true"
-			download
+			target="_blank"
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>

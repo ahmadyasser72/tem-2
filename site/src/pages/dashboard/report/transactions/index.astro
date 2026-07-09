@@ -50,9 +50,9 @@ const transactionStats = getTransactionStats(invoices);
 		<a
 			class="btn btn-outline btn-sm"
 			id="transactions-print"
-			href={`/dashboard/report/transactions/report/download${Astro.url.search}`}
+			href={`/dashboard/report/transactions/report/html${Astro.url.search}`}
 			hx-swap-oob="true"
-			download
+			target="_blank"
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>

@@ -22,15 +22,12 @@ export default defineConfig({
 				access: "secret",
 				context: "server",
 			}),
-			CHROMIUM_PATH: envField.string({
-				access: "secret",
-				context: "server",
-			}),
 			UPLOADS_DIR: envField.string({
 				access: "secret",
 				context: "server",
 				default: "uploads",
 			}),
+
 			DUITKU_MERCHANT_CODE: envField.string({
 				access: "secret",
 				context: "server",

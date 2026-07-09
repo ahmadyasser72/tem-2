@@ -96,7 +96,6 @@
         "es-toolkit": "1.49.0",
         "htmx.org": "2.0.10",
         "iconify-icon": "3.0.2",
-        "puppeteer-core": "25.3.0",
         "tailwindcss": "4.3.2",
       },
       "devDependencies": {

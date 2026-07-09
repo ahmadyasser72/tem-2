@@ -32,9 +32,9 @@ const chatbotStats = getChatbotStats(chatbotLogs);
 		<a
 			class="btn btn-outline btn-sm"
 			id="chatbot-print"
-			href={`/dashboard/log/chatbot/report/download${Astro.url.search}`}
+			href={`/dashboard/log/chatbot/report/html${Astro.url.search}`}
 			hx-swap-oob="true"
-			download
+			target="_blank"
 		>
 			<Icon name="lucide:download" /> PDF
 		</a>

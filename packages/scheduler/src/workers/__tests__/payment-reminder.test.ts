@@ -21,7 +21,6 @@ import { runPaymentReminder } from "../payment-reminder";
 
 let systemUser: User;
 let tenantId: number;
-let leaseId: number;
 let invoiceId: number;
 
 beforeAll(async () => {
@@ -71,8 +70,6 @@ beforeAll(async () => {
 			isActive: true,
 		})
 		.returning({ id: leases.id });
-
-	leaseId = lease.id;
 
 	// Invoice due within 3 days from ref date
 	const [invoice] = await db

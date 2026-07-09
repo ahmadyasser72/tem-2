@@ -94,6 +94,13 @@ interface TemplateParams {
 		dueDate: string | null;
 		paymentUrl: string | null;
 	};
+	"overdue-reminder": {
+		fullName: string;
+		roomNumber: string | null;
+		amount: string | null;
+		dueDate: string | null;
+		paymentUrl: string | null;
+	};
 	"complaint-prompt": Record<string, never>;
 	"no-lease-complaint": Record<string, never>;
 	"unknown-number": Record<string, never>;

@@ -1,6 +1,5 @@
-import { config } from "@indekos/utilities/brand";
-
 import { describe, expect, it } from "bun:test";
+import { config } from "@indekos/utilities/brand";
 
 import { help } from "../help";
 

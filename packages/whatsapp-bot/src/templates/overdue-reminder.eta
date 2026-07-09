@@ -1,0 +1,15 @@
+*⚠️ Tagihan Jatuh Tempo*
+
+Yth. <%= it.fullName %>,
+Tagihan sewa Anda telah melewati batas waktu pembayaran.
+<% if (it.roomNumber) { %>
+📍 Kamar: <%= it.roomNumber %>
+<% } %><% if (it.amount) { %>
+💰 Jumlah: <%= it.amount %>
+<% } %><% if (it.dueDate) { %>
+📅 Jatuh tempo: <%= it.dueDate %>
+<% } %><% if (it.paymentUrl) { %>
+💳 Bayar sekarang: <%= it.paymentUrl %>
+<% } %>
+
+_Pesan ini dikirim otomatis oleh sistem._

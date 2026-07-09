@@ -73,6 +73,16 @@ export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 					date: invoiceData ? formatDate(invoiceData.dueDate) : null,
 					invoiceUrl,
 				});
+			} else if (notification.type === "overdue_reminder") {
+				msg = render("overdue-reminder", {
+					fullName: tenant.fullName,
+					roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
+					amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
+					dueDate: invoiceData ? formatDate(invoiceData.dueDate) : null,
+					paymentUrl: invoiceData?.duitkuReference
+						? getPaymentUrlFromReference(invoiceData.duitkuReference)
+						: null,
+				});
 			} else {
 				msg = render("payment-reminder", {
 					fullName: tenant.fullName,
@@ -103,20 +113,20 @@ export const pollNotifications = async (sock: WASocket, botUserId: number) => {
 				.set({ status: "sent", chatbotMessageId: sent.id })
 				.where(eq(notifications.id, notification.id));
 
-			const actionDesc =
-				notification.type === "welcome"
-					? `Bot mengirim pesan selamat datang ke tenant #${tenant.id}`
-					: notification.type === "phone_change"
-						? `Bot mengirim verifikasi ganti nomor ke tenant #${tenant.id}`
-						: notification.type === "payment_success"
-							? `Bot mengirim konfirmasi pembayaran sukses ke tenant #${tenant.id}`
-							: `Bot mengirim pengingat pembayaran ke tenant #${tenant.id}`;
+			const notificationMessages = {
+				welcome: "pesan selamat datang",
+				phone_change: "verifikasi ganti nomor",
+				payment_success: "konfirmasi pembayaran sukses",
+				overdue_reminder: "pengingat invoice jatuh tempo",
+				reminder: "pengingat pembayaran",
+			} satisfies Record<typeof notification.type, string>;
+			const botAction = `Bot mengirim ${notificationMessages[notification.type]} ke tenant #${tenant.id}`;
 
 			await db.insert(auditLogs).values({
 				userId: botUserId,
 				action: "CREATE",
 				tableName: "notifications",
-				details: auditDetail.notification(actionDesc, "whatsapp", tenant.id),
+				details: auditDetail.notification(botAction, "whatsapp", tenant.id),
 			});
 		} catch (err) {
 			console.error("Send notification failed:", err);

@@ -87,6 +87,15 @@ describe("runOverdueCheck", () => {
 		expect(updated?.status).toBe("overdue");
 	});
 
+	it("is idempotent on re-run", async () => {
+		await runOverdueCheck(systemUser, new Date("2026-06-02"));
+
+		const updated = await db.query.invoices.findFirst({
+			where: { leaseId },
+		});
+		expect(updated?.status).toBe("overdue");
+	});
+
 	it("does not change invoices due in the future", async () => {
 		// Reset status to unpaid (still within transaction)
 		await db
@@ -101,6 +110,23 @@ describe("runOverdueCheck", () => {
 			where: { leaseId },
 		});
 		expect(updated?.status).toBe("unpaid");
+	});
+
+	it("marks multiple overdue invoices", async () => {
+		// Insert second unpaid past-due invoice
+		await db.insert(invoices).values({
+			leaseId,
+			amount: 300_000,
+			dueDate: new Date("2026-04-10"),
+			status: "unpaid",
+		});
+
+		await runOverdueCheck(systemUser, new Date("2026-06-01"));
+
+		const updated = await db.query.invoices.findMany({
+			where: { leaseId, status: "overdue" },
+		});
+		expect(updated.length).toBe(2);
 	});
 
 	it("creates audit log entry when marking overdue", async () => {

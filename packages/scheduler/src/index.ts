@@ -4,7 +4,8 @@ import { logger } from "./logger";
 import { runInvoiceGeneration } from "./workers/invoice-generation";
 import { runMonthlyReport } from "./workers/monthly-report";
 import { runOverdueCheck } from "./workers/overdue";
-import { runRentReminder } from "./workers/rent-reminder";
+import { runOverdueReminder } from "./workers/overdue-reminder";
+import { runPaymentReminder } from "./workers/payment-reminder";
 
 const main = async () => {
 	const systemUser = await db.query.users.findFirst({
@@ -18,14 +19,17 @@ const main = async () => {
 
 	// Overdue otomatis tiap jam 00:00 WITA
 	// Callback-based Bun.cron pakai UTC, jadi 16:00 UTC = 00:00 WITA (+1 day)
-	Bun.cron("0 16 * * *", () => runOverdueCheck(systemUser));
+	Bun.cron("0 16 * * *", async () => {
+		await runOverdueCheck(systemUser);
+		await runOverdueReminder(systemUser);
+	});
 
 	// Pembuatan invoice bulanan dan pengingat pembayaran tiap jam 8 pagi WITA
 	// 00:00 UTC = 08:00 WITA
 	Bun.cron("0 0 * * *", async () =>
 		Promise.all([
 			runInvoiceGeneration(systemUser),
-			runRentReminder(systemUser),
+			runPaymentReminder(systemUser),
 		]),
 	);
 

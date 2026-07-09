@@ -127,7 +127,7 @@ describe("runMonthlyReport", () => {
 		expect(newLog).toBeDefined();
 		expect(newLog!.userId).toBe(systemUser.id);
 		expect(newLog!.action).toBe("CREATE");
-		expect(newLog!.tableName).toBe("notifications");
+		expect(newLog!.tableName).toBe("push_history");
 
 		const details = newLog!.details as {
 			type: string;
@@ -136,7 +136,7 @@ describe("runMonthlyReport", () => {
 		};
 		expect(details.type).toBe("notification");
 		expect(details.channel).toBe("push");
-		expect(details.description).toContain("1 paid");
-		expect(details.description).toContain("1 unpaid");
+		expect(details.description).toContain("1 terbayar");
+		expect(details.description).toContain("1 tertunggak");
 	});
 });

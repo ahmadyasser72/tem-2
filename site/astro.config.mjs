@@ -7,7 +7,7 @@ import { defineConfig, envField } from "astro/config";
 export default defineConfig({
 	output: "server",
 	adapter: node({ mode: "middleware" }),
-	security: { checkOrigin: false },
+	security: { allowedDomains: [{ hostname: "cat.opah-barley.ts.net" }] },
 
 	env: {
 		schema: {
@@ -45,7 +45,10 @@ export default defineConfig({
 
 	vite: {
 		plugins: [tailwindcss()],
-		server: { allowedHosts: ["indekos-ungu.loophole.site"], hmr: false },
+		server: {
+			allowedHosts: ["cat.opah-barley.ts.net"],
+			hmr: false,
+		},
 	},
 	devToolbar: { enabled: false },
 });

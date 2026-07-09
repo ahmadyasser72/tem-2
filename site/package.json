@@ -6,7 +6,7 @@
 		"node": "26.4.0"
 	},
 	"scripts": {
-		"start": "bun start-server.mjs --host",
+		"start": "bun start-server.mts",
 		"build": "astro build",
 		"check": "astro check",
 		"test": "bun test",

@@ -63,6 +63,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 					invoiceId: invoice.id,
 					type: "overdue_reminder" as const,
 					status: "pending" as const,
+					createdAt: referenceTime,
 				})),
 			)
 			.returning({ id: notifications.id });

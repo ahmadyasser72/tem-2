@@ -67,6 +67,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 					invoiceId: invoice.id,
 					type: "reminder" as const,
 					status: "pending" as const,
+					createdAt: referenceDate,
 				})),
 			)
 			.returning({ id: notifications.id });

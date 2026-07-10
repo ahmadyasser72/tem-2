@@ -198,7 +198,7 @@ const [recentNotifications, allNotifications] = pushActive
 				return;
 			}
 
-			const publicKey = document.querySelector(
+			const publicKey = document.querySelector<HTMLMetaElement>(
 				'meta[name="vapid-public-key"]',
 			)?.content;
 			if (!publicKey) {

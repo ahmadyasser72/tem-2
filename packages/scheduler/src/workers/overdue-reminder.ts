@@ -46,12 +46,12 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 
 		if (overdueInvoices.length === 0) {
 			log?.info(
-				{ createdReminderCount: 0 },
+				{ createdReminder: 0 },
 				"overdue-reminder: no eligible past-due invoices found requiring notification dispatch",
 			);
 			return {
 				success: true,
-				processedCount: 0,
+				processed: 0,
 				message: "Tidak ada invoice jatuh tempo yang memerlukan pengingat",
 			};
 		}
@@ -84,7 +84,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 
 		log?.info(
 			{
-				createdReminderCount: overdueInvoices.length,
+				createdReminder: overdueInvoices.length,
 				targetInvoiceIds: invoiceIds,
 			},
 			"overdue-reminder: reminder notifications successfully inserted into the database queue",
@@ -92,7 +92,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 
 		return {
 			success: true,
-			processedCount: newNotifications.length,
+			processed: newNotifications.length,
 			message: `Berhasil membuat ${newNotifications.length} pengingat invoice jatuh tempo`,
 		};
 	} catch (error) {
@@ -102,7 +102,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 		);
 		return {
 			success: false,
-			processedCount: 0,
+			processed: 0,
 			message: `Gagal: ${error instanceof Error ? error.message : "Kesalahan tidak diketahui"}`,
 		};
 	}

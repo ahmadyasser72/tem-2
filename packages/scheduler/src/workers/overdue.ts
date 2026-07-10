@@ -42,7 +42,7 @@ export const runOverdueCheck: SchedulerWorkerFunction = async (
 			});
 
 			log?.info(
-				{ overdueInvoiceCount: overdueInvoices.length, invoiceIds },
+				{ overdueInvoice: overdueInvoices.length, invoiceIds },
 				"overdue: persistent database records updated to overdue status successfully",
 			);
 		} else {
@@ -52,13 +52,13 @@ export const runOverdueCheck: SchedulerWorkerFunction = async (
 		}
 
 		log?.info(
-			{ processedInvoiceCount: overdueInvoices.length },
+			{ processedInvoice: overdueInvoices.length },
 			"overdue: status check execution routine completed successfully",
 		);
 
 		return {
 			success: true,
-			processedCount: overdueInvoices.length,
+			processed: overdueInvoices.length,
 			message: `Berhasil menandai ${overdueInvoices.length} invoice sebagai jatuh tempo`,
 		};
 	} catch (error) {
@@ -68,7 +68,7 @@ export const runOverdueCheck: SchedulerWorkerFunction = async (
 		);
 		return {
 			success: false,
-			processedCount: 0,
+			processed: 0,
 			message: `Gagal: ${error instanceof Error ? error.message : "Kesalahan tidak diketahui"}`,
 		};
 	}

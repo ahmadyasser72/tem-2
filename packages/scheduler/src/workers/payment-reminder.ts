@@ -50,12 +50,12 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 
 		if (dueInvoices.length === 0) {
 			log?.info(
-				{ createdReminderCount: 0 },
+				{ createdReminder: 0 },
 				"payment-reminder: no upcoming unpaid invoices found requiring early warning notifications",
 			);
 			return {
 				success: true,
-				processedCount: 0,
+				processed: 0,
 				message: "Tidak ada invoice mendatang yang memerlukan pengingat",
 			};
 		}
@@ -88,7 +88,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 
 		log?.info(
 			{
-				createdReminderCount: dueInvoices.length,
+				createdReminder: dueInvoices.length,
 				targetInvoiceIds: invoiceIds,
 			},
 			"payment-reminder: pending warning notifications successfully committed to the outbound message queue",
@@ -96,7 +96,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 
 		return {
 			success: true,
-			processedCount: newNotifications.length,
+			processed: newNotifications.length,
 			message: `Berhasil membuat ${newNotifications.length} pengingat pembayaran`,
 		};
 	} catch (error) {
@@ -106,7 +106,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 		);
 		return {
 			success: false,
-			processedCount: 0,
+			processed: 0,
 			message: `Gagal: ${error instanceof Error ? error.message : "Kesalahan tidak diketahui"}`,
 		};
 	}

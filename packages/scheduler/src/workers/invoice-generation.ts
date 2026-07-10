@@ -66,7 +66,7 @@ export const runInvoiceGeneration: SchedulerWorkerFunction = async (
 				.returning({ id: invoices.id });
 
 			log?.info(
-				{ invoiceCount: newInvoices.length },
+				{ invoice: newInvoices.length },
 				"invoice-generation: persistent database records committed successfully",
 			);
 
@@ -84,12 +84,12 @@ export const runInvoiceGeneration: SchedulerWorkerFunction = async (
 
 		// Generate payment links for newly created invoices
 		if (newInvoices.length > 0) {
-			let generatedCount = 0;
+			let generated = 0;
 
 			for (const { id } of newInvoices) {
 				try {
 					await generatePaymentLink(id, systemUser.id, { logger: log });
-					generatedCount++;
+					generated++;
 				} catch (error) {
 					log?.error(
 						{ invoiceId: id, error },
@@ -99,19 +99,19 @@ export const runInvoiceGeneration: SchedulerWorkerFunction = async (
 			}
 
 			log?.info(
-				{ generatedCount, totalInvoices: newInvoices.length },
+				{ generated, totalInvoices: newInvoices.length },
 				"invoice-generation: payment links compilation sequence complete",
 			);
 		}
 
 		log?.info(
-			{ createdInvoiceCount: toCreate.length },
+			{ createdInvoice: toCreate.length },
 			"invoice-generation: execution routine completed successfully",
 		);
 
 		return {
 			success: true,
-			processedCount: toCreate.length,
+			processed: toCreate.length,
 			message: `Berhasil membuat ${toCreate.length} invoice dengan ${newInvoices.length} link pembayaran`,
 		};
 	} catch (error) {
@@ -121,7 +121,7 @@ export const runInvoiceGeneration: SchedulerWorkerFunction = async (
 		);
 		return {
 			success: false,
-			processedCount: 0,
+			processed: 0,
 			message: `Gagal: ${error instanceof Error ? error.message : "Kesalahan tidak diketahui"}`,
 		};
 	}

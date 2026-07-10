@@ -25,7 +25,7 @@ export const listComplaints: CommandHandlerFunction = async (
 		}
 
 		log?.info(
-			{ tenantId: tenant.id, complaintCount: latest.length },
+			{ tenantId: tenant.id, complaint: latest.length },
 			"complaints retrieved successfully",
 		);
 

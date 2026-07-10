@@ -160,19 +160,16 @@ export class ConversationManager {
 		this.logger?.debug("starting session cleanup timer");
 		this.cleanupTimer = setInterval(() => {
 			const now = Date.now();
-			let cleanedCount = 0;
+			let cleaned = 0;
 			for (const [jid, session] of this.sessions) {
 				if (now - session.lastActivity > SESSION_TIMEOUT_MS) {
 					this.sessions.delete(jid);
-					cleanedCount++;
+					cleaned++;
 				}
 			}
 
-			if (cleanedCount > 0) {
-				this.logger?.info(
-					{ cleanedCount: cleanedCount },
-					"expired sessions cleaned up",
-				);
+			if (cleaned > 0) {
+				this.logger?.info({ cleaned: cleaned }, "expired sessions cleaned up");
 			}
 
 			if (this.sessions.size === 0) {

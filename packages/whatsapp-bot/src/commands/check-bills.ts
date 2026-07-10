@@ -52,7 +52,7 @@ export const checkBills: CommandHandlerFunction = async (tenant, options) => {
 			{
 				tenantId: tenant.id,
 				leaseId: lease.id,
-				unpaidCount: unpaid.length,
+				unpaid: unpaid.length,
 				totalAmount: total,
 			},
 			"unpaid bills retrieved successfully",

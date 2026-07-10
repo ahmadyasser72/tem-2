@@ -49,7 +49,7 @@ const unpaidInvoices = await db.query.invoices.findMany({
 });
 
 const totalUnpaidAmount = sumBy(unpaidInvoices, ({ amount }) => amount);
-const totalUnpaidCount = unpaidInvoices.length;
+const totalUnpaid = unpaidInvoices.length;
 
 const pendingBills = unpaidInvoices
 	.slice(0, 5)
@@ -94,7 +94,7 @@ const stats = [
 	{
 		title: "Tagihan Belum Bayar",
 		value: formatCurrency(totalUnpaidAmount),
-		desc: `${totalUnpaidCount} tagihan belum lunas`,
+		desc: `${totalUnpaid} tagihan belum lunas`,
 		icon: "lucide:file-text" as const,
 	},
 	{

@@ -3,7 +3,7 @@ import type { Logger } from "@indekos/utilities/logger";
 
 export type SchedulerWorkerResult = {
 	success: boolean;
-	processedCount: number;
+	processed: number;
 	message: string;
 };
 

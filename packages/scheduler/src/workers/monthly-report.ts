@@ -79,8 +79,8 @@ export const runMonthlyReport: SchedulerWorkerFunction = async (
 		log?.info(
 			{
 				targetMonth: formatDate(startDate, "YYYY-MM"),
-				paidCount: paid.length,
-				unpaidCount: unpaid.length,
+				paid: paid.length,
+				unpaid: unpaid.length,
 				totalAdministrativeUsersNotified: users.length,
 			},
 			"monthly-report: push notification statement summary sent successfully",
@@ -88,7 +88,7 @@ export const runMonthlyReport: SchedulerWorkerFunction = async (
 
 		return {
 			success: true,
-			processedCount: users.length,
+			processed: users.length,
 			message: `Berhasil mengirim laporan ke ${users.length} pengguna (${paid.length} terbayar, ${unpaid.length} tertunggak)`,
 		};
 	} catch (error) {
@@ -98,7 +98,7 @@ export const runMonthlyReport: SchedulerWorkerFunction = async (
 		);
 		return {
 			success: false,
-			processedCount: 0,
+			processed: 0,
 			message: `Gagal: ${error instanceof Error ? error.message : "Kesalahan tidak diketahui"}`,
 		};
 	}

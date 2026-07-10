@@ -189,7 +189,7 @@ export const notifyStaffNewComplaint = async (
 		log?.info(
 			{
 				tenantId: tenant.id,
-				staffCount: users.length,
+				staff: users.length,
 			},
 			"staff notified of new complaint",
 		);

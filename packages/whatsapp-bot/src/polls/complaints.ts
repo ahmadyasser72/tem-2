@@ -24,7 +24,7 @@ export const pollInProgressComplaints = async (
 		});
 
 		log?.info(
-			{ complaintCount: inProgress.length },
+			{ complaint: inProgress.length },
 			"found unnotified in-progress complaints",
 		);
 
@@ -102,7 +102,7 @@ export const pollResolvedComplaints = async (
 		});
 
 		log?.info(
-			{ complaintCount: resolved.length },
+			{ complaint: resolved.length },
 			"found unnotified resolved complaints",
 		);
 

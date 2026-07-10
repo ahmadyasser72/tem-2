@@ -48,9 +48,9 @@ export const sendPush = async (
 
 	log?.info(
 		{
-			recipientCount: to.length,
-			structuredUserCount: userIdentifiers.length,
-			directEndpointCount: endpoints.length,
+			recipient: to.length,
+			structuredUser: userIdentifiers.length,
+			directEndpoint: endpoints.length,
 		},
 		"push-service: scanning database to retrieve active browser push registration subscriptions",
 	);
@@ -80,7 +80,7 @@ export const sendPush = async (
 		}
 
 		log?.info(
-			{ targetSubscriptionCount: subscriptions.length },
+			{ targetSubscription: subscriptions.length },
 			"push-service: dispatching web-push payload notification packets",
 		);
 
@@ -121,7 +121,7 @@ export const sendPush = async (
 			);
 
 			log?.warn(
-				{ invalidSubscriptionCount: invalidSubscriptionEndpoints.length },
+				{ invalidSubscription: invalidSubscriptionEndpoints.length },
 				"push-service: purging expired subscription tokens from database records due to 404/410 vendor codes",
 			);
 
@@ -135,7 +135,7 @@ export const sendPush = async (
 		// 2. Process successfully delivered notifications
 		if (grouped.sent?.length > 0) {
 			log?.info(
-				{ successfullyDeliveredCount: grouped.sent.length },
+				{ successfullyDelivered: grouped.sent.length },
 				"push-service: recording historical tracking logs for sent packets",
 			);
 

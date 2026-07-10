@@ -42,7 +42,7 @@ export const paymentHistory: CommandHandlerFunction = async (
 			{
 				tenantId: tenant.id,
 				leaseId: lease.id,
-				paidCount: lease.invoices.length,
+				paid: lease.invoices.length,
 			},
 			"payment history retrieved successfully",
 		);

@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   site:
+    image: "${BASE_IMAGE_TAG:-localhost}/indekos-site:latest"
     build:
       context: .
       target: site
@@ -24,6 +25,7 @@ services:
     restart: unless-stopped
 
   scheduler:
+    image: "${BASE_IMAGE_TAG:-localhost}/indekos-scheduler:latest"
     build:
       context: .
       target: scheduler
@@ -39,6 +41,7 @@ services:
     restart: unless-stopped
 
   whatsapp-bot:
+    image: "${BASE_IMAGE_TAG:-localhost}/indekos-whatsapp-bot:latest"
     build:
       context: .
       target: whatsapp-bot

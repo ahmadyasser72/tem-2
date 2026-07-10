@@ -30,6 +30,16 @@ if (logoutResult && !logoutResult.error) {
 ---
 
 <BaseLayout {...Astro.props}>
+	{
+		process.env.VAPID_PUBLIC_KEY && (
+			<meta
+				name="vapid-public-key"
+				content={process.env.VAPID_PUBLIC_KEY}
+				slot="head"
+			/>
+		)
+	}
+
 	<div class="drawer lg:drawer-open">
 		<input class="drawer-toggle" id="dashboard-drawer" type="checkbox" />
 		<div class="drawer-content" id="dashboard-content">

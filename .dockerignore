@@ -1,0 +1,42 @@
+# Build output & Cache
+**/dist/
+**/.astro/
+**/.vite/
+**/*.tsbuildinfo
+
+# Dependencies
+**/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables (catches all nested files)
+**/.env
+**/.env.example
+**/.env.local
+
+# Git, IDE, and Docker configs
+.git
+.gitignore
+.dockerignore
+.github
+**/.vscode/
+**/.idea/
+Dockerfile*
+docker-compose.yml
+
+# Tests & Docs
+**/*.test.ts
+**/*.md
+/docs/
+
+# Misc Data & Uploads
+.DS_Store
+/brand.json
+/db.sqlite
+/test.db.sqlite
+/site/uploads/
+/data/

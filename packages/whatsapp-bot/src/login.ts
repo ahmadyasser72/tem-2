@@ -1,8 +1,7 @@
 import { createLogger } from "@indekos/utilities/logger";
 
 import { DisconnectReason, makeWASocket } from "baileys";
-import open from "open";
-import { renderSVG } from "uqr";
+import { renderUnicodeCompact } from "uqr";
 
 import { useSqliteAuthState } from "./auth";
 
@@ -23,20 +22,21 @@ const login = async () => {
 
 		sock.ev.on("creds.update", saveCreds);
 
-		const SVGFile = Bun.file("qr.svg");
 		sock.ev.on(
 			"connection.update",
 			async ({ connection, lastDisconnect, qr }) => {
 				if (qr) {
-					log.info("qr code generated, opening browser");
-					const qrSVG = renderSVG(qr);
-					await SVGFile.write(qrSVG);
-					await open(SVGFile.name!, { wait: true });
+					log.info("qr code generated");
+					console.log(
+						"\nScan QR code berikut dengan aplikasi WhatsApp Anda:\n",
+					);
+					console.log(renderUnicodeCompact(qr));
+					console.log("\n");
 				}
 
 				if (connection === "open") {
 					log.info("whatsapp connection established successfully");
-					await SVGFile.delete();
+
 					process.exit(0);
 				}
 

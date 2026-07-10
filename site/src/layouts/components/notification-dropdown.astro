@@ -147,7 +147,7 @@ const [recentNotifications, allNotifications] = pushActive
 
 <script>
 	import { actions } from "astro:actions";
-	import { VAPID_PUBLIC_KEY } from "astro:env/client";
+	import htmx from "htmx.org";
 
 	const sw = await new Promise<ServiceWorkerRegistration | null>(
 		async (resolve) => {
@@ -198,9 +198,20 @@ const [recentNotifications, allNotifications] = pushActive
 				return;
 			}
 
+			const publicKey = document.querySelector(
+				'meta[name="vapid-public-key"]',
+			)?.content;
+			if (!publicKey) {
+				console.error("VAPID public key is missing from meta tags.");
+				showClientSideToast(
+					"error",
+					"Konfigurasi notifikasi server tidak lengkap.",
+				);
+			}
+
 			subscription = await sw.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: VAPID_PUBLIC_KEY,
+				applicationServerKey: publicKey,
 			});
 
 			const { error } = await actions.push.subscribe(

@@ -18,7 +18,8 @@ const BRAND_DEFAULT = {
 	phone: "+62 896-7268-4032",
 } satisfies BrandConfig;
 
-export const BRAND_FILE = path.join(MONOREPO_ROOT, "brand.json");
+export const BRAND_FILE =
+	process.env.BRAND_FILE ?? path.join(MONOREPO_ROOT, "brand.json");
 const ensureConfig = async () => {
 	const configFile = Bun.file(BRAND_FILE);
 	if (!(await configFile.exists())) {
@@ -30,7 +31,7 @@ export const config: BrandConfig = await (async () => {
 	await ensureConfig();
 
 	watch(path.dirname(BRAND_FILE), {}, async (event, name) => {
-		if (name !== "brand.json") return;
+		if (name !== path.basename(BRAND_FILE)) return;
 
 		if (event === "rename") await ensureConfig();
 

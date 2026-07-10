@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  site:
+    build:
+      context: .
+      target: site
+    container_name: indekos-site
+    init: true
+    ports:
+      - "127.0.0.1:4321:4321"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/data/db.sqlite
+      - UPLOADS_DIR=/data/uploads
+      - HOST=0.0.0.0
+    volumes:
+      - ./data:/data
+    depends_on:
+      - scheduler
+      - whatsapp-bot
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+      target: scheduler
+    container_name: indekos-scheduler
+    init: true
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/data/db.sqlite
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  whatsapp-bot:
+    build:
+      context: .
+      target: whatsapp-bot
+    container_name: indekos-whatsapp-bot
+    init: true
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/data/db.sqlite
+      - UPLOADS_DIR=/data/uploads
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+volumes:
+  data:

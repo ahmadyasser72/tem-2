@@ -7,7 +7,8 @@
 		"./*": "./src/workers/*.ts"
 	},
 	"scripts": {
-		"start": "bun src/index.ts",
+		"build": "bun build src/index.ts --sourcemap --minify --target=bun --outdir dist",
+		"start": "bun dist/index.js",
 		"check": "tsc --noEmit",
 		"trigger": "bun src/trigger.ts"
 	},

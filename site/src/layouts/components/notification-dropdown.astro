@@ -28,7 +28,7 @@ const [recentNotifications, allNotifications] = pushActive
 	id="notification-popover-button"
 	hx-headers="js:{ 'push-endpoint': localStorage.subscriptionEndpoint ?? '' }"
 	hx-select="#notification-popover-button"
-	hx-swap="innerHTML transition:true"
+	hx-swap="innerHTML transition:true ignoreTitle:true"
 >
 	{
 		allNotifications > 0 && (
@@ -59,6 +59,7 @@ const [recentNotifications, allNotifications] = pushActive
 	hx-indicator="#notification-popover-loader"
 	hx-select="#notification-popover-wrapper"
 	hx-select-oob="#notification-popover-button"
+	hx-swap="innerHTML ignoreTitle:true"
 	popover
 	style="position-anchor:--user-anchor"
 >
@@ -237,11 +238,11 @@ const [recentNotifications, allNotifications] = pushActive
 			if (!(event.target instanceof HTMLButtonElement)) return;
 
 			const updateUI = () =>
-				htmx.ajax("get", document.URL, {
+				htmx.ajax("get", "/dashboard/empty", {
 					select: "#notification-popover-wrapper",
 					selectOOB: "#notification-popover-button",
 					target: "#notification-popover",
-					swap: "innerHTML transition:true",
+					swap: "innerHTML transition:true ignoreTitle:true",
 					headers: {
 						"push-endpoint": localStorage.getItem("subscriptionEndpoint") ?? "",
 					},

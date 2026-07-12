@@ -19,24 +19,19 @@
 			</div>
 			<div class="card mb-4 border border-base-300 bg-base-100 shadow-sm">
 				<div class="p-4">
-					<div class="flex flex-wrap items-end gap-4">
+					<div
+						class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<label class="input w-full input-sm sm:w-64">
+							📅
+							<input
+								type="text"
+								class="vc grow"
+								placeholder="Pilih periode"
+								readonly
+							/>
+						</label>
 						<div class="flex items-center gap-2">
-							<label class="wf-label">📅 Pilih Periode</label>
-							<input
-								type="month"
-								class="input w-36 input-sm"
-								value="2026-01"
-								disabled
-							/>
-							<span class="text-sm">Sampai:</span>
-							<input
-								type="month"
-								class="input w-36 input-sm"
-								value="2026-03"
-								disabled
-							/>
-						</div>
-						<div class="ml-auto flex items-center gap-2">
 							<button class="btn btn-sm">🔽 Filter</button>
 							<label class="input input-sm"
 								>🔍
@@ -74,63 +69,93 @@
 					</div>
 				</div>
 			</div>
-			<div class="overflow-x-auto border border-base-300 shadow-sm">
-				<table class="table table-sm">
-					<thead>
-						<tr>
-							<th>Tanggal</th>
-							<th>Penghuni</th>
-							<th>Kamar</th>
-							<th>Kategori</th>
-							<th>Status</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-20 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-8 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-16 skeleton">&nbsp;</span></td>
-							<td><span class="badge w-14 skeleton badge-sm">&nbsp;</span></td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
-						</tr>
-						<tr>
-							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-24 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-8 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-20 skeleton">&nbsp;</span></td>
-							<td><span class="badge w-12 skeleton badge-sm">&nbsp;</span></td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
-						</tr>
-						<tr>
-							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-18 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-8 skeleton">&nbsp;</span></td>
-							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
-							<td><span class="badge w-16 skeleton badge-sm">&nbsp;</span></td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="mt-4 flex items-center justify-between">
-				<span class="text-sm opacity-60"
-					>Menampilkan 1-3 dari
-					<span class="inline-block w-6 skeleton">&nbsp;</span></span
+			<div class="flex flex-col gap-4">
+				<div
+					class="card card-side border border-l-4 border-base-300 border-l-success bg-base-100 opacity-65 shadow-sm"
 				>
-				<div class="join">
-					<button class="btn join-item btn-sm">«</button>
-					<button class="btn btn-active join-item btn-sm">1</button>
-					<button class="btn join-item btn-sm">2</button>
-					<button class="btn join-item btn-sm">3</button>
-					<button class="btn join-item btn-sm">»</button>
+					<figure class="w-24 shrink-0 sm:w-32">
+						<div class="h-full w-full skeleton bg-base-200">&nbsp;</div>
+					</figure>
+					<div
+						class="card-body justify-between gap-4 p-5 md:flex-row md:items-center"
+					>
+						<div class="flex flex-1 flex-col gap-2">
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="text-mono text-xs font-bold text-base-content/40"
+									>KMP-X</span
+								>
+								<span class="badge badge-sm font-bold badge-success"
+									>Selesai</span
+								>
+								<span class="badge-mono badge badge-sm font-bold badge-neutral"
+									>101</span
+								>
+								<span class="text-xs text-base-content/50">&bull;</span>
+								<span class="text-xs font-semibold text-base-content/60"
+									>John Doe</span
+								>
+							</div>
+							<p class="text-base font-bold text-base-content">
+								Sistem keran air bocor di kamar mandi
+							</p>
+							<div
+								class="mt-1 flex items-center gap-2 text-xs text-base-content/50"
+							>
+								<span>Dilaporkan pada: 06 Jul 2026</span>
+								<span>&bull;</span>
+								<span
+									class="flex items-center gap-1 font-semibold text-success"
+								>
+									Ditangani oleh: Admin
+								</span>
+							</div>
+						</div>
+						<div
+							class="flex shrink-0 items-center gap-2 self-end md:self-center"
+						>
+							<div class="rounded-btn h-8 w-8 skeleton">&nbsp;</div>
+							<div class="rounded-btn h-8 w-8 skeleton">&nbsp;</div>
+						</div>
+					</div>
+				</div>
+				<div
+					class="card card-side border border-l-4 border-base-300 border-l-error bg-base-100 shadow-sm"
+				>
+					<div
+						class="card-body justify-between gap-4 p-5 md:flex-row md:items-center"
+					>
+						<div class="flex flex-1 flex-col gap-2">
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="text-mono text-xs font-bold text-base-content/40"
+									>KMP-Y</span
+								>
+								<span class="badge badge-sm font-bold badge-error"
+									>Terbuka</span
+								>
+								<span class="badge-mono badge badge-sm font-bold badge-neutral"
+									>102</span
+								>
+								<span class="text-xs text-base-content/50">&bull;</span>
+								<span class="text-xs font-semibold text-base-content/60"
+									>Jane Smith</span
+								>
+							</div>
+							<p class="text-base font-bold text-base-content">
+								Lampu utama mati berkedip
+							</p>
+							<div
+								class="mt-1 flex items-center gap-2 text-xs text-base-content/50"
+							>
+								<span>Dilaporkan pada: 07 Jul 2026</span>
+							</div>
+						</div>
+						<div
+							class="flex shrink-0 items-center gap-2 self-end md:self-center"
+						>
+							<div class="rounded-btn h-8 w-8 skeleton">&nbsp;</div>
+							<div class="rounded-btn h-8 w-8 skeleton">&nbsp;</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

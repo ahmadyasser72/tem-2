@@ -151,6 +151,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	}
 
 	const response = await next();
+	if (context.locals.noContent) return new Response(null, { status: 304 });
+
 	if (persistQuery.size > 0 && !context.url.pathname.includes("/modal/")) {
 		response.headers.set(
 			"hx-replace-url",

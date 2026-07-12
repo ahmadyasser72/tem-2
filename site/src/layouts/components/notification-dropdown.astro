@@ -19,16 +19,24 @@ const [recentNotifications, allNotifications] = pushActive
 			db.$count(pushHistory, eq(pushHistory.endpoint, pushEndpoint)),
 		])
 	: [[], 0];
+
+const lastNotificationCount = Number(Astro.url.searchParams.get("count"));
+if (
+	!Number.isNaN(lastNotificationCount) &&
+	lastNotificationCount === recentNotifications.length
+)
+	Astro.locals.noContent = true;
 ---
 
 <div
 	hx-get="/dashboard/empty"
-	hx-trigger="load delay:30s"
+	hx-trigger="load delay:10s"
 	class="indicator"
 	id="notification-popover-button"
 	hx-headers="js:{ 'push-endpoint': localStorage.subscriptionEndpoint ?? '' }"
 	hx-select="#notification-popover-button"
-	hx-swap="innerHTML transition:true ignoreTitle:true"
+	hx-swap="outerHTML transition:true ignoreTitle:true"
+	hx-vals={JSON.stringify({ count: recentNotifications.length })}
 >
 	{
 		allNotifications > 0 && (

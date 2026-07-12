@@ -25,5 +25,6 @@ declare namespace App {
 
 		logger: import("@indekos/utilities/logger").Logger;
 		actionResults: import("~/lib/form-result").ActionResult[];
+		noContent?: boolean;
 	}
 }

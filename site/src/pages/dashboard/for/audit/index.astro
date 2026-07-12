@@ -46,7 +46,7 @@ const auditStats = getAuditStats(auditLogs);
 		</a>
 	</Fragment>
 
-	<FilterToolbar name="audit" {...params}>
+	<FilterToolbar name="audit" period={params.period}>
 		<Fragment slot="actions">
 			<FilterPopover
 				name="audit"

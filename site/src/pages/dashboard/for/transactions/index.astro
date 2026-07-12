@@ -58,7 +58,7 @@ const transactionStats = getTransactionStats(invoices);
 		</a>
 	</Fragment>
 
-	<FilterToolbar name="transactions" {...params}>
+	<FilterToolbar name="transactions" period={params.period}>
 		<Fragment slot="actions">
 			<FilterPopover
 				name="transactions"

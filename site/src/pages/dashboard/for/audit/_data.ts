@@ -4,7 +4,7 @@ import { z } from "astro/zod";
 import { countBy, uniqBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
-import { periodFields, querySchema, statusSchema } from "~/lib/query";
+import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
 export { AUDIT_ACTIONS };
 
@@ -21,7 +21,10 @@ export const fetchAuditLogs = async (
 					{ user: { username: { like: `%${params.query}%` } } },
 				],
 			}),
-			createdAt: { gte: params.from, lte: params.to },
+			createdAt: {
+				gte: params.period.from.startOf("day").toDate(),
+				lte: params.period.to.endOf("day").toDate(),
+			},
 			user: { role: params.show_system ? "system" : { ne: "system" } },
 			...(params.action && { action: params.action }),
 		},
@@ -44,7 +47,7 @@ export const fetchAuditLogs = async (
 
 export const auditQuerySchema = z.object({
 	query: querySchema,
-	...periodFields,
+	period: periodSchema,
 	action: statusSchema(AUDIT_ACTIONS),
 	show_system: z.stringbool().catch(false),
 });

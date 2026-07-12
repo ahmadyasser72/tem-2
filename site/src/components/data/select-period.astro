@@ -1,0 +1,92 @@
+---
+import { formatDate } from "@indekos/utilities/date";
+
+import type { JSX } from "astro/jsx-runtime";
+
+import Icon from "~/components/ui/icon.astro";
+import { PERIOD_SEPARATOR, type Period } from "~/lib/query";
+
+interface Props extends JSX.InputHTMLAttributes {
+	period?: Period;
+}
+
+const { period, class: className, ...props } = Astro.props;
+---
+
+<label class="input w-full input-sm sm:w-64">
+	<Icon name="lucide:calendar" size="size-5" />
+	<input
+		data-period={period
+			? [period.from, period.to]
+					.map((date) => formatDate(date, "YYYY-MM-DD"))
+					.join(PERIOD_SEPARATOR)
+			: undefined}
+		type="text"
+		class:list={["vc", className]}
+		placeholder="Pilih periode"
+		readonly
+		{...props}
+	/>
+</label>
+
+<script>
+	import htmx from "htmx.org";
+	import { Calendar, type Options } from "vanilla-calendar-pro";
+
+	import { PERIOD_SEPARATOR, PERIOD_SEPARATOR_UI } from "~/lib/query";
+
+	const options: Options = {
+		inputMode: true,
+		selectionDatesMode: "multiple-ranged",
+		onClickDate: ({ context, set }) => {
+			// handle singular date
+			if (context.selectedDates.some((it) => !it)) {
+				set({ selectedDates: [context.inputElement!.value] });
+				context.inputElement!.dispatchEvent(new Event("period-change"));
+				return;
+			}
+
+			context.inputElement!.value =
+				context.selectedDates.join(PERIOD_SEPARATOR_UI);
+			if (context.selectedDates.length === 2)
+				context.inputElement!.dispatchEvent(new Event("period-change"));
+		},
+		onCreateDateRangeTooltip: ({ context }) => {
+			const createRow = (title: string, value: string) =>
+				`<div style="text-align: left; white-space: nowrap">
+                    <span>${title}</span>
+                    <b>${value}</b>
+                  </div>`;
+
+			return `
+                ${createRow("Tanggal:", context.selectedDates[0])}
+                ${context.selectedDates[1] ? createRow("Sampai:", context.selectedDates[1]) : ""}
+              `;
+		},
+
+		// display 2 months at once on sm+
+		...(window.matchMedia("(width >= 40rem)").matches && {
+			type: "multiple",
+			displayMonthsCount: 2,
+			monthsToSwitch: 2,
+		}),
+	};
+
+	htmx.onLoad((node) => {
+		if (!(node instanceof HTMLElement)) return;
+
+		const calendars = node.querySelectorAll<HTMLInputElement>("input.vc");
+		calendars.forEach((calendarElement) => {
+			const calendar = new Calendar(calendarElement, options);
+
+			const { period } = calendarElement.dataset;
+			if (period) {
+				const selectedDates = period.split(PERIOD_SEPARATOR);
+				calendar.set({ selectedDates });
+				calendarElement.value = selectedDates.join(PERIOD_SEPARATOR_UI);
+			}
+
+			calendar.init();
+		});
+	});
+</script>

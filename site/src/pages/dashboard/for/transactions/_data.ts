@@ -9,7 +9,7 @@ import { z } from "astro/zod";
 import { groupBy, sumBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
-import { periodFields, querySchema, statusSchema } from "~/lib/query";
+import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
 export { INVOICE_STATUS };
 
@@ -27,7 +27,10 @@ export const fetchTransactions = async (
 
 			...(params.status && { status: params.status }),
 
-			dueDate: { gte: params.from, lte: params.to },
+			dueDate: {
+				gte: params.period.from.startOf("day").toDate(),
+				lte: params.period.to.endOf("day").toDate(),
+			},
 		},
 		with: {
 			lease: {
@@ -86,7 +89,7 @@ export const getTransactionStats = (
 
 export const transactionQuerySchema = z.object({
 	query: querySchema,
-	...periodFields,
+	period: periodSchema,
 	status: statusSchema(INVOICE_STATUS),
 });
 

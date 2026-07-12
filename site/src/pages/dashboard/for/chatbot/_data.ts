@@ -5,12 +5,12 @@ import { z } from "astro/zod";
 import { countBy, uniqBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
-import { periodFields, querySchema, statusSchema } from "~/lib/query";
+import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
 export const chatbotQuerySchema = z.object({
 	query: querySchema,
 	direction: statusSchema(CHATBOT_DIRECTIONS),
-	...periodFields,
+	period: periodSchema,
 });
 
 export const fetchChatbotLogs = async (
@@ -27,7 +27,10 @@ export const fetchChatbotLogs = async (
 
 			...(params.direction && { direction: params.direction }),
 
-			sentAt: { gte: params.from, lte: params.to },
+			sentAt: {
+				gte: params.period.from.startOf("day").toDate(),
+				lte: params.period.to.endOf("day").toDate(),
+			},
 		},
 		with: {
 			tenant: {

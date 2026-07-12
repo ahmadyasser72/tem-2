@@ -3,6 +3,7 @@ import { formatDate } from "@indekos/utilities/date";
 
 import ReportStats from "~/components/data/report-stats.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
+import { PERIOD_SEPARATOR_UI } from "~/lib/query";
 import {
 	fetchNotifications,
 	getNotificationStats,
@@ -25,11 +26,12 @@ if (params.type) {
 if (params.status) {
 	filterParts.push(`Status: ${NOTIFICATION_STATUS_LABELS[params.status]}`);
 }
-if (params.from) {
+if (params.period) {
+	const { from, to } = params.period;
 	filterParts.push(
-		params.from !== params.to
-			? `Periode: ${params.from} s/d ${params.to}`
-			: `Periode: ${params.from}`,
+		from.isSame(to, "day")
+			? `Per ${formatDate(from, "DD MMMM YYYY")}`
+			: `Periode ${[from, to].map((date) => formatDate(date, "DD MMMM YYYY")).join(PERIOD_SEPARATOR_UI)}`,
 	);
 }
 const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;

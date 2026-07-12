@@ -8,6 +8,7 @@ import { defineMiddleware } from "astro:middleware";
 import { z } from "astro/zod";
 
 import { logAudit } from "~/lib/audit-log";
+import { PERIOD_SEPARATOR, type Period } from "~/lib/query";
 
 const baseLogger = createLogger("site-middleware");
 
@@ -55,6 +56,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			const parsed = schema.parse(query);
 			for (const key of Object.keys(schema.shape)) {
 				const value = parsed[key];
+
+				if (key === "period" && typeof value === "object" && value) {
+					const { from, to } = value as Period;
+					persistQuery.set(
+						"period",
+						[from, to]
+							.map((date) => date.format("YYYY-MM-DD"))
+							.join(PERIOD_SEPARATOR),
+					);
+				}
+
 				if (!value || typeof value !== "string") continue;
 				persistQuery.set(key, value);
 			}

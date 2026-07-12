@@ -3,6 +3,7 @@ import { formatDate } from "@indekos/utilities/date";
 
 import ReportStats from "~/components/data/report-stats.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
+import { PERIOD_SEPARATOR_UI } from "~/lib/query";
 import {
 	AUDIT_ACTION_LABELS,
 	auditQuerySchema,
@@ -19,11 +20,12 @@ const filterParts: string[] = [];
 if (params.action) {
 	filterParts.push(`Aksi: ${AUDIT_ACTION_LABELS[params.action]}`);
 }
-if (params.from) {
+if (params.period) {
+	const { from, to } = params.period;
 	filterParts.push(
-		params.from !== params.to
-			? `Periode: ${params.from} s/d ${params.to}`
-			: `Periode: ${params.from}`,
+		from.isSame(to, "day")
+			? `Per ${formatDate(from, "DD MMMM YYYY")}`
+			: `Periode ${[from, to].map((date) => formatDate(date, "DD MMMM YYYY")).join(PERIOD_SEPARATOR_UI)}`,
 	);
 }
 const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;

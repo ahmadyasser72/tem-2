@@ -12,15 +12,12 @@ dayjs.tz.setDefault("Asia/Makassar");
 dayjs.extend(relativeTime);
 
 export const formatDate = (
-	date: Date | string | number | null | undefined,
+	date: dayjs.Dayjs | Date | string | number | null | undefined,
 	formatStr = "DD MMM YYYY",
 ): string => {
 	if (!date) return "-";
 	return dayjs(date).format(formatStr);
 };
-
-export const formatPeriod = (date: Date | string | number) =>
-	formatDate(date, "YYYY-MM");
 
 export const normalizePeriodRange = (from: Date, to: Date) =>
 	dayjs(from).isAfter(to) ? { from, to: from } : { from, to };

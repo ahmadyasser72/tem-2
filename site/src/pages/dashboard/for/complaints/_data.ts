@@ -4,7 +4,7 @@ import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
-import { periodFields, querySchema, statusSchema } from "~/lib/query";
+import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
 export const fetchComplaints = async (
 	params: z.infer<typeof complaintQuerySchema>,
@@ -20,7 +20,10 @@ export const fetchComplaints = async (
 
 			...(params.status && { status: params.status }),
 
-			createdAt: { gte: params.from, lte: params.to },
+			createdAt: {
+				gte: params.period.from.startOf("day").toDate(),
+				lte: params.period.to.endOf("day").toDate(),
+			},
 		},
 		with: {
 			tenant: { with: { lease: { with: { room: true } } } },
@@ -73,7 +76,7 @@ export const getComplaintStats = (
 export const complaintQuerySchema = z.object({
 	query: querySchema,
 	status: statusSchema(COMPLAINT_STATUS),
-	...periodFields,
+	period: periodSchema,
 });
 
 export const COMPLAINT_STATUS_BADGES = {

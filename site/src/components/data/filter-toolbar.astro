@@ -1,15 +1,13 @@
 ---
-import { formatPeriod } from "@indekos/utilities/date";
-
-import Icon from "~/components/ui/icon.astro";
+import type { Period } from "~/lib/query";
+import SelectPeriod from "./select-period.astro";
 
 interface Props {
 	name: string;
-	from?: Date;
-	to?: Date;
+	period?: Period;
 }
 
-const { name, from, to } = Astro.props;
+const { name, period } = Astro.props;
 const filterClass = `filter-${name}`;
 const targetId = `#${name}-content-wrapper`;
 ---
@@ -23,39 +21,14 @@ const targetId = `#${name}-content-wrapper`;
 		hx-target={targetId}
 	>
 		{
-			from && to && (
-				<div
-					class="flex w-full items-center gap-3 sm:flex-1"
-					id="filter-period"
-					hx-select-oob="#filter-period"
-				>
-					<Icon
-						class="shrink-0 text-primary"
-						name="lucide:calendar"
-						size="size-5"
-					/>
-					<span class="hidden text-sm font-semibold text-base-content/75 md:inline">
-						Pilih Periode:
-					</span>
-					<input
-						hx-get={Astro.url.pathname}
-						class={`input input-sm ${filterClass} w-full sm:w-40`}
-						name="from"
-						type="month"
-						value={formatPeriod(from)}
-					/>
-					<span class="text-sm font-semibold text-base-content/70">
-						Sampai:
-					</span>
-					<input
-						hx-get={Astro.url.pathname}
-						class={`input input-sm ${filterClass} w-full sm:w-40`}
-						name="to"
-						type="month"
-						value={formatPeriod(to)}
-						min={formatPeriod(from)}
-					/>
-				</div>
+			period && (
+				<SelectPeriod
+					hx-get={Astro.url.pathname}
+					hx-trigger="period-change"
+					class={filterClass}
+					name="period"
+					{period}
+				/>
 			)
 		}
 

@@ -5,11 +5,11 @@ import { z } from "astro/zod";
 import { countBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
-import { periodFields, querySchema, statusSchema } from "~/lib/query";
+import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
 export const notificationQuerySchema = z.object({
 	query: querySchema,
-	...periodFields,
+	period: periodSchema,
 	type: statusSchema(NOTIFICATION_TYPES),
 	status: statusSchema(NOTIFICATION_STATUS),
 });
@@ -26,7 +26,10 @@ export const fetchNotifications = async (
 			...(params.type && { type: params.type }),
 			...(params.status && { status: params.status }),
 
-			createdAt: { gte: params.from, lte: params.to },
+			createdAt: {
+				gte: params.period.from.startOf("day").toDate(),
+				lte: params.period.to.endOf("day").toDate(),
+			},
 		},
 		columns: {
 			id: true,

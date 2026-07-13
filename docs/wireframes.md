@@ -1,17 +1,23 @@
 # 📄 Deskripsi Antarmuka Sistem Manajemen Kos
 
-## 🧾 A. Antarmuka Masukan (Input)
+Dokumen ini menjelaskan rancangan halaman antarmuka (wireframe) untuk aplikasi manajemen kos **Indekos Ungu**. Penjelasan di bawah ini memuat fungsi utama setiap halaman secara umum dan daftar tombol aksi yang dapat digunakan oleh pengelola kos.
 
-Rancangan masukan sistem merupakan bagian yang menjelaskan bagaimana data dimasukkan ke dalam sistem oleh pengguna. Antarmuka masukan dirancang agar mudah digunakan, jelas, dan meminimalkan kesalahan dalam pengisian data. Setiap elemen input seperti field, tombol, dan pilihan disusun secara terstruktur agar pengguna dapat memahami alur pengisian dengan cepat.
+---
 
-Selain itu, rancangan antarmuka masukan disusun berdasarkan rancangan model sistem dan rancangan basis data yang telah dibuat sebelumnya. Hal ini bertujuan agar setiap data yang dimasukkan sesuai dengan struktur dan kebutuhan sistem, sehingga proses pengolahan data dapat berjalan dengan baik dan terintegrasi.
+## 🧾 A. Antarmuka Manajemen dan Pengelolaan Data (Input)
+
+Halaman-halaman ini digunakan oleh pengelola atau pemilik kos untuk melihat, mencari, menyaring, dan mengelola data operasional kos sehari-hari.
+
+---
 
 <details>
 <summary>1. Dashboard</summary>
 
 ![Dashboard](wireframe-v2/png/input/1-dashboard.png)
 
-Halaman dashboard menampilkan ringkasan kondisi sistem seperti jumlah kamar, penghuni aktif, tagihan, dan komplain. Selain itu, terdapat informasi tambahan seperti tagihan yang mendekati jatuh tempo dan komplain terbaru.
+Halaman utama yang menampilkan ringkasan kondisi kos secara keseluruhan, seperti jumlah total kamar, kamar yang kosong atau terisi, penghuni aktif, total tagihan, serta jumlah komplain yang belum terselesaikan. Selain itu, terdapat peringatan tagihan yang mendekati jatuh tempo dan daftar komplain terbaru dari penghuni.
+
+**Aksi/Fitur:** Pada halaman ini, pengguna dapat menggunakan tombol **Lihat Semua** pada bagian Tagihan Jatuh Tempo untuk membuka daftar transaksi terkait, serta menekan tombol **Lihat Komplain** pada daftar komplain terbaru untuk langsung membuka halaman komplain tersebut.
 
 </details>
 
@@ -22,7 +28,9 @@ Halaman dashboard menampilkan ringkasan kondisi sistem seperti jumlah kamar, pen
 
 ![Akun](wireframe-v2/png/input/2-akun.png)
 
-Halaman ini menampilkan daftar akun pengguna dalam bentuk tabel. Informasi yang ditampilkan meliputi username, role, dan status akun. Pengguna dapat mengelola data akun melalui halaman ini.
+Setiap akun memiliki nama pengguna, peran, dan waktu terakhir mengakses sistem.
+
+**Aksi/Fitur:** Halaman ini menyediakan tombol **Tambah Akun** untuk membuat akun pengguna baru melalui formulir pop-up, tombol **Edit** untuk mengubah informasi akun seperti nama atau peran, serta tombol **Hapus** untuk menghapus akun dari sistem. Selain itu, terdapat fitur **Pencarian** untuk mencari akun berdasarkan nama pengguna dan fitur **Saring (Filter)** untuk memilah akun berdasarkan peran tertentu.
 
 </details>
 
@@ -33,7 +41,9 @@ Halaman ini menampilkan daftar akun pengguna dalam bentuk tabel. Informasi yang 
 
 ![Kamar](wireframe-v2/png/input/3-kamar.png)
 
-Halaman ini menampilkan data kamar dalam bentuk tabel. Setiap kamar memiliki informasi seperti nomor kamar, jenis, harga sewa, dan status ketersediaan. Pengguna dapat menambah, mengedit, atau menghapus data kamar.
+Halaman untuk melihat seluruh data unit kamar kos beserta status ketersediaannya. Informasi mencakup nomor kamar, tipe kamar, harga sewa bulanan, dan apakah kamar tersebut sedang kosong atau sedang ditempati penghuni. Data ditampilkan dalam bentuk kartu visual.
+
+**Aksi/Fitur:** Pengelola dapat menggunakan tombol **Tambah Kamar** untuk menambahkan unit kamar baru ke dalam sistem, tombol **Detail** untuk melihat informasi lengkap beserta riwayat penghuninya, tombol **Edit Kamar** untuk mengubah rincian seperti nomor atau harga sewa, serta tombol **Hapus** untuk menghapus unit kamar. Halaman ini juga dilengkapi fitur **Pencarian** berdasarkan nomor atau tipe kamar, dan fitur **Saring (Filter)** untuk memilah kamar berdasarkan status kosong atau terisi.
 
 </details>
 
@@ -44,7 +54,9 @@ Halaman ini menampilkan data kamar dalam bentuk tabel. Setiap kamar memiliki inf
 
 ![Penghuni](wireframe-v2/png/input/4-penghuni.png)
 
-Halaman ini menampilkan daftar penghuni kos dalam bentuk tabel. Data yang ditampilkan mencakup nama lengkap, nomor HP, kamar yang ditempati, periode sewa, dan status keaktifan. Pengguna dapat mencari penghuni berdasarkan nama atau kamar.
+Halaman untuk mengelola data penyewa yang menempati kamar kos. Informasi mencakup nama lengkap, nomor telepon, kamar yang ditempati, periode sewa, dan status keaktifan penghuni.
+
+**Aksi/Fitur:** Berbagai aksi tersedia di halaman ini, mulai dari tombol **Tambah Penghuni** untuk mendaftarkan penyewa baru, **Permintaan Chat** untuk membuka daftar permintaan WhatsApp, hingga tombol **📄 PDF** untuk mengunduh atau mencetak daftar penghuni aktif. Untuk pengelolaan individu, tersedia tombol **Detail** guna melihat rincian lengkap, **Edit** untuk mengubah data diri, **Sewa Baru** untuk mendaftarkan kontrak baru, **Pindah Kamar** untuk memindahkan penghuni, **Chat** untuk membuka percakapan langsung via WhatsApp, dan **Berhenti Menginap** untuk menyelesaikan kontrak sewa. Pengguna juga dapat memanfaatkan fitur **Pencarian** untuk menemukan penghuni berdasarkan nama atau nomor kamar.
 
 </details>
 
@@ -55,18 +67,22 @@ Halaman ini menampilkan daftar penghuni kos dalam bentuk tabel. Data yang ditamp
 
 ![Komplain](wireframe-v2/png/input/5-komplain.png)
 
-Halaman ini digunakan untuk mencatat dan memantau komplain dari penghuni. Setiap komplain memiliki informasi seperti deskripsi, status (terbuka, diproses, selesai), serta tanggal pelaporan dan penyelesaian.
+Halaman untuk melacak keluhan atau kerusakan fasilitas dari penghuni kos. Setiap komplain mencakup deskripsi keluhan, status penanganan (terbuka, diproses, selesai), kamar terkait, nama penghuni pelapor, serta catatan tindak lanjut dari petugas.
+
+**Aksi/Fitur:** Pengguna dapat membatasi tampilan melalui kotak **Pilih Periode**, mengubah status komplain menjadi "Sedang Diproses" dengan tombol **Tandai Proses**, atau menyelesaikannya beserta pencatatan hasil menggunakan tombol **Tandai Selesai**. Pencarian spesifik dapat dilakukan melalui fitur **Pencarian** berdasarkan kata kunci deskripsi, dan fitur **Saring (Filter)** tersedia untuk memilah komplain berdasarkan status penanganan.
 
 </details>
 
 ---
 
 <details>
-<summary>6. Transaksi</summary>
+<summary>6. Transaksi Keuangan</summary>
 
 ![Transaksi](wireframe-v2/png/input/6-transaksi.png)
 
-Halaman ini menampilkan daftar transaksi pembayaran penghuni. Informasi yang ditampilkan meliputi nomor invoice, nama penghuni, nominal pembayaran, tanggal jatuh tempo, dan status pembayaran.
+Halaman untuk melihat tagihan pembayaran bulanan dari masing-masing penghuni kamar. Setiap transaksi mencakup nomor invoice, nama penghuni, nominal pembayaran, tanggal jatuh tempo, status pembayaran, dan referensi payment gateway (Duitku).
+
+**Aksi/Fitur:** Halaman ini menyediakan kotak **Pilih Periode** untuk melihat transaksi pada bulan tertentu dan tombol **Generate** untuk membuat tagihan baru secara otomatis. Pengelola dapat menggunakan tombol **Tandai Lunas** jika pembayaran dilakukan secara langsung, tombol **Salin** untuk menyalin tautan pembayaran ke papan klip, atau **Buka Pembayaran** untuk mengakses portal daring penghuni. Untuk memudahkan penelusuran, tersedia fitur **Pencarian** berdasarkan nomor invoice atau nama penghuni, serta fitur **Saring (Filter)** berdasarkan status kelunasan tagihan.
 
 </details>
 
@@ -77,7 +93,9 @@ Halaman ini menampilkan daftar transaksi pembayaran penghuni. Informasi yang dit
 
 ![Notifikasi](wireframe-v2/png/input/7-notifikasi.png)
 
-Halaman ini menampilkan riwayat notifikasi yang telah dikirim ke penghuni. Setiap notifikasi mencatat waktu pengiriman, penghuni tujuan, jenis notifikasi, dan status terkirim atau gagal.
+Halaman untuk memantau pesan pengingat tagihan via WhatsApp yang dikirimkan oleh sistem secara otomatis maupun manual. Setiap notifikasi mencatat waktu pengiriman, penghuni tujuan, jenis notifikasi, dan status terkirim atau gagal.
+
+**Aksi/Fitur:** Selain menampilkan banner **Sistem Otomatisasi Aktif** yang menginformasikan jadwal pengiriman otomatis setiap pukul 08:00 WITA, halaman ini memiliki tombol **Jalankan Manual** untuk mengirim pengingat secara langsung kepada penghuni yang belum lunas dan tombol **📄 PDF** untuk mencetak riwayat notifikasi. Pengguna juga dapat menggunakan kotak **Pilih Periode** untuk memfilter berdasarkan bulan pengiriman serta fitur **Pencarian** untuk menelusuri notifikasi berdasarkan nama penerima atau status.
 
 </details>
 
@@ -88,7 +106,9 @@ Halaman ini menampilkan riwayat notifikasi yang telah dikirim ke penghuni. Setia
 
 ![Chatbot](wireframe-v2/png/input/8-chatbot.png)
 
-Halaman ini menampilkan riwayat percakapan antara chatbot dengan penghuni. Setiap percakapan mencatat waktu, nama penghuni, arah pesan, dan isi pesan.
+Halaman untuk melihat riwayat percakapan antara chatbot WhatsApp dengan para penghuni kos. Setiap percakapan mencatat waktu pesan dikirim, nama penghuni, arah pesan (dari penghuni atau dari bot), serta isi pesan.
+
+**Aksi/Fitur:** Pada halaman ini, pengguna dapat memfilter riwayat percakapan berdasarkan bulan pelaporan melalui kotak **Pilih Periode** dan menggunakan fitur **Pencarian** untuk menemukan percakapan spesifik berdasarkan nama penghuni atau kata kunci isi pesan.
 
 </details>
 
@@ -99,33 +119,37 @@ Halaman ini menampilkan riwayat percakapan antara chatbot dengan penghuni. Setia
 
 ![Audit](wireframe-v2/png/input/9-audit.png)
 
-Halaman ini mencatat aktivitas pengguna di dalam sistem. Setiap log mencatat waktu kejadian, pengguna yang melakukan aksi, jenis aksi, dan tabel yang diubah.
+Halaman untuk mencatat seluruh aktivitas pengguna di dalam sistem. Setiap catatan audit memuat waktu kejadian, nama pengguna yang melakukan aksi, jenis aksi yang dilakukan, data yang diubah, serta identitas record yang terpengaruh.
+
+**Aksi/Fitur:** Tersedia tombol **Detail** untuk menampilkan rincian perubahan data yang terjadi pada catatan audit terkait, serta fitur **Pencarian** untuk mencari berdasarkan nama pengguna atau jenis aksi. Selain itu, pengguna dapat memanfaatkan fitur **Saring (Filter)** untuk memilah catatan berdasarkan jenis aksi spesifik seperti CREATE, UPDATE, atau DELETE.
 
 </details>
 
 ---
 
 <details>
-<summary>10. Login</summary>
+<summary>10. Halaman Login</summary>
 
 ![Login](wireframe-v2/png/input/10-login.png)
 
-Halaman login digunakan untuk masuk ke dalam sistem. Terdapat dua input utama yaitu nama pengguna dan kata sandi, serta tombol masuk. Pengguna harus mengisi data dengan benar agar dapat mengakses sistem.
+Halaman masuk untuk mengakses sistem. Pengguna wajib memasukkan nama pengguna dan kata sandi yang benar. Jika login berhasil, pengguna akan diarahkan ke halaman dashboard sesuai perannya.
 
 </details>
 
-## 📋 B. Antarmuka Keluaran (Output)
+---
 
-Rancangan keluaran sistem merupakan bagian yang menjelaskan bagaimana data disajikan kepada pengguna dalam bentuk laporan. Antarmuka keluaran dirancang agar informatif, mudah dibaca, dan sesuai dengan kebutuhan pengguna dalam mengambil keputusan. Setiap laporan mencakup kop surat, statistik ringkasan, tabel data, serta tanda tangan untuk pengesahan.
+## 📋 B. Antarmuka Laporan dan Dokumen Keluaran (Output)
 
-Selain itu, rancangan antarmuka keluaran disusun berdasarkan kebutuhan informasi yang telah diidentifikasi sebelumnya. Hal ini bertujuan agar setiap laporan yang dihasilkan dapat memberikan gambaran yang jelas dan akurat mengenai kondisi sistem, sehingga mendukung proses evaluasi dan pengambilan keputusan.
+Halaman-halaman laporan ini menampilkan data operasional kos secara terstruktur dalam format cetak. Laporan ini memiliki kop surat resmi, ringkasan statistik, tabel data, serta tanda tangan untuk keperluan pengarsipan atau evaluasi.
+
+---
 
 <details>
 <summary>1. Laporan Penghuni</summary>
 
 ![Laporan Penghuni](wireframe-v2/png/output/1-laporan-penghuni.png)
 
-Laporan ini menampilkan daftar penghuni kos yang aktif. Data yang disajikan mencakup nama lengkap, nomor HP, kamar yang ditempati, periode sewa, dan status.
+Laporan yang menampilkan daftar penghuni kos yang sedang aktif menempati kamar. Data mencakup nama lengkap, nomor telepon, kamar yang ditempati, periode sewa, dan status keaktifan.
 
 </details>
 
@@ -136,7 +160,7 @@ Laporan ini menampilkan daftar penghuni kos yang aktif. Data yang disajikan menc
 
 ![Laporan Kamar](wireframe-v2/png/output/2-laporan-kamar.png)
 
-Laporan ini menampilkan data seluruh kamar kos. Informasi yang disajikan meliputi nomor kamar, jenis kamar, harga sewa per bulan, status ketersediaan, dan penghuni yang menempati.
+Laporan yang menampilkan seluruh data unit kamar kos. Informasi mencakup nomor kamar, tipe kamar, harga sewa per bulan, status ketersediaan, serta nama penghuni yang menempati kamar tersebut.
 
 </details>
 
@@ -147,7 +171,7 @@ Laporan ini menampilkan data seluruh kamar kos. Informasi yang disajikan meliput
 
 ![Laporan Komplain](wireframe-v2/png/output/3-laporan-komplain.png)
 
-Laporan ini menampilkan data pengaduan yang diajukan penghuni. Informasi yang disajikan mencakup penghuni, kamar, deskripsi, status, tanggal lapor, petugas yang menangani, dan tanggal selesai.
+Laporan yang menampilkan data pengaduan atau keluhan dari penghuni. Informasi mencakup nama penghuni, kamar terkait, deskripsi keluhan, status penanganan, tanggal pelaporan, petugas yang menangani, dan tanggal selesai.
 
 </details>
 
@@ -158,7 +182,7 @@ Laporan ini menampilkan data pengaduan yang diajukan penghuni. Informasi yang di
 
 ![Laporan Transaksi](wireframe-v2/png/output/4-laporan-transaksi.png)
 
-Laporan ini menampilkan data transaksi keuangan dalam periode tertentu. Informasi yang disajikan meliputi nomor invoice, penghuni, kamar, nominal, jatuh tempo, dan status pembayaran.
+Laporan yang menampilkan data transaksi keuangan pembayaran dalam periode tertentu. Informasi mencakup nomor invoice, nama penghuni, kamar, nominal pembayaran, tanggal jatuh tempo, dan status kelunasan.
 
 </details>
 
@@ -169,29 +193,29 @@ Laporan ini menampilkan data transaksi keuangan dalam periode tertentu. Informas
 
 ![Laporan Notifikasi](wireframe-v2/png/output/5-laporan-notifikasi.png)
 
-Laporan ini menampilkan data pengiriman notifikasi dalam periode tertentu. Informasi yang disajikan mencakup tanggal dibuat dan dikirim, penghuni tujuan, nomor invoice terkait, jenis notifikasi, dan status pengiriman.
+Laporan yang menampilkan data pengiriman pesan notifikasi pengingat tagihan. Informasi mencakup tanggal dibuat dan dikirim, nama penghuni tujuan, nomor invoice terkait, jenis notifikasi, serta status pengiriman (terkirim atau gagal).
 
 </details>
 
 ---
 
 <details>
-<summary>6. Log Chatbot</summary>
+<summary>6. Laporan Log Chatbot</summary>
 
 ![Laporan Chatbot](wireframe-v2/png/output/6-laporan-chatbot.png)
 
-Laporan ini menampilkan data percakapan chatbot dengan penghuni. Informasi yang disajikan meliputi waktu, penghuni, kamar, arah pesan, dan isi percakapan.
+Laporan yang menampilkan data percakapan chatbot dengan penghuni. Informasi mencakup waktu percakapan, nama penghuni, kamar, arah pesan, dan isi percakapan.
 
 </details>
 
 ---
 
 <details>
-<summary>7. Audit Log</summary>
+<summary>7. Laporan Audit Log</summary>
 
 ![Laporan Audit](wireframe-v2/png/output/7-laporan-audit.png)
 
-Laporan ini menampilkan data aktivitas sistem yang dilakukan oleh pengguna. Informasi yang disajikan meliputi waktu kejadian, pengguna, jenis aksi, tabel target, dan identitas record yang diubah.
+Laporan yang menampilkan catatan aktivitas pengguna di dalam sistem. Informasi mencakup waktu kejadian, nama pengguna, jenis aksi yang dilakukan, tabel data yang diubah, serta identitas record yang terpengaruh.
 
 </details>
 
@@ -202,6 +226,6 @@ Laporan ini menampilkan data aktivitas sistem yang dilakukan oleh pengguna. Info
 
 ![Invoice](wireframe-v2/png/output/8-invoice.png)
 
-Halaman ini menampilkan tagihan pembayaran untuk penghuni. Informasi yang disajikan mencakup nomor invoice, periode tagihan, rincian biaya sewa dan utilitas, total tagihan, serta instruksi pembayaran.
+Halaman tagihan pembayaran yang dikirimkan kepada penghuni. Informasi mencakup nomor invoice, periode tagihan, rincian biaya sewa kamar, serta total tagihan yang harus dibayar.
 
 </details>

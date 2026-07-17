@@ -116,8 +116,7 @@ export const edit = defineAction({
 			"attempting to update room",
 		);
 
-		if (input.is_active === undefined) input.is_active = oldRoom.isActive;
-
+		if (input.is_active === undefined) input.is_active = false;
 		try {
 			const [updated] = await db
 				.update(rooms)

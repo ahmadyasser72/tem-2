@@ -1,0 +1,15 @@
+<% const roomLabel = it.roomNumber ? `Kamar ${it.roomNumber} - ` : "" %>*🎉 Selamat Datang di <%= roomLabel %>Indekos!*
+
+Halo *<%= it.fullName %>*,
+
+Data Anda telah terdaftar sebagai penghuni kos.
+
+*📋 Tagihan Sewa Pertama*
+💰 Jumlah: <%= it.amount %>
+📅 Jatuh Tempo: <%= it.dueDate %>
+
+Untuk mengaktifkan akun Anda, silakan lakukan pembayaran:
+<% if (it.paymentUrl) { %>💳 *<%= it.paymentUrl %>*
+<% } %>
+
+_Pesan ini dikirim otomatis oleh sistem._

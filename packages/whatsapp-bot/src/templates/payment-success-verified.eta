@@ -1,0 +1,21 @@
+*✅ Akun Diaktifkan & Pembayaran Diterima*
+
+Yth. <%= it.fullName %>,
+
+Terima kasih telah melakukan pembayaran! Akun Anda sekarang aktif.
+
+<% if (it.roomNumber) { %>📍 Kamar: <%= it.roomNumber %>
+<% } %><% if (it.amount) { %>💰 Jumlah: <%= it.amount %>
+<% } %><% if (it.date) { %>📅 Pembayaran: <%= it.date %>
+<% } %>
+
+Sekarang Anda bisa menggunakan semua fitur layanan:
+• *tagihan* — Cek tagihan sewa
+• *riwayat* — Riwayat pembayaran
+• *komplain* — Ajukan keluhan
+• *info* — Info kamar & data diri
+• *help* — Lihat semua perintah
+
+<% if (it.invoiceUrl) { %>🔗 Link Invoice: <%= it.invoiceUrl %>
+<% } %>
+Selamat datang! 🎉

@@ -1,0 +1,116 @@
+---
+import { db } from "@indekos/database";
+import { formatDate } from "@indekos/utilities/date";
+import {
+	formatCurrency,
+	formatInvoiceNumber,
+} from "@indekos/utilities/transforms";
+
+import DetailModal from "~/components/modal/detail-modal.astro";
+import Icon from "~/components/ui/icon.astro";
+import NotFound from "~/components/ui/not-found.astro";
+import {
+	INVOICE_STATUS_BADGES,
+	INVOICE_STATUS_LABELS,
+} from "~/pages/dashboard/for/transactions/_data";
+
+export const partial = true;
+
+const tenant = await db.query.tenants.findFirst({
+	columns: { id: true, fullName: true },
+	where: { id: Number(Astro.params.id) },
+	with: {
+		lease: {
+			columns: { id: true, startDate: true, endDate: true, isActive: true },
+			with: {
+				room: { columns: { roomNumber: true } },
+				invoices: { orderBy: { dueDate: "desc" } },
+			},
+		},
+		leaseHistory: {
+			columns: { id: true, startDate: true, endDate: true, isActive: true },
+			with: {
+				room: { columns: { roomNumber: true } },
+				invoices: { orderBy: { dueDate: "desc" } },
+			},
+			orderBy: { startDate: "desc" },
+		},
+	},
+});
+
+if (!tenant) Astro.response.status = 404;
+
+const leaseGroups = [
+	...(tenant?.lease ? [tenant.lease] : []),
+	...(tenant?.leaseHistory ?? []),
+].filter((lease) => lease.invoices.length > 0);
+---
+
+<DetailModal
+	id="invoices_tenant"
+	title={`Tagihan ${tenant?.fullName ?? ""}`}
+	icon="lucide:receipt"
+	modalClass="max-w-md"
+>
+	{
+		tenant ? (
+			leaseGroups.length > 0 ? (
+				<div class="flex flex-col gap-4">
+					{leaseGroups.map((lease) => (
+						<div>
+							<div class="mb-2 flex items-center gap-2">
+								<span class="badge font-mono badge-sm font-bold badge-neutral">
+									{lease.room.roomNumber}
+								</span>
+								<span class="text-xs text-base-content/50">
+									{formatDate(lease.startDate)} s/d{" "}
+									{lease.endDate ? formatDate(lease.endDate) : "Sekarang"}
+								</span>
+								{lease.isActive && (
+									<span class="badge badge-xs badge-success">Aktif</span>
+								)}
+							</div>
+							<div class="divide-y divide-base-200 rounded-lg border border-base-200">
+								{lease.invoices.map((invoice) => (
+									<div class="flex items-center justify-between px-3 py-2.5 text-sm">
+										<div class="flex flex-col gap-0.5">
+											<span class="font-mono text-xs text-base-content/50">
+												{formatInvoiceNumber(invoice)}
+											</span>
+											<span class="font-bold">
+												{formatCurrency(invoice.amount)}
+											</span>
+											<span class="text-xs text-base-content/60">
+												Jatuh tempo: {formatDate(invoice.dueDate)}
+											</span>
+											{invoice.paidAt && (
+												<span class="text-xs text-base-content/60">
+													Dibayar: {formatDate(invoice.paidAt)}
+												</span>
+											)}
+										</div>
+										<span
+											class:list={[
+												"badge badge-sm font-bold",
+												INVOICE_STATUS_BADGES[invoice.status],
+											]}
+										>
+											{INVOICE_STATUS_LABELS[invoice.status]}
+										</span>
+									</div>
+								))}
+							</div>
+						</div>
+					))}
+				</div>
+			) : (
+				<div class="flex flex-col items-center gap-2 py-8 text-sm text-base-content/50">
+					<Icon class="size-8 opacity-40" name="lucide:inbox" />
+					<span>Belum ada tagihan</span>
+				</div>
+			)
+		) : (
+			<NotFound label="Penghuni" />
+		)
+	}
+</DetailModal>

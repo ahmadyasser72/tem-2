@@ -5,6 +5,7 @@ import {
 	auditLogs,
 	chatbotMessages,
 	notifications,
+	tenants,
 } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 import type { Logger } from "@indekos/utilities/logger";
@@ -58,58 +59,88 @@ export const pollNotifications = async (
 					: undefined;
 
 				let msg: string;
-				if (
-					notification.type === "welcome" ||
-					notification.type === "phone_change"
-				) {
-					const lease = await db.query.leases.findFirst({
-						where: { tenantId: notification.tenantId, isActive: true },
-						with: { room: true },
+				if (notification.type === "welcome") {
+					msg = render("welcome-invoice", {
+						fullName: tenant.fullName,
+						roomNumber: invoiceData!.lease.room.roomNumber,
+						amount: formatCurrency(invoiceData!.amount),
+						dueDate: formatDate(invoiceData!.dueDate),
+						paymentUrl: getPaymentUrlFromReference(
+							invoiceData!.duitkuReference!,
+						),
 					});
-
-					msg =
-						notification.type === "welcome"
-							? render("welcome", {
-									fullName: tenant.fullName,
-									roomNumber: lease?.room?.roomNumber ?? null,
-								})
-							: render("phone-change-verification", {
-									fullName: tenant.fullName,
-								});
+				} else if (notification.type === "phone_change") {
+					msg = render("phone-change-verification", {
+						fullName: tenant.fullName,
+					});
 				} else if (notification.type === "payment_success") {
+					// Track if tenant is newly verified from payment
+					const wasUnverified = !tenant.isVerified;
+
+					// Auto-verify tenant on payment success
+					if (wasUnverified) {
+						await db
+							.update(tenants)
+							.set({ isVerified: true })
+							.where(eq(tenants.id, tenant.id));
+					}
+
 					const siteUrl = process.env.SITE_URL;
 					const invoiceUrl =
 						siteUrl && invoiceData
 							? `${siteUrl}/invoice/${invoiceData.id}`
 							: null;
 
-					msg = render("payment-success", {
-						fullName: tenant.fullName,
-						roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
-						amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
-						date: invoiceData ? formatDate(invoiceData.dueDate) : null,
-						invoiceUrl,
-					});
+					if (wasUnverified) {
+						// First payment: newly activated account
+						msg = render("payment-success-verified", {
+							fullName: tenant.fullName,
+							roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
+							amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
+							date: invoiceData ? formatDate(invoiceData.dueDate) : null,
+							invoiceUrl,
+						});
+					} else {
+						// Regular payment
+						msg = render("payment-success", {
+							fullName: tenant.fullName,
+							roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
+							amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
+							date: invoiceData ? formatDate(invoiceData.dueDate) : null,
+							invoiceUrl,
+						});
+					}
 				} else if (notification.type === "overdue_reminder") {
 					msg = render("overdue-reminder", {
 						fullName: tenant.fullName,
 						roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
 						amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
 						dueDate: invoiceData ? formatDate(invoiceData.dueDate) : null,
-						paymentUrl: invoiceData?.duitkuReference
-							? getPaymentUrlFromReference(invoiceData.duitkuReference)
-							: null,
 					});
-				} else {
+				} else if (notification.type === "reminder") {
+					const siteUrl = process.env.SITE_URL;
+					const paymentUrl =
+						siteUrl && invoiceData?.duitkuReference
+							? getPaymentUrlFromReference(invoiceData.duitkuReference)
+							: null;
+
 					msg = render("payment-reminder", {
 						fullName: tenant.fullName,
 						roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
 						amount: invoiceData ? formatCurrency(invoiceData.amount) : null,
 						dueDate: invoiceData ? formatDate(invoiceData.dueDate) : null,
-						paymentUrl: invoiceData?.duitkuReference
-							? getPaymentUrlFromReference(invoiceData.duitkuReference)
-							: null,
+						paymentUrl,
 					});
+				} else {
+					log?.warn(
+						{ notificationId: notification.id, type: notification.type },
+						"unknown notification type, skipping",
+					);
+					await db
+						.update(notifications)
+						.set({ status: "failed" })
+						.where(eq(notifications.id, notification.id));
+					continue;
 				}
 
 				await sock.sendMessage(`${tenant.phoneNumber}@s.whatsapp.net`, {

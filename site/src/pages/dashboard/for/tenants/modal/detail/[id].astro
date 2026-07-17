@@ -108,4 +108,25 @@ if (!tenant) Astro.response.status = 404;
 			<NotFound label="Penghuni" />
 		)
 	}
+
+	{
+		tenant && (
+			<Fragment slot="actions">
+				<button
+					hx-get={`/dashboard/for/tenants/modal/invoices/${tenant.id}`}
+					class="btn btn-accent btn-sm"
+				>
+					<Icon name="lucide:receipt" /> Tagihan
+				</button>
+
+				<a
+					class="btn btn-accent btn-sm"
+					href={`/dashboard/for/tenants/report/${tenant.id}/html`}
+					target="_blank"
+				>
+					<Icon name="lucide:printer" /> Cetak
+				</a>
+			</Fragment>
+		)
+	}
 </DetailModal>

@@ -3,6 +3,7 @@ import { db } from "@indekos/database";
 
 import { actions } from "astro:actions";
 
+import FormField from "~/components/form/form-field.astro";
 import ModalForm from "~/components/form/modal-form.astro";
 import Modal from "~/components/modal/modal.astro";
 import NotFound from "~/components/ui/not-found.astro";
@@ -35,13 +36,16 @@ if (!tenant) Astro.response.status = 404;
 
 				<ModalForm
 					action={actions.manage.tenants.terminate}
-					hidden
 					modalId="terminate_lease"
 					submitClass="btn-error"
 					submitLabel="Konfirmasi Akhiri"
 					target="#form_result, #tenants-content-wrapper"
 				>
 					<input name="id" type="hidden" value={tenant.id} />
+
+					<FormField label="Tanggal Selesai">
+						<input class="input w-full" name="end_date" type="date" />
+					</FormField>
 				</ModalForm>
 			</>
 		) : (

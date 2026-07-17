@@ -1,10 +1,13 @@
-import { db, eq } from "@indekos/database";
+import { and, db, eq, inArray } from "@indekos/database";
+import { generatePaymentLink } from "@indekos/database/duitku/invoice-payment";
 import {
 	auditDetail,
+	invoices,
 	leases,
 	notifications,
 	tenants,
 } from "@indekos/database/schema";
+import dayjs from "@indekos/utilities/date";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -15,6 +18,21 @@ export * as chat from "./tenants-chat";
 const normalizePhone = (raw: string): string => {
 	const stripped = raw.replace(/\D/g, "").replace(/^0/, "");
 	return stripped.startsWith("62") ? stripped : `62${stripped}`;
+};
+
+const validateLeaseDuration = (startDate: string, endDate?: string): void => {
+	if (!endDate) return;
+
+	const start = dayjs(startDate);
+	const end = dayjs(endDate);
+	const minEndDate = start.add(1, "month");
+
+	if (end.isBefore(minEndDate)) {
+		throw new ActionError({
+			code: "BAD_REQUEST",
+			message: "Durasi sewa minimal 1 bulan dari tanggal mulai.",
+		});
+	}
 };
 
 export const add = defineAction({
@@ -32,6 +50,8 @@ export const add = defineAction({
 			module: "actions:manage:tenants:add",
 		});
 		const phoneNumber = normalizePhone(input.phone_number);
+
+		validateLeaseDuration(input.start_date, input.end_date);
 
 		const samePhone = await db.query.tenants.findFirst({
 			columns: { id: true },
@@ -52,7 +72,7 @@ export const add = defineAction({
 
 		try {
 			// Run in a transaction synchronously for SQLite sync driver
-			const insertedTenant = db.transaction((tx) => {
+			const { insertedTenant, insertedLease } = db.transaction((tx) => {
 				const activeLease = tx.query.leases
 					.findFirst({
 						columns: { id: true },
@@ -87,7 +107,8 @@ export const add = defineAction({
 					});
 				}
 
-				tx.insert(leases)
+				const [lease] = tx
+					.insert(leases)
 					.values({
 						tenantId: inserted.id,
 						roomId: input.room_id,
@@ -95,9 +116,31 @@ export const add = defineAction({
 						endDate: input.end_date ? new Date(input.end_date) : null,
 						isActive: true,
 					})
-					.run();
+					.returning({ id: leases.id })
+					.all();
 
-				return inserted;
+				const room = tx.query.rooms
+					.findFirst({
+						where: { id: input.room_id },
+						columns: { monthlyPrice: true },
+					})
+					.sync();
+
+				if (room?.monthlyPrice && lease) {
+					const startDate = dayjs(input.start_date);
+					const dueDate = startDate.add(3, "days").toDate();
+
+					tx.insert(invoices)
+						.values({
+							leaseId: lease.id,
+							amount: room.monthlyPrice,
+							dueDate,
+							status: "unpaid",
+						})
+						.run();
+				}
+
+				return { insertedTenant: inserted, insertedLease: lease };
 			});
 
 			await context.locals.logAudit(
@@ -110,8 +153,45 @@ export const add = defineAction({
 				),
 			);
 
+			// Query the invoice we just created
+			const createdInvoice = await db.query.invoices.findFirst({
+				where: { leaseId: insertedLease.id },
+				columns: { id: true },
+			});
+
+			if (!createdInvoice?.id) {
+				log.error(
+					"failed to find invoice for new lease, aborting tenant creation",
+				);
+				await db.delete(tenants).where(eq(tenants.id, insertedTenant.id));
+				throw new ActionError({
+					code: "INTERNAL_SERVER_ERROR",
+					message:
+						"Gagal membuat invoice untuk penghuni baru. Penghuni tidak jadi ditambahkan.",
+				});
+			}
+
+			// Generate Duitku payment link — abort entire tenant creation if this fails
+			try {
+				await generatePaymentLink(createdInvoice.id, context.locals.user?.id, {
+					logger: log,
+				});
+			} catch (error) {
+				log.error(
+					{ error },
+					"failed to generate payment link, aborting tenant creation",
+				);
+				await db.delete(tenants).where(eq(tenants.id, insertedTenant.id));
+				throw new ActionError({
+					code: "INTERNAL_SERVER_ERROR",
+					message:
+						"Gagal membuat link pembayaran. Penghuni tidak jadi ditambahkan.",
+				});
+			}
+
 			await db.insert(notifications).values({
 				tenantId: insertedTenant.id,
+				invoiceId: createdInvoice.id,
 				type: "welcome",
 				status: "pending",
 			});
@@ -130,8 +210,11 @@ export const add = defineAction({
 
 export const terminate = defineAction({
 	accept: "form",
-	input: z.object({ id: z.coerce.number() }),
-	handler: async ({ id }, context) => {
+	input: z.object({
+		id: z.coerce.number(),
+		end_date: z.string().optional(),
+	}),
+	handler: async ({ id, end_date }, context) => {
 		const log = context.locals.logger.child({
 			module: "actions:manage:tenants:terminate",
 		});
@@ -147,15 +230,24 @@ export const terminate = defineAction({
 			});
 		}
 
+		if (end_date && dayjs(end_date).isBefore(activeLease.startDate)) {
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Tanggal selesai tidak boleh sebelum tanggal mulai sewa.",
+			});
+		}
+
 		log.info(
 			{ tenantId: id, leaseId: activeLease.id },
 			"attempting to terminate lease",
 		);
 
 		try {
+			const endDate = end_date ? new Date(end_date) : new Date();
+
 			await db
 				.update(leases)
-				.set({ isActive: false, endDate: new Date() })
+				.set({ isActive: false, endDate })
 				.where(eq(leases.id, activeLease.id));
 
 			await context.locals.logAudit(
@@ -165,7 +257,7 @@ export const terminate = defineAction({
 				auditDetail.update(
 					`Mengakhiri kontrak sewa tenant ID ${id}`,
 					activeLease,
-					{ ...activeLease, isActive: false, endDate: new Date() },
+					{ ...activeLease, isActive: false, endDate },
 				),
 			);
 
@@ -242,6 +334,18 @@ export const edit = defineAction({
 				.returning({ id: tenants.id });
 
 			if (phoneChanged) {
+				// Cancel stale phone_change notifications from previous number
+				await db
+					.update(notifications)
+					.set({ status: "failed" })
+					.where(
+						and(
+							eq(notifications.tenantId, updated.id),
+							eq(notifications.type, "phone_change"),
+							inArray(notifications.status, ["pending", "sent"]),
+						),
+					);
+
 				await db.insert(notifications).values({
 					tenantId: updated.id,
 					type: "phone_change",
@@ -281,6 +385,9 @@ export const register = defineAction({
 		const log = context.locals.logger.child({
 			module: "actions:manage:tenants:register",
 		});
+
+		validateLeaseDuration(input.start_date, input.end_date);
+
 		const target = await db.query.tenants.findFirst({
 			columns: { id: true, fullName: true },
 			where: { id: input.id },
@@ -358,11 +465,15 @@ export const move = defineAction({
 		id: z.coerce.number(),
 		room_id: z.coerce.number(),
 		start_date: z.string(),
+		end_date: z.string().optional(),
 	}),
 	handler: async (input, context) => {
 		const log = context.locals.logger.child({
 			module: "actions:manage:tenants:move",
 		});
+
+		validateLeaseDuration(input.start_date, input.end_date);
+
 		const target = await db.query.tenants.findFirst({
 			columns: { id: true, fullName: true },
 			where: { id: input.id },
@@ -424,7 +535,7 @@ export const move = defineAction({
 					tenantId: input.id,
 					roomId: input.room_id,
 					startDate: new Date(input.start_date),
-					endDate: null,
+					endDate: input.end_date ? new Date(input.end_date) : null,
 					isActive: true,
 				})
 				.run();
@@ -441,7 +552,7 @@ export const move = defineAction({
 					...oldLease,
 					roomId: input.room_id,
 					startDate: new Date(input.start_date),
-					endDate: null,
+					endDate: input.end_date ? new Date(input.end_date) : null,
 				},
 			),
 		);

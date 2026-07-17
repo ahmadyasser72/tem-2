@@ -69,7 +69,7 @@ export const getTransactionStats = (
 		{
 			title: "Total Pemasukan",
 			value: formatCurrency(totalRevenue),
-			desc: `${paid} invoice terbayar`,
+			desc: `${paid.length} invoice terbayar`,
 			icon: "lucide:arrow-up-right" as const,
 		},
 		{

@@ -229,33 +229,60 @@ export const main = async () => {
 					})
 					.returning({ id: chatbotMessages.id });
 
-				// Tenant verification sequence checkpoint
 				if (!tenant.isVerified) {
-					tenantLogger.info(
-						"unverified tenant contact text routing through confirmation checkpoint",
-					);
+					// Phone change verification: tenant already existed, just needs to reply YA
+					const phoneChangeNotif = await db.query.notifications.findFirst({
+						where: {
+							tenantId: tenant.id,
+							type: "phone_change",
+							status: "sent",
+						},
+						columns: { id: true },
+					});
 
-					if (lowerText === "ya") {
-						await db
-							.update(tenants)
-							.set({ isVerified: true })
-							.where(eq(tenants.id, tenant.id));
+					if (phoneChangeNotif) {
+						if (lowerText === "ya") {
+							tenantLogger.info(
+								{ notificationId: phoneChangeNotif.id },
+								"phone change verified by tenant reply",
+							);
+							await db
+								.update(tenants)
+								.set({ isVerified: true })
+								.where(eq(tenants.id, tenant.id));
+							await replyAndLog(
+								jid,
+								tenant.id,
+								render("verification-success", { fullName: tenant.fullName }),
+								message,
+							);
+						} else {
+							tenantLogger.info("phone change pending: awaiting YA reply");
+							await replyAndLog(
+								jid,
+								tenant.id,
+								render("phone-change-verification", {
+									fullName: tenant.fullName,
+								}),
+								message,
+							);
+						}
+						return;
+					}
 
-						await replyAndLog(
-							jid,
-							tenant.id,
-							render("verification-success", { fullName: tenant.fullName }),
-							message,
+					// New tenant: must pay first
+					if (lowerText !== "tagihan") {
+						tenantLogger.info(
+							"unverified tenant: awaiting payment to activate account",
 						);
-					} else {
 						await replyAndLog(
 							jid,
 							tenant.id,
 							render("verification-prompt", { fullName: tenant.fullName }),
 							message,
 						);
+						return;
 					}
-					return;
 				}
 
 				// Build message input parameter structures

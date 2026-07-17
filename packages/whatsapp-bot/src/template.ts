@@ -77,11 +77,21 @@ interface TemplateParams {
 		resolveNotes: string | null;
 		resolverDisplayName: string;
 	};
-	welcome: {
+	"welcome-invoice": {
 		fullName: string;
 		roomNumber: string | null;
+		amount: string;
+		dueDate: string;
+		paymentUrl: string | null;
 	};
 	"payment-success": {
+		fullName: string;
+		roomNumber: string | null;
+		amount: string | null;
+		date: string | null;
+		invoiceUrl: string | null;
+	};
+	"payment-success-verified": {
 		fullName: string;
 		roomNumber: string | null;
 		amount: string | null;
@@ -100,7 +110,7 @@ interface TemplateParams {
 		roomNumber: string | null;
 		amount: string | null;
 		dueDate: string | null;
-		paymentUrl: string | null;
+		paymentUrl?: string | null;
 	};
 	"complaint-prompt": Record<string, never>;
 	"no-lease-complaint": Record<string, never>;

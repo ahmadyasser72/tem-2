@@ -1,4 +1,6 @@
 *⚠️ Akun Belum Aktif*
 
-Halo *<%= it.fullName %>*! Anda belum melakukan verifikasi.
-Silakan balas pesan selamat datang dengan kata *YA* untuk mengaktifkan akun Anda.
+Halo *<%= it.fullName %>*! Akun Anda belum aktif.
+Silakan bayar tagihan sewa pertama Anda untuk mengaktifkan akun.
+
+Ketik *tagihan* untuk melihat detail tagihan.

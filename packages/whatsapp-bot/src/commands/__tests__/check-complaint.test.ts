@@ -8,7 +8,7 @@ import {
 	users,
 } from "@indekos/database/schema";
 
-import type { ActiveTenant, ConversationSession } from "~/conversation/types";
+import type { ActiveTenant } from "~/conversation/types";
 import { checkComplaint } from "../check-complaint";
 
 let testTenant: ActiveTenant;

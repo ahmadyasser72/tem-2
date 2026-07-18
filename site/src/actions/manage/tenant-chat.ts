@@ -27,6 +27,7 @@ export const sendMessage = defineAction({
 		const tenant = await db.query.tenants.findFirst({
 			columns: { id: true, fullName: true },
 			where: { id: tenantId },
+			with: { lease: { columns: {}, with: { room: true } } },
 		});
 
 		if (!tenant) {
@@ -43,6 +44,7 @@ export const sendMessage = defineAction({
 			.insert(chatbotMessages)
 			.values({
 				tenantId,
+				roomId: tenant.lease!.room.id,
 				staffId: user.id,
 				message,
 				direction: "outgoing",

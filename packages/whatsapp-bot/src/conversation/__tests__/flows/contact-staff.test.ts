@@ -1,14 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import { tenants } from "@indekos/database/schema";
+import { leases, rooms, tenants } from "@indekos/database/schema";
 
 import { contactStaffFlow } from "~/conversation/flows/contact-staff";
-import type { ConversationSession, MessageInput } from "~/conversation/types";
+import type {
+	ActiveTenant,
+	ConversationSession,
+	MessageInput,
+} from "~/conversation/types";
 
-let testTenant: ConversationSession["tenant"];
+let testTenant: ActiveTenant;
 
 beforeEach(async () => {
 	db.run("BEGIN");
+
+	const [room] = await db
+		.insert(rooms)
+		.values({
+			roomNumber: `CS${Math.random().toString().slice(2, 6)}`,
+			roomType: "standard",
+			monthlyPrice: 200_000,
+			isActive: true,
+		})
+		.returning({ id: rooms.id });
 
 	const [tenant] = await db
 		.insert(tenants)
@@ -18,10 +32,18 @@ beforeEach(async () => {
 		})
 		.returning({ id: tenants.id });
 
+	await db.insert(leases).values({
+		tenantId: tenant.id,
+		roomId: room.id,
+		startDate: new Date("2026-01-01"),
+		endDate: null,
+		isActive: true,
+	});
+
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
 		with: { lease: { columns: {}, with: { room: true } } },
-	}))!;
+	}))! as ActiveTenant;
 });
 
 afterEach(() => {

@@ -106,11 +106,13 @@ export const main = async () => {
 		const replyAndLog = async (
 			jid: string,
 			tenantId: number,
+			roomId: number,
 			message: string,
 			quoted?: WAMessage,
 		) => {
 			await db.insert(chatbotMessages).values({
 				tenantId,
+				roomId,
 				message,
 				direction: "outgoing",
 			});
@@ -224,6 +226,7 @@ export const main = async () => {
 					.insert(chatbotMessages)
 					.values({
 						tenantId: tenant.id,
+						roomId: tenant.lease!.room.id,
 						direction: "incoming",
 						message: imageMessage ? ["📷 [gambar]", text].join("\n") : text,
 					})
@@ -253,6 +256,7 @@ export const main = async () => {
 							await replyAndLog(
 								jid,
 								tenant.id,
+								tenant.lease!.room.id,
 								render("verification-success", { fullName: tenant.fullName }),
 								message,
 							);
@@ -261,6 +265,7 @@ export const main = async () => {
 							await replyAndLog(
 								jid,
 								tenant.id,
+								tenant.lease!.room.id,
 								render("phone-change-verification", {
 									fullName: tenant.fullName,
 								}),
@@ -278,6 +283,7 @@ export const main = async () => {
 						await replyAndLog(
 							jid,
 							tenant.id,
+							tenant.lease!.room.id,
 							render("verification-prompt", { fullName: tenant.fullName }),
 							message,
 						);
@@ -337,6 +343,7 @@ export const main = async () => {
 							await replyAndLog(
 								jid,
 								tenant.id,
+								tenant.lease!.room.id,
 								"❌ Permintaan dibatalkan.",
 								message,
 							);
@@ -378,7 +385,14 @@ export const main = async () => {
 						jid,
 						messageInput,
 					);
-					if (reply) await replyAndLog(jid, tenant.id, reply, message);
+					if (reply)
+						await replyAndLog(
+							jid,
+							tenant.id,
+							tenant.lease!.room.id,
+							reply,
+							message,
+						);
 					return;
 				}
 
@@ -392,7 +406,14 @@ export const main = async () => {
 						jid,
 						messageInput,
 					);
-					if (reply) await replyAndLog(jid, tenant.id, reply, message);
+					if (reply)
+						await replyAndLog(
+							jid,
+							tenant.id,
+							tenant.lease!.room.id,
+							reply,
+							message,
+						);
 					return;
 				}
 
@@ -406,7 +427,14 @@ export const main = async () => {
 						jid,
 						messageInput,
 					);
-					if (reply) await replyAndLog(jid, tenant.id, reply, message);
+					if (reply)
+						await replyAndLog(
+							jid,
+							tenant.id,
+							tenant.lease!.room.id,
+							reply,
+							message,
+						);
 					return;
 				}
 
@@ -416,7 +444,13 @@ export const main = async () => {
 				);
 				const responseText = await processCommand(tenant, text);
 
-				await replyAndLog(jid, tenant.id, responseText, message);
+				await replyAndLog(
+					jid,
+					tenant.id,
+					tenant.lease!.room.id,
+					responseText,
+					message,
+				);
 			};
 
 			for (const message of messages) {

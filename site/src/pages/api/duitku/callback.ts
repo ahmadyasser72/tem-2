@@ -100,6 +100,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 				tx.insert(notifications)
 					.values({
 						tenantId: invoice.lease!.tenantId,
+						roomId: invoice.lease!.roomId,
 						invoiceId: invoice.id,
 						type: "payment_success",
 						status: "pending",

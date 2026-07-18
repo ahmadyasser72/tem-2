@@ -88,7 +88,12 @@ export const createComplaint = async (
 	try {
 		const [newComplaint] = await db
 			.insert(complaints)
-			.values({ tenantId: tenant.id, description, status: "open" })
+			.values({
+				tenantId: tenant.id,
+				roomId: tenant.lease.room.id,
+				description,
+				status: "open",
+			})
 			.returning({ id: complaints.id, createdAt: complaints.createdAt });
 
 		let imagePath: string | null = null;

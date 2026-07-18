@@ -44,7 +44,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 				},
 			},
 			with: {
-				lease: { columns: { tenantId: true } },
+				lease: { columns: { tenantId: true, roomId: true } },
 			},
 		});
 
@@ -67,6 +67,7 @@ export const runPaymentReminder: SchedulerWorkerFunction = async (
 			.values(
 				dueInvoices.map((invoice) => ({
 					tenantId: invoice.lease.tenantId,
+					roomId: invoice.lease.roomId,
 					invoiceId: invoice.id,
 					type: "reminder" as const,
 					status: "pending" as const,

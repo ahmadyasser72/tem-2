@@ -26,16 +26,17 @@ export const fetchComplaints = async (
 			},
 		},
 		with: {
-			tenant: { with: { lease: { with: { room: true } } } },
+			tenant: true,
+			room: true,
 			resolver: true,
 		},
 		orderBy: { createdAt: "desc" },
 	});
 
-	return complaints.map(({ tenant, resolver, ...complaint }) => ({
+	return complaints.map(({ tenant, room, resolver, ...complaint }) => ({
 		...complaint,
 		tenantName: tenant.fullName,
-		roomNumber: tenant.lease?.room?.roomNumber ?? null,
+		roomNumber: room?.roomNumber ?? null,
 		resolvedByUserName: resolver?.displayName ?? null,
 	}));
 };

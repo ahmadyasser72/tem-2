@@ -96,6 +96,10 @@ export const relations = defineRelations(schema, (r) => ({
 			to: r.tenants.id,
 			optional: false,
 		}),
+		room: r.one.rooms({
+			from: r.complaints.roomId,
+			to: r.rooms.id,
+		}),
 		resolver: r.one.users({
 			from: r.complaints.resolvedBy,
 			to: r.users.id,
@@ -115,6 +119,10 @@ export const relations = defineRelations(schema, (r) => ({
 			to: r.tenants.id,
 			optional: false,
 		}),
+		room: r.one.rooms({
+			from: r.chatbotMessages.roomId,
+			to: r.rooms.id,
+		}),
 		notification: r.one.notifications({
 			from: r.chatbotMessages.id,
 			to: r.notifications.chatbotMessageId,
@@ -132,6 +140,10 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.chatRequests.tenantId,
 			to: r.tenants.id,
 			optional: false,
+		}),
+		room: r.one.rooms({
+			from: r.chatRequests.roomId,
+			to: r.rooms.id,
 		}),
 		pendingMessages: r.many.pendingChatMessages({
 			from: r.chatRequests.id,
@@ -152,6 +164,10 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.notifications.tenantId,
 			to: r.tenants.id,
 			optional: false,
+		}),
+		room: r.one.rooms({
+			from: r.notifications.roomId,
+			to: r.rooms.id,
 		}),
 		invoice: r.one.invoices({
 			from: r.notifications.invoiceId,

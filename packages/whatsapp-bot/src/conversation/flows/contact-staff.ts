@@ -4,6 +4,7 @@ import type { Logger } from "@indekos/utilities/logger";
 import { sendPush } from "@indekos/utilities/push";
 
 import type {
+	ActiveTenant,
 	ConversationSession,
 	FlowDef,
 	MessageInput,
@@ -105,6 +106,7 @@ const completeChatRequest = async (
 			.insert(chatRequests)
 			.values({
 				tenantId: session.tenant.id,
+				roomId: (session.tenant as ActiveTenant).lease.room.id,
 				description: text,
 				status: "pending",
 			})

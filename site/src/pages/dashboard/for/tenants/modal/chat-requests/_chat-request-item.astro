@@ -1,10 +1,5 @@
 ---
-import type {
-	ChatRequest,
-	Lease,
-	Room,
-	Tenant,
-} from "@indekos/database/schema";
+import type { ChatRequest, Room, Tenant } from "@indekos/database/schema";
 import { formatDate } from "@indekos/utilities/date";
 import { truncate } from "@indekos/utilities/transforms";
 
@@ -15,7 +10,8 @@ import ChatRequestTimeTooltip from "./_chat-request-time-tooltip.astro";
 
 interface Props {
 	request: ChatRequest & {
-		tenant: Tenant & { lease: null | (Lease & { room: Room }) };
+		tenant: Tenant;
+		room: Room | null;
 	};
 }
 

@@ -39,13 +39,8 @@ export const fetchNotifications = async (
 			invoiceId: true,
 		},
 		with: {
-			tenant: {
-				with: {
-					lease: {
-						with: { room: true },
-					},
-				},
-			},
+			tenant: true,
+			room: true,
 			invoice: true,
 			chatbotMessage: true,
 		},
@@ -53,11 +48,18 @@ export const fetchNotifications = async (
 	});
 
 	return notifications.map(
-		({ chatbotMessage, invoiceId, invoice, tenant, ...notification }) => ({
+		({
+			chatbotMessage,
+			invoiceId,
+			invoice,
+			tenant,
+			room,
+			...notification
+		}) => ({
 			...notification,
 			sentAt: chatbotMessage?.sentAt,
 			tenantName: tenant.fullName,
-			roomNumber: tenant.lease?.room.roomNumber ?? "-",
+			roomNumber: room?.roomNumber ?? "-",
 			invoiceNumber: invoice ? formatInvoiceNumber(invoice) : "-",
 		}),
 	);

@@ -191,6 +191,7 @@ export const add = defineAction({
 
 			await db.insert(notifications).values({
 				tenantId: insertedTenant.id,
+				roomId: input.room_id,
 				invoiceId: createdInvoice.id,
 				type: "welcome",
 				status: "pending",
@@ -294,6 +295,7 @@ export const edit = defineAction({
 				originRegion: true,
 			},
 			where: { id: input.id },
+			with: { lease: true },
 		});
 		if (!target) {
 			log.error({ tenantId: input.id }, "tenant not found");
@@ -348,6 +350,7 @@ export const edit = defineAction({
 
 				await db.insert(notifications).values({
 					tenantId: updated.id,
+					roomId: target.lease!.roomId,
 					type: "phone_change",
 					status: "pending",
 				});

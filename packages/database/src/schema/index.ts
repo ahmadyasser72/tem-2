@@ -122,6 +122,9 @@ export const chatbotMessages = sqliteTable("chatbot_messages", {
 	tenantId: integer("tenant_id")
 		.notNull()
 		.references(() => tenants.id, CASCADE),
+	roomId: integer("room_id")
+		.notNull()
+		.references(() => rooms.id, CASCADE),
 	staffId: integer("staff_id").references(() => users.id, CASCADE),
 
 	direction: text("direction", { enum: CHATBOT_DIRECTIONS }).notNull(),
@@ -139,6 +142,9 @@ export const chatRequests = sqliteTable("chat_requests", {
 	tenantId: integer("tenant_id")
 		.notNull()
 		.references(() => tenants.id, CASCADE),
+	roomId: integer("room_id")
+		.notNull()
+		.references(() => rooms.id, CASCADE),
 	description: text().notNull(),
 	status: text("status", { enum: CHAT_REQUEST_STATUS })
 		.notNull()
@@ -158,6 +164,9 @@ export const notifications = sqliteTable("notifications", {
 	tenantId: integer("tenant_id")
 		.notNull()
 		.references(() => tenants.id, CASCADE),
+	roomId: integer("room_id")
+		.notNull()
+		.references(() => rooms.id, CASCADE),
 	invoiceId: integer("invoice_id").references(() => invoices.id, CASCADE),
 
 	chatbotMessageId: integer("chatbot_message_id")
@@ -188,6 +197,9 @@ export const complaints = sqliteTable("complaints", {
 	tenantId: integer("tenant_id")
 		.notNull()
 		.references(() => tenants.id, CASCADE),
+	roomId: integer("room_id")
+		.notNull()
+		.references(() => rooms.id, CASCADE),
 	description: text("description").notNull(),
 	imagePath: text("image_path"),
 	status: text("status", { enum: COMPLAINT_STATUS }).notNull().default("open"),

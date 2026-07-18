@@ -151,6 +151,7 @@ export const pollNotifications = async (
 					.insert(chatbotMessages)
 					.values({
 						tenantId: notification.tenantId,
+						roomId: notification.roomId,
 						direction: "outgoing",
 						message: msg,
 					})

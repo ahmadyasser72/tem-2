@@ -14,11 +14,8 @@ export const partial = true;
 const log = await db.query.chatbotMessages.findFirst({
 	where: { id: Number(Astro.params.id) },
 	with: {
-		tenant: {
-			with: {
-				lease: { with: { room: true } },
-			},
-		},
+		tenant: true,
+		room: true,
 	},
 });
 
@@ -26,7 +23,7 @@ const chatbotLog = log
 	? {
 			...log,
 			tenantName: log.tenant.fullName,
-			roomNumber: log.tenant.lease?.room?.roomNumber ?? "-",
+			roomNumber: log.room?.roomNumber ?? "-",
 		}
 	: null;
 

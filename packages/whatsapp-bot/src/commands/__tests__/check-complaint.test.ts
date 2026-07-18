@@ -1,15 +1,31 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@indekos/database";
-import { complaints, tenants, users } from "@indekos/database/schema";
+import {
+	complaints,
+	leases,
+	rooms,
+	tenants,
+	users,
+} from "@indekos/database/schema";
 
-import type { ConversationSession } from "~/conversation/types";
+import type { ActiveTenant, ConversationSession } from "~/conversation/types";
 import { checkComplaint } from "../check-complaint";
 
-let testTenant: ConversationSession["tenant"];
+let testTenant: ActiveTenant;
 let complaintId: number;
 
 beforeAll(async () => {
 	db.run("BEGIN");
+
+	const [room] = await db
+		.insert(rooms)
+		.values({
+			roomNumber: "CMP01",
+			roomType: "standard",
+			monthlyPrice: 200_000,
+			isActive: true,
+		})
+		.returning({ id: rooms.id });
 
 	const [tenant] = await db
 		.insert(tenants)
@@ -19,10 +35,19 @@ beforeAll(async () => {
 		})
 		.returning({ id: tenants.id });
 
+	await db.insert(leases).values({
+		tenantId: tenant.id,
+		roomId: room.id,
+		startDate: new Date("2026-01-01"),
+		endDate: null,
+		isActive: true,
+	});
+
 	const [complaint] = await db
 		.insert(complaints)
 		.values({
 			tenantId: tenant.id,
+			roomId: room.id,
 			description: "AC kamar tidak dingin",
 			status: "open",
 		})
@@ -31,7 +56,7 @@ beforeAll(async () => {
 	testTenant = (await db.query.tenants.findFirst({
 		where: { id: tenant.id },
 		with: { lease: { columns: {}, with: { room: true } } },
-	}))!;
+	}))! as ActiveTenant;
 	complaintId = complaint.id;
 });
 
@@ -63,6 +88,7 @@ describe("checkComplaint", () => {
 			.insert(complaints)
 			.values({
 				tenantId: testTenant.id,
+				roomId: testTenant.lease.room.id,
 				description: "Kran bocor",
 				status: "resolved",
 				processedAt: new Date("2026-06-20"),
@@ -83,6 +109,7 @@ describe("checkComplaint", () => {
 			.insert(complaints)
 			.values({
 				tenantId: testTenant.id,
+				roomId: testTenant.lease.room.id,
 				description: "Toilet mampet",
 				status: "in_progress",
 				processedAt: new Date("2026-06-22"),
@@ -110,6 +137,7 @@ describe("checkComplaint", () => {
 			.insert(complaints)
 			.values({
 				tenantId: testTenant.id,
+				roomId: testTenant.lease.room.id,
 				description: "Pintu rusak",
 				status: "resolved",
 				processedAt: new Date("2026-06-20"),

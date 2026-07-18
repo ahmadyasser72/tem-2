@@ -49,6 +49,7 @@ export const pollInProgressComplaints = async (
 
 				await db.insert(chatbotMessages).values({
 					tenantId: complaint.tenantId,
+					roomId: complaint.roomId,
 					direction: "outgoing",
 					message,
 				});
@@ -134,6 +135,7 @@ export const pollResolvedComplaints = async (
 
 				await db.insert(chatbotMessages).values({
 					tenantId: complaint.tenantId,
+					roomId: complaint.roomId,
 					direction: "outgoing",
 					message,
 				});

@@ -29,9 +29,7 @@ const requests = await db.query.chatRequests.findMany({
 		...(params.tenant && { tenantId: params.tenant }),
 		status: params.status,
 	},
-	with: {
-		tenant: { with: { lease: { with: { room: true } } } },
-	},
+	with: { tenant: true, room: true },
 	orderBy: { requestedAt: "desc" },
 });
 

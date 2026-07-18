@@ -103,6 +103,7 @@ export const markAsPaid = defineAction({
 		if (invoice.lease?.tenant) {
 			await db.insert(notifications).values({
 				tenantId: invoice.lease.tenant.id,
+				roomId: invoice.lease.roomId,
 				invoiceId: invoice.id,
 				type: "payment_success",
 				status: "pending",

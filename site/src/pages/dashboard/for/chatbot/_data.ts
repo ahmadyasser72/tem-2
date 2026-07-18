@@ -32,20 +32,14 @@ export const fetchChatbotLogs = async (
 				lte: params.period.to.endOf("day").toDate(),
 			},
 		},
-		with: {
-			tenant: {
-				with: {
-					lease: { with: { room: true } },
-				},
-			},
-		},
+		with: { tenant: true, room: true },
 		orderBy: { sentAt: "desc" },
 	});
 
-	return logs.map(({ tenant, ...log }) => ({
+	return logs.map(({ tenant, room, ...log }) => ({
 		...log,
 		tenantName: tenant.fullName,
-		roomNumber: tenant.lease?.room?.roomNumber ?? "-",
+		roomNumber: room?.roomNumber ?? "-",
 	}));
 };
 

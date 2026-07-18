@@ -40,7 +40,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 				},
 			},
 			with: {
-				lease: { columns: { tenantId: true } },
+				lease: { columns: { tenantId: true, roomId: true } },
 			},
 		});
 
@@ -63,6 +63,7 @@ export const runOverdueReminder: SchedulerWorkerFunction = async (
 			.values(
 				overdueInvoices.map((invoice) => ({
 					tenantId: invoice.lease.tenantId,
+					roomId: invoice.lease.roomId,
 					invoiceId: invoice.id,
 					type: "overdue_reminder" as const,
 					status: "pending" as const,

@@ -19,7 +19,7 @@ const WorkerKind = z.enum([
 	"report",
 ]);
 
-const workers = {
+export const workers = {
 	"payment-reminder": runPaymentReminder,
 	"overdue-reminder": runOverdueReminder,
 	overdue: runOverdueCheck,
@@ -31,9 +31,7 @@ export const trigger = defineAction({
 	accept: "form",
 	input: z.object({
 		worker: WorkerKind,
-		target: z.iso
-			.datetime({ local: true })
-			.default(dayjs().format("YYYY-MM-DDTHH:mm")),
+		target: z.iso.date().default(() => dayjs().format("YYYY-MM-DD")),
 	}),
 	handler: async (input, context) => {
 		const log = context.locals.logger.child({

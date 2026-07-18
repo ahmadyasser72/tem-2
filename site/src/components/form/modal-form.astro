@@ -27,7 +27,7 @@ const {
 	class={hidden ? "hidden" : "flex flex-col gap-4"}
 	id={`${modalId}_form`}
 	hx-indicator={`#${modalId}_button`}
-	hx-on--after-request={`event.detail.successful && ${modalId}_modal.close()`}
+	hx-on--after-request={`event.detail.target instanceof HTMLFormElement && event.detail.successful && ${modalId}_modal.close()`}
 	hx-select-oob={target ? `${target}, #form_error` : "#form_error"}
 	hx-swap="none transition:true"
 	action={action}

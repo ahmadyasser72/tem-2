@@ -22,7 +22,7 @@ const { period, class: className, ...props } = Astro.props;
 					.join(PERIOD_SEPARATOR)
 			: undefined}
 		type="text"
-		class:list={["vc", className]}
+		class:list={["select-period vc", className]}
 		placeholder="Pilih periode"
 		readonly
 		{...props}
@@ -75,7 +75,9 @@ const { period, class: className, ...props } = Astro.props;
 	htmx.onLoad((node) => {
 		if (!(node instanceof HTMLElement)) return;
 
-		const calendars = node.querySelectorAll<HTMLInputElement>("input.vc");
+		const calendars = node.querySelectorAll<HTMLInputElement>(
+			"input.vc.select-period",
+		);
 		calendars.forEach((calendarElement) => {
 			const calendar = new Calendar(calendarElement, options);
 

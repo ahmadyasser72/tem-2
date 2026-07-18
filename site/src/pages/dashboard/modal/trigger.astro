@@ -1,4 +1,7 @@
 ---
+import { db } from "@indekos/database";
+import dayjs from "@indekos/utilities/date";
+
 import { actions, type ActionInputSchema } from "astro:actions";
 import { z } from "astro/zod";
 
@@ -28,12 +31,148 @@ const workers = {
 		string
 	>
 >;
+
+const { worker: selectedWorker } = Astro.locals.parseQuery(
+	z.object({ worker: z.string().optional() }),
+);
+
+const data: Record<string, string[]> = {};
+
+if (selectedWorker === "invoice") {
+	const activeLeases = await db.query.leases.findMany({
+		where: { isActive: true },
+		with: { invoices: true },
+	});
+
+	for (const lease of activeLeases) {
+		let cycleStart = dayjs(lease.startDate).add(1, "month");
+		const endDate = lease.endDate ? dayjs(lease.endDate) : null;
+
+		while (true) {
+			if (endDate && !cycleStart.isBefore(endDate, "day")) break;
+
+			const creationDate = cycleStart.subtract(7, "days");
+
+			// Don't create invoices too far in the future (arbitrary limit 2 years)
+			if (creationDate.isAfter(dayjs().add(2, "years"), "day")) break;
+
+			const existing = lease.invoices.find(({ dueDate }) =>
+				cycleStart.isSame(dueDate, "day"),
+			);
+
+			if (!existing) {
+				const dateStr = cycleStart.format("YYYY-MM-DD");
+				data[dateStr] ??= [];
+				data[dateStr].push("Generate Invoice");
+			}
+
+			cycleStart = cycleStart.add(1, "month");
+		}
+	}
+} else if (
+	selectedWorker === "payment-reminder" ||
+	selectedWorker === "overdue-reminder" ||
+	selectedWorker === "overdue"
+) {
+	const invoices = await db.query.invoices.findMany({
+		columns: { dueDate: true, status: true },
+	});
+
+	const counts: Record<string, number> = {};
+
+	if (selectedWorker === "payment-reminder") {
+		const unpaidInvoices = invoices.filter((inv) => inv.status === "unpaid");
+
+		for (const invoice of unpaidInvoices) {
+			const dueDate = dayjs(invoice.dueDate);
+			const reminderStartDate = dueDate.subtract(3, "days");
+
+			let currentDate = reminderStartDate;
+			while (currentDate.isBefore(dueDate, "day")) {
+				const dateStr = currentDate.format("YYYY-MM-DD");
+				counts[dateStr] = (counts[dateStr] ?? 0) + 1;
+				currentDate = currentDate.add(1, "day");
+			}
+		}
+	} else if (selectedWorker === "overdue-reminder") {
+		const overdueInvoices = invoices.filter((inv) => inv.status === "overdue");
+
+		if (overdueInvoices.length > 0) {
+			// Find earliest overdue dueDate
+			const earliestDueDate = overdueInvoices.reduce(
+				(min, inv) =>
+					dayjs(inv.dueDate).isBefore(dayjs(min), "day") ? inv.dueDate : min,
+				overdueInvoices[0].dueDate,
+			);
+
+			let currentDate = dayjs(earliestDueDate);
+			// Show 30 days from earliest overdue date
+			for (let i = 0; i < 30; i++) {
+				const countOnThisDate = overdueInvoices.filter((inv) =>
+					dayjs(inv.dueDate).isBefore(currentDate, "day"),
+				).length;
+
+				if (countOnThisDate > 0) {
+					const dateStr = currentDate.format("YYYY-MM-DD");
+					counts[dateStr] = countOnThisDate;
+				}
+
+				currentDate = currentDate.add(1, "day");
+			}
+		}
+	} else if (selectedWorker === "overdue") {
+		const unpaidInvoices = invoices.filter((inv) => inv.status === "unpaid");
+
+		for (const invoice of unpaidInvoices) {
+			const dueDate = dayjs(invoice.dueDate);
+
+			let currentDate = dueDate;
+			for (let i = 0; i < 30; i++) {
+				const dateStr = currentDate.format("YYYY-MM-DD");
+				counts[dateStr] = (counts[dateStr] ?? 0) + 1;
+				currentDate = currentDate.add(1, "day");
+			}
+		}
+	}
+
+	const labelMap = {
+		"payment-reminder": "Pengingat Pembayaran",
+		"overdue-reminder": "Pengingat Overdue",
+		overdue: "Tandai Overdue",
+	} as const;
+
+	for (const [dateStr, count] of Object.entries(counts)) {
+		data[dateStr] = [`${count} ${labelMap[selectedWorker]}`];
+	}
+} else if (selectedWorker === "report") {
+	const invoices = await db.query.invoices.findMany({
+		columns: { dueDate: true },
+	});
+
+	if (invoices.length > 0) {
+		// Get unique months from invoices
+		const monthsWithData = new Set(
+			invoices.map((inv) => dayjs(inv.dueDate).format("YYYY-MM")),
+		);
+
+		for (const yearMonth of monthsWithData) {
+			// Show month start date
+			const monthStart = dayjs(yearMonth, "YYYY-MM")
+				.startOf("month")
+				.format("YYYY-MM-DD");
+			data[monthStart] = ["1 Laporan Bulanan"];
+		}
+	}
+}
+
+export type Data = typeof data;
 ---
 
 <Modal
 	id="trigger_worker"
 	title={`Trigger ${onlyNotificationWorker ? "Pengingat" : "Worker"}`}
 	icon="lucide:play"
+	modalClass="overflow-visible"
 >
 	<ModalForm
 		action={actions.worker.trigger}
@@ -43,7 +182,15 @@ const workers = {
 		<FormField
 			label={`Pilih ${onlyNotificationWorker ? "Jenis Pengingat" : "Worker"}`}
 		>
-			<select class="select w-full" name="worker" required>
+			<select
+				hx-get={Astro.url.pathname}
+				class="select w-full"
+				name="worker"
+				hx-select="#select-trigger-date"
+				hx-swap="outerHTML"
+				hx-target="#select-trigger-date"
+				required
+			>
 				<option value="" disabled selected
 					>-- Pilih {onlyNotificationWorker ? "pengingat" : "worker"} --</option
 				>
@@ -59,20 +206,73 @@ const workers = {
 			helperText={`Jalankan ${onlyNotificationWorker ? "pengingat" : "worker"} untuk tanggal tertentu (kosongkan untuk menggunakan waktu sekarang)`}
 			label="Tanggal Eksekusi"
 		>
-			<input class="input w-full" name="target" type="datetime-local" />
+			<div
+				class="vc"
+				id="select-trigger-date"
+				data-calendar={JSON.stringify(data)}
+			>
+			</div>
+			<input name="target" type="hidden" />
 		</FormField>
 	</ModalForm>
 </Modal>
 
 <script>
-	// Set default date to today
-	document.addEventListener("htmx:load", () => {
-		const dateInput = document.querySelector(
-			'input[name="targetDate"]',
-		) as HTMLInputElement;
-		if (dateInput && !dateInput.value) {
-			const today = new Date();
-			dateInput.value = today.toISOString().split("T")[0];
-		}
+	import htmx from "htmx.org";
+	import { Calendar } from "vanilla-calendar-pro";
+
+	import type { Data } from "./trigger.astro";
+
+	htmx.onLoad((node) => {
+		if (!(node instanceof HTMLElement)) return;
+
+		const calendarElement = node.matches(".vc#select-trigger-date")
+			? node
+			: node.querySelector<HTMLElement>(".vc#select-trigger-date");
+		if (!(calendarElement instanceof HTMLElement)) return;
+
+		const data = JSON.parse(calendarElement.dataset.calendar!) as Data;
+		const calendar = new Calendar(calendarElement, {
+			disableToday: true,
+			disableAllDates: true,
+			enableDates: Object.keys(data),
+
+			onClickDate: ({ context }) => {
+				(context.mainElement.nextElementSibling as HTMLInputElement).value =
+					context.selectedDates[0] ?? "";
+			},
+
+			onCreateDateEls: (_, element) => {
+				const items = data[element.dataset.vcDate!] ?? [];
+				if (items.length === 0) return;
+
+				const button = element.querySelector(
+					"[data-vc-date-btn]",
+				) as HTMLButtonElement;
+				button.classList.add("flex-col");
+				const day = button.innerText;
+				button.innerHTML = "";
+				button.innerHTML += `<span>${day}</span>`;
+				button.innerHTML += `<span class="badge badge-xs badge-primary badge-soft">${items.length}</span>`;
+			},
+
+			popups: Object.fromEntries(
+				Object.entries(data).map(([date, items]) => [
+					date,
+					{
+						html: [
+							'<div class="flex w-max max-w-32 min-w-full flex-wrap justify-center gap-x-1 gap-y-0.5 py-2 font-medium">',
+							...items.map(
+								(item) =>
+									`<span class="badge badge-soft badge-xs">${item}</span>`,
+							),
+							"</div>",
+						].join(""),
+					},
+				]),
+			),
+		});
+
+		calendar.init();
 	});
 </script>

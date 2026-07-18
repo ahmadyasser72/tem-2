@@ -11,7 +11,9 @@
 			<div class="mb-4 flex items-start justify-between">
 				<div>
 					<h1 class="mb-1 text-2xl font-bold">💳 Transaksi</h1>
-					<p class="text-sm opacity-60">Daftar transaksi pembayaran</p>
+					<p class="text-sm opacity-60">
+						Rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni
+					</p>
 				</div>
 				<div class="flex items-center gap-2">
 					<button class="btn btn-outline btn-sm">📄 PDF</button>
@@ -35,7 +37,10 @@
 							<button class="btn btn-sm">🔽 Filter</button>
 							<label class="input input-sm"
 								>🔍
-								<input type="search" placeholder="Cari transaksi…" class="grow"
+								<input
+									type="search"
+									placeholder="Cari nama/No. Kamar…"
+									class="grow"
 							/></label>
 						</div>
 					</div>
@@ -57,7 +62,7 @@
 					</div>
 				</div>
 				<div class="stat">
-					<div class="stat-title">Pembayaran Tertunggak</div>
+					<div class="stat-title">Terlambat</div>
 					<div class="stat-value text-xl">
 						<span class="inline-block w-6 skeleton">&nbsp;</span>
 					</div>
@@ -72,9 +77,8 @@
 							<th>Kamar</th>
 							<th>Nominal</th>
 							<th>Jatuh Tempo</th>
+							<th>Dibayar</th>
 							<th>Status</th>
-							<th>Ref. Gateway</th>
-							<th class="text-right">Aksi</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -88,13 +92,8 @@
 								<span class="inline-block w-14 skeleton font-mono">&nbsp;</span>
 							</td>
 							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
+							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
 							<td><span class="badge w-14 skeleton badge-sm">&nbsp;</span></td>
-							<td>
-								<span class="inline-block w-24 skeleton font-mono">&nbsp;</span>
-							</td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
 						</tr>
 						<tr>
 							<td>
@@ -106,13 +105,8 @@
 								<span class="inline-block w-14 skeleton font-mono">&nbsp;</span>
 							</td>
 							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
+							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
 							<td><span class="badge w-12 skeleton badge-sm">&nbsp;</span></td>
-							<td>
-								<span class="inline-block w-24 skeleton font-mono">&nbsp;</span>
-							</td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
 						</tr>
 						<tr>
 							<td>
@@ -124,13 +118,8 @@
 								<span class="inline-block w-14 skeleton font-mono">&nbsp;</span>
 							</td>
 							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
+							<td><span class="inline-block w-14 skeleton">&nbsp;</span></td>
 							<td><span class="badge w-16 skeleton badge-sm">&nbsp;</span></td>
-							<td>
-								<span class="inline-block w-24 skeleton font-mono">&nbsp;</span>
-							</td>
-							<td class="text-right">
-								<span class="inline-block w-8 skeleton">&nbsp;</span>
-							</td>
 						</tr>
 					</tbody>
 				</table>

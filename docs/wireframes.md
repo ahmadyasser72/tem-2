@@ -80,9 +80,9 @@ Halaman untuk melacak keluhan atau kerusakan fasilitas dari penghuni kos. Setiap
 
 ![Transaksi](wireframe-v2/png/input/6-transaksi.png)
 
-Halaman untuk melihat tagihan pembayaran bulanan dari masing-masing penghuni kamar. Setiap transaksi mencakup nomor invoice, nama penghuni, nominal pembayaran, tanggal jatuh tempo, status pembayaran, dan referensi payment gateway (Duitku).
+Halaman untuk melihat rekapitulasi tagihan dan riwayat pembayaran sewa bulanan penghuni. Setiap transaksi mencakup nomor invoice, nama penghuni, kamar, nominal pembayaran, tanggal jatuh tempo, tanggal pembayaran, dan status pembayaran.
 
-**Aksi/Fitur:** Halaman ini menyediakan kotak **Pilih Periode** untuk melihat transaksi pada bulan tertentu dan tombol **Generate** untuk membuat tagihan baru secara otomatis. Pengelola dapat menggunakan tombol **Tandai Lunas** jika pembayaran dilakukan secara langsung, tombol **Salin** untuk menyalin tautan pembayaran ke papan klip, atau **Buka Pembayaran** untuk mengakses portal daring penghuni. Untuk memudahkan penelusuran, tersedia fitur **Pencarian** berdasarkan nomor invoice atau nama penghuni, serta fitur **Saring (Filter)** berdasarkan status kelunasan tagihan.
+**Aksi/Fitur:** Halaman ini menyediakan tombol **📄 PDF** untuk mengunduh laporan transaksi, kotak **Pilih Periode** untuk melihat transaksi pada bulan tertentu, fitur **Pencarian** berdasarkan nama penghuni atau nomor kamar, serta fitur **Saring (Filter)** berdasarkan status kelunasan tagihan.
 
 </details>
 
@@ -133,6 +133,19 @@ Halaman untuk mencatat seluruh aktivitas pengguna di dalam sistem. Setiap catata
 ![Login](wireframe-v2/png/input/10-login.png)
 
 Halaman masuk untuk mengakses sistem. Pengguna wajib memasukkan nama pengguna dan kata sandi yang benar. Jika login berhasil, pengguna akan diarahkan ke halaman dashboard sesuai perannya.
+
+</details>
+
+---
+
+<details>
+<summary>11. Manajemen Tagihan</summary>
+
+![Tagihan](wireframe-v2/png/input/11-tagihan.png)
+
+Halaman untuk mengelola daftar tagihan per kontrak sewa penghuni. Data ditampilkan per grup kontrak sewa, mencakup nomor kamar, nama penghuni, periode sewa, dan status keaktifan. Setiap tagihan mencakup nomor invoice, tanggal jatuh tempo, tanggal pembayaran, nominal, dan status (Lunas, Belum Bayar, Terlambat).
+
+**Aksi/Fitur:** Pengelola dapat menggunakan tombol **📄 PDF** untuk mengunduh laporan tagihan, kotak **Pilih Periode** untuk memfilter berdasarkan bulan, serta fitur **Pencarian** dan **Saring (Filter)** berdasarkan status. Pada setiap tagihan, tersedia tombol **Generate** untuk membuat tautan pembayaran, tombol **Salin Link** untuk menyalin URL pembayaran, tombol **Tandai Lunas** untuk mencatat pembayaran langsung, serta tombol **Invoice** untuk membuka halaman invoice penghuni.
 
 </details>
 
@@ -227,5 +240,27 @@ Laporan yang menampilkan catatan aktivitas pengguna di dalam sistem. Informasi m
 ![Invoice](wireframe-v2/png/output/8-invoice.png)
 
 Halaman tagihan pembayaran yang dikirimkan kepada penghuni. Informasi mencakup nomor invoice, periode tagihan, rincian biaya sewa kamar, serta total tagihan yang harus dibayar.
+
+</details>
+
+---
+
+<details>
+<summary>9. Laporan Tagihan</summary>
+
+![Laporan Tagihan](wireframe-v2/png/output/9-laporan-tagihan.png)
+
+Laporan yang menampilkan rekapitulasi tagihan per kontrak sewa penghuni dalam periode tertentu. Data dikelompokkan per kamar dan penghuni, mencakup nomor invoice, tanggal jatuh tempo, tanggal pembayaran, nominal, dan status kelunasan.
+
+</details>
+
+---
+
+<details>
+<summary>10. Laporan Tagihan Per Penghuni</summary>
+
+![Laporan Tagihan Per Penghuni](wireframe-v2/png/output/10-laporan-tagihan-per-penghuni.png)
+
+Laporan yang menampilkan riwayat tagihan untuk satu penghuni tertentu. Data mencakup informasi penghuni (nama, telepon, asal), serta seluruh tagihan yang dikelompokkan berdasarkan periode kontrak sewa.
 
 </details>

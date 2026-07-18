@@ -5,10 +5,10 @@ import { formatCurrency } from "@indekos/utilities/transforms";
 import ReportStats from "~/components/data/report-stats.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
 import { PERIOD_SEPARATOR_UI } from "~/lib/query";
+import { INVOICE_STATUS_LABELS } from "~/pages/dashboard/for/invoices/_data";
 import {
 	fetchTransactions,
 	getTransactionStats,
-	INVOICE_STATUS_LABELS,
 	transactionQuerySchema,
 } from "../_data";
 

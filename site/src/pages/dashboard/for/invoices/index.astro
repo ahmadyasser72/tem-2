@@ -1,0 +1,321 @@
+---
+import { formatDate } from "@indekos/utilities/date";
+import { formatCurrency } from "@indekos/utilities/transforms";
+
+import { actions } from "astro:actions";
+import { sumBy } from "es-toolkit";
+
+import FilterPopover from "~/components/data/filter-popover.astro";
+import FilterToolbar from "~/components/data/filter-toolbar.astro";
+import SearchInput from "~/components/data/search-input.astro";
+import Stats from "~/components/data/stats.astro";
+import ActionsMenu from "~/components/ui/actions-menu.astro";
+import IconLoader from "~/components/ui/icon-loader.astro";
+import Icon from "~/components/ui/icon.astro";
+import DashboardLayout from "~/layouts/dashboard-layout.astro";
+import { createActionResult } from "~/lib/form-result";
+import {
+	fetchLeaseInvoices,
+	getInvoiceStats,
+	INVOICE_STATUS,
+	INVOICE_STATUS_BADGES,
+	INVOICE_STATUS_LABELS,
+	invoiceQuerySchema,
+} from "./_data";
+
+Astro.locals.actionResults.push(
+	createActionResult(
+		actions.manage.invoices.generatePaymentLink,
+		"Buat link bayar",
+		(d) =>
+			`Link pembayaran berhasil dibuat! <a href="${d.paymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`,
+	),
+	createActionResult(
+		actions.manage.invoices.markAsPaid,
+		"Tandai Lunas",
+		() => "Berhasil menandai invoice sebagai lunas!",
+	),
+);
+
+const params = Astro.locals.parseQuery(invoiceQuerySchema);
+
+const leases = await fetchLeaseInvoices(params);
+const invoiceStats = getInvoiceStats(leases);
+---
+
+<DashboardLayout
+	title="Manajemen Tagihan"
+	description="Daftar tagihan per kontrak sewa penghuni"
+>
+	<Fragment slot="page-action">
+		<a
+			class="btn btn-outline btn-sm"
+			id="invoices-print"
+			href={`/dashboard/for/invoices/report/html${Astro.url.search}`}
+			hx-swap-oob="true"
+			target="_blank"
+		>
+			<Icon name="lucide:download" /> PDF
+		</a>
+	</Fragment>
+
+	<FilterToolbar name="invoices" period={params.period}>
+		<Fragment slot="actions">
+			<FilterPopover
+				name="invoices"
+				groups={[
+					{
+						title: "Status",
+						name: "status",
+						options: INVOICE_STATUS.map((status) => ({
+							value: status,
+							label: INVOICE_STATUS_LABELS[status],
+							checked: params.status === status,
+						})),
+					},
+				]}
+			/>
+			<SearchInput
+				value={params.query}
+				filterClass="filter-invoices"
+				placeholder="Cari nama/No. Kamar..."
+			/>
+		</Fragment>
+	</FilterToolbar>
+
+	<Stats stats={invoiceStats} />
+
+	<div class="contents" id="invoices-content-wrapper">
+		<div class="flex flex-col gap-4">
+			{
+				leases.length === 0 ? (
+					<div class="rounded-box border border-base-300 p-8 text-center text-base-content/50">
+						Tidak ada tagihan ditemukan
+					</div>
+				) : (
+					leases.map((lease) => (
+						<div class="rounded-box border border-base-300 shadow-sm">
+							<div class="flex items-center gap-2 border-b border-base-300 px-4 py-3">
+								<span class="badge font-mono badge-neutral">
+									{lease.roomNumber}
+								</span>
+								<span class="font-semibold">{lease.tenantName}</span>
+								<span class="text-sm text-base-content/50">
+									{formatDate(lease.startDate)} s/d{" "}
+									{lease.endDate ? formatDate(lease.endDate) : "Sekarang"}
+								</span>
+								{lease.isActive && (
+									<span class="badge badge-xs badge-success">Aktif</span>
+								)}
+							</div>
+							<div class="overflow-x-auto">
+								<table class="table w-full table-sm">
+									<thead>
+										<tr>
+											<th class="w-6 text-center">No</th>
+											<th>No. Invoice</th>
+											<th>Jatuh Tempo</th>
+											<th>Dibayar</th>
+											<th class="text-right">Nominal</th>
+											<th>Status</th>
+											<th>Aksi</th>
+										</tr>
+									</thead>
+									<tbody>
+										{lease.invoices.map((invoice, idx) => (
+											<tr id={`invoice-${invoice.id}`}>
+												<td class="text-center font-mono">{idx + 1}</td>
+												<td class="font-mono text-xs">
+													{invoice.invoiceNumber}
+												</td>
+												<td class="font-mono text-xs">
+													{formatDate(invoice.dueDate)}
+												</td>
+												<td class="font-mono text-xs">
+													{invoice.paidAt ? formatDate(invoice.paidAt) : "-"}
+												</td>
+												<td class="text-right font-mono">
+													{formatCurrency(invoice.amount)}
+												</td>
+												<td>
+													<span
+														class:list={[
+															"badge badge-sm font-bold",
+															INVOICE_STATUS_BADGES[invoice.status],
+														]}
+													>
+														{INVOICE_STATUS_LABELS[invoice.status]}
+													</span>
+												</td>
+												<td>
+													{invoice.status === "paid" ? (
+														<a
+															class="btn w-24 btn-outline btn-success btn-xs"
+															href={`/invoice/${invoice.id}`}
+															target="_blank"
+														>
+															<Icon
+																name="lucide:external-link"
+																size="size-3.5"
+															/>{" "}
+															Invoice
+														</a>
+													) : invoice.paymentUrl ? (
+														<div class="flex items-center gap-1">
+															<a
+																class="btn w-24 btn-outline btn-success btn-xs"
+																href={`/invoice/${invoice.id}`}
+																target="_blank"
+															>
+																<Icon
+																	name="lucide:external-link"
+																	size="size-3.5"
+																/>{" "}
+																Invoice
+															</a>
+															{Astro.locals.user?.allowEdit && (
+																<ActionsMenu id={invoice.id} menuClass="w-36">
+																	<li>
+																		<button
+																			onclick={`navigator.clipboard.writeText("${invoice.paymentUrl}")`}
+																		>
+																			<Icon
+																				name="lucide:clipboard-list"
+																				size="size-3.5"
+																			/>
+																			Salin Link
+																		</button>
+																	</li>
+																	<li>
+																		<form
+																			hx-post={
+																				actions.manage.invoices.markAsPaid
+																			}
+																			class="hidden"
+																			id={`mark_as_paid_${invoice.id}`}
+																			hx-indicator="next button"
+																			hx-select={`#invoice-${invoice.id}`}
+																			hx-swap="outerHTML transition:true"
+																			hx-target={`#invoice-${invoice.id}`}
+																			action={
+																				actions.manage.invoices.markAsPaid
+																			}
+																			method="post"
+																		>
+																			<input
+																				name="invoice_id"
+																				type="hidden"
+																				value={invoice.id}
+																			/>
+																		</form>
+																		<button
+																			type="submit"
+																			form={`mark_as_paid_${invoice.id}`}
+																		>
+																			<IconLoader name="lucide:circle-check" />
+																			Tandai Lunas
+																		</button>
+																	</li>
+																</ActionsMenu>
+															)}
+														</div>
+													) : (
+														Astro.locals.user?.allowEdit && (
+															<div class="flex items-center gap-1">
+																<form
+																	hx-post={
+																		actions.manage.invoices.generatePaymentLink
+																	}
+																	class="hidden"
+																	id={`generate_link_${invoice.id}`}
+																	hx-indicator="next button"
+																	hx-select={`#invoice-${invoice.id}`}
+																	hx-swap="outerHTML transition:true"
+																	hx-target={`#invoice-${invoice.id}`}
+																	action={
+																		actions.manage.invoices.generatePaymentLink
+																	}
+																	method="post"
+																>
+																	<input
+																		name="invoice_id"
+																		type="hidden"
+																		value={invoice.id}
+																	/>
+																</form>
+																<button
+																	class="btn w-24 btn-outline btn-primary btn-xs"
+																	type="submit"
+																	form={`generate_link_${invoice.id}`}
+																>
+																	<IconLoader
+																		name="lucide:link"
+																		size="size-3.5"
+																	/>
+																	Generate
+																</button>
+																<ActionsMenu id={invoice.id} menuClass="w-36">
+																	<li>
+																		<form
+																			hx-post={
+																				actions.manage.invoices.markAsPaid
+																			}
+																			class="contents"
+																			id={`mark_as_paid_${invoice.id}`}
+																			hx-select={`#invoice-${invoice.id}`}
+																			hx-swap="outerHTML transition:true"
+																			hx-target={`#invoice-${invoice.id}`}
+																			action={
+																				actions.manage.invoices.markAsPaid
+																			}
+																			method="post"
+																		>
+																			<input
+																				name="invoice_id"
+																				type="hidden"
+																				value={invoice.id}
+																			/>
+																		</form>
+																		<button
+																			type="submit"
+																			form={`mark_as_paid_${invoice.id}`}
+																		>
+																			<Icon name="lucide:circle-check" />
+																			Tandai Lunas
+																		</button>
+																	</li>
+																</ActionsMenu>
+															</div>
+														)
+													)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+									<tfoot>
+										<tr>
+											<td class="text-xs text-base-content/60" colspan="7">
+												{lease.invoices.length} tagihan &middot; Terbayar:{" "}
+												{formatCurrency(
+													sumBy(lease.invoices, ({ amount, status }) =>
+														status === "paid" ? amount : 0,
+													),
+												)}{" "}
+												&middot; Tertunggak:{" "}
+												{formatCurrency(
+													sumBy(lease.invoices, ({ amount, status }) =>
+														status !== "paid" ? amount : 0,
+													),
+												)}
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</div>
+					))
+				)
+			}
+		</div>
+	</div>
+</DashboardLayout>

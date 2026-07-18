@@ -1,58 +1,52 @@
 ---
-import { db } from "@indekos/database";
 import { formatDate } from "@indekos/utilities/date";
-import {
-	formatCurrency,
-	formatInvoiceNumber,
-} from "@indekos/utilities/transforms";
+import { formatCurrency } from "@indekos/utilities/transforms";
 
 import { sumBy } from "es-toolkit";
 
+import ReportStats from "~/components/data/report-stats.astro";
 import ReportLayout from "~/layouts/report-layout.astro";
-import { INVOICE_STATUS_LABELS } from "~/pages/dashboard/for/invoices/_data";
+import { PERIOD_SEPARATOR_UI } from "~/lib/query";
+import {
+	fetchLeaseInvoices,
+	getInvoiceStats,
+	INVOICE_STATUS_LABELS,
+	invoiceQuerySchema,
+} from "../_data";
 
-const tenant = await db.query.tenants.findFirst({
-	columns: { id: true, fullName: true, phoneNumber: true, originRegion: true },
-	where: { id: Number(Astro.params.id) },
-	with: {
-		lease: {
-			columns: { id: true, startDate: true, endDate: true, isActive: true },
-			with: {
-				room: { columns: { roomNumber: true } },
-				invoices: { orderBy: { dueDate: "asc" } },
-			},
-		},
-		leaseHistory: {
-			columns: { id: true, startDate: true, endDate: true, isActive: true },
-			with: {
-				room: { columns: { roomNumber: true } },
-				invoices: { orderBy: { dueDate: "asc" } },
-			},
-			orderBy: { startDate: "desc" },
-		},
-	},
-});
+const params = Astro.locals.parseQuery(
+	invoiceQuerySchema.omit({ query: true }),
+);
 
-if (!tenant) return Astro.redirect("/404");
+const leases = await fetchLeaseInvoices(params);
+const invoiceStats = getInvoiceStats(leases);
 
-const leaseGroups = [
-	...(tenant.lease ? [tenant.lease] : []),
-	...tenant.leaseHistory,
-];
+const filterParts: string[] = [];
+if (params.status) {
+	filterParts.push(`Status: ${INVOICE_STATUS_LABELS[params.status]}`);
+}
+if (params.period) {
+	const { from, to } = params.period;
+	filterParts.push(
+		from.isSame(to, "day")
+			? `Per ${formatDate(from, "DD MMMM YYYY")}`
+			: `Periode ${[from, to].map((date) => formatDate(date, "DD MMMM YYYY")).join(PERIOD_SEPARATOR_UI)}`,
+	);
+}
+const subtitle = filterParts.length > 0 ? filterParts.join(" | ") : undefined;
 ---
 
-<ReportLayout
-	title={`Laporan Penghuni: ${tenant.fullName}`}
-	subtitle={`No. HP: +${tenant.phoneNumber}${tenant.originRegion ? ` · Asal: ${tenant.originRegion}` : ""}`}
->
+<ReportLayout title="Manajemen Tagihan" subtitle={subtitle}>
+	<ReportStats stats={invoiceStats} />
+
 	{
-		leaseGroups.map((lease) => (
+		leases.map((lease) => (
 			<div class="mb-6">
 				<table>
 					<thead>
 						<tr>
 							<th class="text-left" colspan="6">
-								Kamar {lease.room.roomNumber} &mdash;{" "}
+								Kamar {lease.roomNumber} &mdash; {lease.tenantName} &mdash;{" "}
 								{formatDate(lease.startDate)} s/d{" "}
 								{lease.endDate ? formatDate(lease.endDate) : "sekarang"}
 								{lease.isActive ? " (Aktif)" : " (Selesai)"}
@@ -72,7 +66,7 @@ const leaseGroups = [
 							lease.invoices.map((invoice, idx) => (
 								<tr>
 									<td class="text-center font-mono">{idx + 1}</td>
-									<td class="font-mono">{formatInvoiceNumber(invoice)}</td>
+									<td class="font-mono">{invoice.invoiceNumber}</td>
 									<td class="font-mono">{formatDate(invoice.dueDate)}</td>
 									<td class="font-mono">
 										{invoice.paidAt ? formatDate(invoice.paidAt) : "-"}

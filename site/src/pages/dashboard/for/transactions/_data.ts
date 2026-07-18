@@ -1,17 +1,16 @@
-import { db, INVOICE_STATUS } from "@indekos/database";
-import { getPaymentUrlFromReference } from "@indekos/database/duitku";
+import { db } from "@indekos/database";
 import {
 	formatCurrency,
 	formatInvoiceNumber,
 } from "@indekos/utilities/transforms";
 
 import { z } from "astro/zod";
-import { groupBy, sumBy } from "es-toolkit";
+import { sumBy } from "es-toolkit";
 
 import type { Stat } from "~/components/data/stats.astro";
 import { periodSchema, querySchema, statusSchema } from "~/lib/query";
 
-export { INVOICE_STATUS };
+export const TRANSACTION_STATUSES = ["paid", "overdue"] as const;
 
 export const fetchTransactions = async (
 	params: z.infer<typeof transactionQuerySchema>,
@@ -25,7 +24,7 @@ export const fetchTransactions = async (
 				],
 			}),
 
-			...(params.status && { status: params.status }),
+			status: params.status ?? { notIn: ["unpaid"] },
 
 			dueDate: {
 				gte: params.period.from.startOf("day").toDate(),
@@ -44,26 +43,22 @@ export const fetchTransactions = async (
 		invoiceNumber: formatInvoiceNumber(invoice),
 		tenantName: lease.tenant.fullName,
 		roomNumber: lease.room.roomNumber,
-		paymentUrl: invoice.duitkuReference
-			? getPaymentUrlFromReference(invoice.duitkuReference)
-			: null,
 	}));
 };
 
 export const getTransactionStats = (
 	transactions: Awaited<ReturnType<typeof fetchTransactions>>,
 ): Stat[] => {
-	const { paid = [], unpaid = [] } = groupBy(transactions, ({ status }) =>
-		status === "paid" ? "paid" : "unpaid",
-	);
+	const paid = transactions.filter(({ status }) => status === "paid");
+	const overdue = transactions.filter(({ status }) => status === "overdue");
 	const totalRevenue = sumBy(paid, ({ amount }) => amount);
-	const paidCount = paid?.length;
+	const paidCount = paid.length;
 	const paidRate =
 		transactions.length > 0
 			? Math.round((paidCount / transactions.length) * 100)
 			: 0;
-	const unpaidCount = unpaid.length;
-	const unpaidTotal = sumBy(unpaid, ({ amount }) => amount);
+	const overdueCount = overdue.length;
+	const overdueTotal = sumBy(overdue, ({ amount }) => amount);
 
 	return [
 		{
@@ -79,9 +74,9 @@ export const getTransactionStats = (
 			icon: "lucide:circle-check" as const,
 		},
 		{
-			title: "Pembayaran Tertunggak",
-			value: `${unpaidCount} Invoice`,
-			desc: formatCurrency(unpaidTotal),
+			title: "Terlambat",
+			value: `${overdueCount} Invoice`,
+			desc: formatCurrency(overdueTotal),
 			icon: "lucide:x-circle" as const,
 		},
 	];
@@ -90,17 +85,5 @@ export const getTransactionStats = (
 export const transactionQuerySchema = z.object({
 	query: querySchema,
 	period: periodSchema,
-	status: statusSchema(INVOICE_STATUS),
+	status: statusSchema(TRANSACTION_STATUSES),
 });
-
-export const INVOICE_STATUS_BADGES = {
-	unpaid: "badge-warning",
-	paid: "badge-success",
-	overdue: "badge-error",
-} satisfies Record<(typeof INVOICE_STATUS)[number], string>;
-
-export const INVOICE_STATUS_LABELS = {
-	unpaid: "Belum Bayar",
-	paid: "Lunas",
-	overdue: "Terlambat",
-} satisfies Record<(typeof INVOICE_STATUS)[number], string>;

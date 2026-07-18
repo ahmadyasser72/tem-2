@@ -2,39 +2,22 @@
 import { formatDate } from "@indekos/utilities/date";
 import { formatCurrency } from "@indekos/utilities/transforms";
 
-import { actions } from "astro:actions";
-
 import FilterPopover from "~/components/data/filter-popover.astro";
 import FilterToolbar from "~/components/data/filter-toolbar.astro";
 import SearchInput from "~/components/data/search-input.astro";
 import Stats from "~/components/data/stats.astro";
-import ActionsMenu from "~/components/ui/actions-menu.astro";
-import IconLoader from "~/components/ui/icon-loader.astro";
 import Icon from "~/components/ui/icon.astro";
 import DashboardLayout from "~/layouts/dashboard-layout.astro";
-import { createActionResult } from "~/lib/form-result";
+import {
+	INVOICE_STATUS_BADGES,
+	INVOICE_STATUS_LABELS,
+} from "~/pages/dashboard/for/invoices/_data";
 import {
 	fetchTransactions,
 	getTransactionStats,
-	INVOICE_STATUS,
-	INVOICE_STATUS_BADGES,
-	INVOICE_STATUS_LABELS,
+	TRANSACTION_STATUSES,
 	transactionQuerySchema,
 } from "./_data";
-
-Astro.locals.actionResults.push(
-	createActionResult(
-		actions.manage.invoices.generatePaymentLink,
-		"Buat link bayar",
-		(d) =>
-			`Link pembayaran berhasil dibuat! <a href="${d.paymentUrl}" class="link link-primary" target="_blank">Buka Pembayaran</a>`,
-	),
-	createActionResult(
-		actions.manage.invoices.markAsPaid,
-		"Tandai Lunas",
-		() => "Berhasil menandai invoice sebagai lunas!",
-	),
-);
 
 const params = Astro.locals.parseQuery(transactionQuerySchema);
 
@@ -66,7 +49,7 @@ const transactionStats = getTransactionStats(invoices);
 					{
 						title: "Status",
 						name: "status",
-						options: INVOICE_STATUS.map((status) => ({
+						options: TRANSACTION_STATUSES.map((status) => ({
 							value: status,
 							label: INVOICE_STATUS_LABELS[status],
 							checked: params.status === status,
@@ -94,26 +77,23 @@ const transactionStats = getTransactionStats(invoices);
 						<th>Kamar</th>
 						<th>Nominal</th>
 						<th>Jatuh Tempo</th>
+						<th>Dibayar</th>
 						<th>Status</th>
-						<th>Ref. Gateway</th>
-						<th>Aksi</th>
 					</tr>
 				</thead>
 				<tbody>
 					{
 						invoices.map(
 							({
-								id,
 								invoiceNumber,
 								tenantName,
 								roomNumber,
 								amount,
 								dueDate,
+								paidAt,
 								status,
-								duitkuReference,
-								paymentUrl,
 							}) => (
-								<tr id={`invoice-${id}`}>
+								<tr>
 									<td class="font-mono text-xs">{invoiceNumber}</td>
 									<td>{tenantName}</td>
 									<td>
@@ -123,6 +103,9 @@ const transactionStats = getTransactionStats(invoices);
 									</td>
 									<td class="font-mono">{formatCurrency(amount)}</td>
 									<td class="font-mono text-xs">{formatDate(dueDate)}</td>
+									<td class="font-mono text-xs">
+										{paidAt ? formatDate(paidAt) : "-"}
+									</td>
 									<td>
 										<span
 											class:list={[
@@ -132,133 +115,6 @@ const transactionStats = getTransactionStats(invoices);
 										>
 											{INVOICE_STATUS_LABELS[status]}
 										</span>
-									</td>
-									<td
-										class="max-w-32 truncate font-mono text-xs"
-										title={duitkuReference ?? undefined}
-									>
-										{duitkuReference ?? "-"}
-									</td>
-									<td>
-										{duitkuReference || status === "paid" ? (
-											<div class="flex items-center gap-1">
-												<a
-													class="btn w-24 btn-outline btn-success btn-xs"
-													href={`/invoice/${id}`}
-													target="_blank"
-												>
-													<Icon name="lucide:external-link" size="size-3.5" />{" "}
-													Invoice
-												</a>
-
-												{Astro.locals.user?.allowEdit && status !== "paid" && (
-													<ActionsMenu id={id} menuClass="w-36">
-														<li>
-															<button
-																onclick={`navigator.clipboard.writeText("${paymentUrl}")`}
-															>
-																<Icon
-																	name="lucide:clipboard-list"
-																	size="size-3.5"
-																/>
-																Salin
-															</button>
-														</li>
-														<li>
-															<form
-																hx-post={actions.manage.invoices.markAsPaid}
-																class="hidden"
-																id={`mark_as_paid_${id}`}
-																hx-indicator="next button"
-																hx-select={`#invoice-${id}`}
-																hx-swap="outerHTML transition:true"
-																hx-target={`#invoice-${id}`}
-																action={actions.manage.invoices.markAsPaid}
-																method="post"
-															>
-																<input
-																	name="invoice_id"
-																	type="hidden"
-																	value={id}
-																/>
-															</form>
-
-															<button type="submit" form={`mark_as_paid_${id}`}>
-																<IconLoader name="lucide:circle-check" />
-																Tandai Lunas
-															</button>
-														</li>
-													</ActionsMenu>
-												)}
-											</div>
-										) : (
-											<div class="flex items-center gap-1">
-												{Astro.locals.user?.allowEdit && (
-													<>
-														<form
-															hx-post={
-																actions.manage.invoices.generatePaymentLink
-															}
-															class="hidden"
-															id={`generate_link_${id}`}
-															hx-indicator="next button"
-															hx-select={`#invoice-${id}`}
-															hx-swap="outerHTML transition:true"
-															hx-target={`#invoice-${id}`}
-															action={
-																actions.manage.invoices.generatePaymentLink
-															}
-															method="post"
-														>
-															<input
-																name="invoice_id"
-																type="hidden"
-																value={id}
-															/>
-														</form>
-
-														<button
-															class="btn w-24 btn-outline btn-primary btn-xs"
-															type="submit"
-															form={`generate_link_${id}`}
-														>
-															<IconLoader name="lucide:link" size="size-3.5" />
-															Generate
-														</button>
-													</>
-												)}
-
-												{Astro.locals.user?.allowEdit && (
-													<ActionsMenu id={id} menuClass="w-36">
-														<li>
-															<form
-																hx-post={actions.manage.invoices.markAsPaid}
-																class="contents"
-																id={`mark_as_paid_${id}`}
-																hx-select={`#invoice-${id}`}
-																hx-swap="outerHTML transition:true"
-																hx-target={`#invoice-${id}`}
-																action={actions.manage.invoices.markAsPaid}
-																method="post"
-															>
-																<li>
-																	<input
-																		name="invoice_id"
-																		type="hidden"
-																		value={id}
-																	/>
-																</li>
-															</form>
-
-															<button type="submit" form={`mark_as_paid_${id}`}>
-																<Icon name="lucide:circle-check" />
-																Tandai Lunas
-															</button>
-														</li>
-													</ActionsMenu>
-												)}
-											</div>
-										)}
 									</td>
 								</tr>
 							),

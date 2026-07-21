@@ -7,7 +7,7 @@ import {
 	notifications,
 	tenants,
 } from "@indekos/database/schema";
-import dayjs from "@indekos/utilities/date";
+import dayjs, { formatDate } from "@indekos/utilities/date";
 
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
@@ -542,7 +542,7 @@ export const move = defineAction({
 			"attempting to move tenant to new room",
 		);
 
-		const { newLeaseId, additionalInvoiceId, newRoomNumber } = db.transaction(
+		const { newLeaseId, additionalInvoiceId, newRoomNumber, oldRoomNumber } = db.transaction(
 			(tx) => {
 				const roomTaken = tx.query.leases
 					.findFirst({
@@ -588,7 +588,7 @@ export const move = defineAction({
 
 				const oldRoom = tx.query.rooms
 					.findFirst({
-						columns: { monthlyPrice: true },
+						columns: { monthlyPrice: true, roomNumber: true },
 						where: { id: oldLease.roomId },
 					})
 					.sync();
@@ -618,15 +618,11 @@ export const move = defineAction({
 					})
 					.run();
 
-				// Create additional invoice for price difference (prorated)
+				// Create invoice: prorated price difference + new room rent for next month (up-front)
 				let additionalInvoiceId: number | null = null;
 				let newRoomNumber: string | null = null;
 
-				if (
-					newRoom?.monthlyPrice &&
-					oldRoom?.monthlyPrice &&
-					newRoom.monthlyPrice > oldRoom.monthlyPrice
-				) {
+				if (newRoom?.monthlyPrice && newLease) {
 					const moveDate = dayjs(input.start_date);
 					let cycleStart = dayjs(oldLease.startDate);
 					let cycleEnd = cycleStart.add(1, "month");
@@ -639,12 +635,18 @@ export const move = defineAction({
 
 					const totalCycleDays = cycleEnd.diff(cycleStart, "day");
 					const remainingDays = cycleEnd.diff(moveDate, "day");
-					const priceDifference = newRoom.monthlyPrice - oldRoom.monthlyPrice;
-					const additionalAmount = Math.round(
+					const priceDifference = oldRoom?.monthlyPrice
+						? newRoom.monthlyPrice - oldRoom.monthlyPrice
+						: newRoom.monthlyPrice;
+					const proratedDifference = Math.round(
 						(priceDifference * remainingDays) / totalCycleDays,
 					);
 
-					if (additionalAmount > 0 && newLease) {
+					// Up-front: prorated difference (if any) + new room rent for next month
+					const additionalAmount =
+						Math.max(0, proratedDifference) + newRoom.monthlyPrice;
+
+					if (additionalAmount > 0) {
 						const dueDate = moveDate.add(3, "days").toDate();
 
 						const [additionalInvoice] = tx
@@ -676,9 +678,11 @@ export const move = defineAction({
 								{
 									tenantId: input.id,
 									amount: additionalAmount,
+									proratedDifference,
+									nextMonthRent: newRoom.monthlyPrice,
 									remainingDays,
 								},
-								"additional invoice created for price difference",
+								"move invoice created (up-front: prorated diff + new room rent)",
 							);
 						}
 					}
@@ -688,6 +692,7 @@ export const move = defineAction({
 					newLeaseId: newLease!.id,
 					additionalInvoiceId,
 					newRoomNumber,
+					oldRoomNumber: oldRoom?.roomNumber ?? null,
 				};
 			},
 		);
@@ -695,10 +700,18 @@ export const move = defineAction({
 		// Generate payment link for additional invoice (outside transaction)
 		if (additionalInvoiceId) {
 			try {
+				const moveMonth = formatDate(input.start_date, "MMM YYYY");
+				const productDetails = oldRoomNumber
+					? `Pindah Kamar ${oldRoomNumber} → ${newRoomNumber} - ${moveMonth}`
+					: `Pindah Kamar ${newRoomNumber} - ${moveMonth}`;
+				const itemName = oldRoomNumber
+					? `Selisih + Sewa ${newRoomNumber} (${moveMonth})`
+					: `Sewa ${newRoomNumber} (${moveMonth})`;
+
 				await generatePaymentLink(
 					additionalInvoiceId,
 					context.locals.user?.id,
-					{ logger: log },
+					{ logger: log, productDetails, itemName },
 				);
 			} catch (error) {
 				log.error(
@@ -726,5 +739,64 @@ export const move = defineAction({
 
 		log.info({ tenantId: input.id }, "tenant moved successfully");
 		return { id: input.id };
+	},
+});
+
+export const toggleBlock = defineAction({
+	accept: "form",
+	input: z.object({
+		id: z.coerce.number(),
+	}),
+	handler: async ({ id }, context) => {
+		const log = context.locals.logger.child({
+			module: "actions:manage:tenants:toggleBlock",
+		});
+
+		const target = await db.query.tenants.findFirst({
+			columns: { id: true, fullName: true, isBlocked: true },
+			where: { id },
+		});
+		if (!target) {
+			log.error({ tenantId: id }, "tenant not found");
+			throw new ActionError({
+				code: "BAD_REQUEST",
+				message: "Penghuni tidak ditemukan.",
+			});
+		}
+
+		const newBlocked = !target.isBlocked;
+
+		log.info(
+			{ tenantId: id, isBlocked: newBlocked },
+			"attempting to toggle tenant chatbot block",
+		);
+
+		try {
+			const [updated] = await db
+				.update(tenants)
+				.set({ isBlocked: newBlocked })
+				.where(eq(tenants.id, id))
+				.returning({ id: tenants.id });
+
+			await context.locals.logAudit(
+				"UPDATE",
+				"tenants",
+				updated.id,
+				auditDetail.update(
+					`${newBlocked ? "Menonaktifkan" : "Mengaktifkan"} chatbot penghuni ${target.fullName}`,
+					target,
+					{ ...target, isBlocked: newBlocked },
+				),
+			);
+
+			log.info(
+				{ tenantId: id, isBlocked: newBlocked },
+				"tenant chatbot block toggled successfully",
+			);
+			return updated;
+		} catch (error) {
+			log.error({ error, tenantId: id }, "failed to toggle tenant block");
+			throw error;
+		}
 	},
 });

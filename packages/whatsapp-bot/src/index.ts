@@ -38,6 +38,7 @@ import { render } from "./template";
 const baseLogger = createLogger("whatsapp-bot");
 
 const unknownCooldowns = new Map<string, number>();
+const blockedCooldowns = new Map<string, number>();
 
 const conversationManager = new ConversationManager();
 conversationManager.registerFlow(complaintFlow);
@@ -222,6 +223,67 @@ export const main = async () => {
 					tenantId: tenant.id,
 				});
 
+				if (tenant.isBlocked && !(lowerText === "cs" || lowerText.startsWith("cs ")) && !conversationManager.hasActiveSession(jid)) {
+					const blockedUntil = blockedCooldowns.get(jid);
+					if (blockedUntil && Date.now() < blockedUntil) return;
+
+					tenantLogger.warn(
+						"message rejected: tenant account has been deactivated by staff",
+					);
+
+					await socket.sendMessage(jid, {
+						text: render("blocked-tenant", {}),
+					});
+					blockedCooldowns.set(jid, Date.now() + 30_000);
+
+					await db.insert(auditLogs).values({
+						userId: botUser.id,
+						action: "REJECT",
+						tableName: "chatbot_messages",
+						details: auditDetail.reject(
+							`Menolak pesan dari penghuni yang dinonaktifkan: ${phoneNumber} (ID: ${tenant.id})`,
+							"blocked_tenant",
+						),
+					});
+
+					return;
+				}
+
+				// "cs" command must work for all tenants (including blocked/unverified) for appeal
+				if (lowerText === "cs" || lowerText.startsWith("cs ")) {
+					if (!tenant.lease?.room?.id) {
+						tenantLogger.warn("contact staff: tenant has no active lease/room");
+						await replyAndLog(
+							jid,
+							tenant.id,
+							0,
+							"❌ Tidak dapat memproses permintaan. Silakan hubungi staf secara langsung.",
+							message,
+						);
+						return;
+					}
+
+					tenantLogger.info(
+						"conversational wizard command matched: initializing contact staff flow session context",
+					);
+					conversationManager.startSession(jid, tenant, "contact_staff");
+
+					const csInput: MessageInput = { text };
+					const reply = await conversationManager.handleMessage(
+						jid,
+						csInput,
+					);
+					if (reply)
+						await replyAndLog(
+							jid,
+							tenant.id,
+							tenant.lease.room.id,
+							reply,
+							message,
+						);
+					return;
+				}
+
 				const [insertedMessage] = await db
 					.insert(chatbotMessages)
 					.values({
@@ -401,27 +463,6 @@ export const main = async () => {
 						"conversational wizard command matched: initializing active complaint flow session context",
 					);
 					conversationManager.startSession(jid, tenant, "complaint");
-
-					const reply = await conversationManager.handleMessage(
-						jid,
-						messageInput,
-					);
-					if (reply)
-						await replyAndLog(
-							jid,
-							tenant.id,
-							tenant.lease!.room.id,
-							reply,
-							message,
-						);
-					return;
-				}
-
-				if (lowerText === "cs" || lowerText.startsWith("cs ")) {
-					tenantLogger.info(
-						"conversational wizard command matched: initializing contact staff flow session context",
-					);
-					conversationManager.startSession(jid, tenant, "contact_staff");
 
 					const reply = await conversationManager.handleMessage(
 						jid,

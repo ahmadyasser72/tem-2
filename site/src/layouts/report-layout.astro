@@ -72,7 +72,9 @@ const knownBy = owner?.displayName ?? "Pemilik Kos";
 			<div>
 				<p>Banjarbaru, {today}</p>
 				<p class="mt-1 font-semibold">Dibuat oleh</p>
-				<p class="text-[10px] opacity-60">(Staff/Admin)</p>
+				<p class="text-[10px] capitalize opacity-60">
+					({user?.role ?? "Staff"})
+				</p>
 				<br />
 				<br />
 				<div class="mt-10 border-t-2 border-black pt-1">

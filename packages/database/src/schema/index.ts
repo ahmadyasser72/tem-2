@@ -69,6 +69,9 @@ export const tenants = sqliteTable("tenants", {
 	isVerified: integer("is_verified", { mode: "boolean" })
 		.notNull()
 		.default(false),
+	isBlocked: integer("is_blocked", { mode: "boolean" })
+		.notNull()
+		.default(false),
 });
 
 export const rooms = sqliteTable("rooms", {

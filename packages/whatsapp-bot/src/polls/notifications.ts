@@ -146,9 +146,13 @@ export const pollNotifications = async (
 						paymentUrl,
 					});
 				} else if (notification.type === "move_success") {
+					const moveRoom = await db.query.rooms.findFirst({
+						columns: { roomNumber: true },
+						where: { id: notification.roomId },
+					});
 					msg = render("move-success", {
 						fullName: tenant.fullName,
-						roomNumber: invoiceData?.lease?.room?.roomNumber ?? null,
+						roomNumber: moveRoom?.roomNumber ?? null,
 					});
 				} else if (notification.type === "move_payment_success") {
 					const wasUnverified = !tenant.isVerified;

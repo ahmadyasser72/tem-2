@@ -1,0 +1,61 @@
+---
+import { db } from "@indekos/database";
+
+import { actions } from "astro:actions";
+
+import ModalForm from "~/components/form/modal-form.astro";
+import Modal from "~/components/modal/modal.astro";
+import NotFound from "~/components/ui/not-found.astro";
+
+export const partial = true;
+
+const tenant = await db.query.tenants.findFirst({
+	columns: { id: true, fullName: true, isBlocked: true },
+	where: { id: Number(Astro.params.id) },
+});
+
+if (!tenant) Astro.response.status = 404;
+
+const isBlocked = tenant?.isBlocked ?? false;
+---
+
+<Modal
+	id="toggle_block"
+	title={isBlocked ? "Aktifkan Chatbot" : "Nonaktifkan Chatbot"}
+	icon={isBlocked ? "lucide:check-circle" : "lucide:ban"}
+	iconClass={isBlocked ? "text-success" : "text-error"}
+>
+	{
+		tenant ? (
+			<>
+				<p class="text-sm text-base-content/70">
+					{isBlocked ? (
+						<>
+							Aktifkan kembali chatbot WhatsApp untuk{" "}
+							<strong>{tenant.fullName}</strong>? Penghuni akan bisa
+							menggunakan layanan chatbot seperti biasa.
+						</>
+					) : (
+						<>
+							Nonaktifkan chatbot WhatsApp untuk{" "}
+							<strong>{tenant.fullName}</strong>? Penghuni tidak akan bisa
+							menggunakan layanan chatbot sampai diaktifkan kembali.
+						</>
+					)}
+				</p>
+
+				<ModalForm
+					action={actions.manage.tenants.toggleBlock}
+					modalId="toggle_block"
+					submitClass={isBlocked ? "btn-success" : "btn-error"}
+					submitLabel={isBlocked ? "Aktifkan" : "Nonaktifkan"}
+					target="#form_result, #tenants-content-wrapper"
+				>
+					<input name="id" type="hidden" value={tenant.id} />
+				</ModalForm>
+			</>
+		) : (
+			<NotFound label="Penghuni" />
+		)
+	}
+</Modal>

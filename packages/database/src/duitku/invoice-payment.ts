@@ -25,7 +25,10 @@ export class InvoicePaymentError extends Error {
 export const generatePaymentLink = async (
 	invoiceId: number,
 	auditUserId?: number,
-	options?: DuitkuExecutionOptions,
+	options?: DuitkuExecutionOptions & {
+		productDetails?: string;
+		itemName?: string;
+	},
 ) => {
 	const log = options?.logger?.child({
 		module: "database:payment:generatePaymentLink",
@@ -72,17 +75,21 @@ export const generatePaymentLink = async (
 		const { tenant, room } = invoice.lease;
 		const payMonth = formatDate(invoice.dueDate, "MMM YYYY");
 
+		const productDetails =
+			options?.productDetails ?? `Pembayaran Sewa Kamar ${room.roomNumber}`;
+		const itemName = options?.itemName ?? `Sewa Kamar ${payMonth}`;
+
 		// Forward our options down into the raw client SDK wrapper
 		const result = await duitkuCreateInvoice(
 			{
 				paymentAmount: invoice.amount,
 				merchantOrderId,
-				productDetails: `Pembayaran Sewa Kamar ${room.roomNumber}`,
+				productDetails,
 				customerVaName: tenant.fullName,
 				phoneNumber: tenant.phoneNumber,
 				itemDetails: [
 					{
-						name: `Sewa Kamar ${payMonth}`,
+						name: itemName,
 						price: invoice.amount,
 						quantity: 1,
 					},

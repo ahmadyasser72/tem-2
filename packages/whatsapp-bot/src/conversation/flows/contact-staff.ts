@@ -124,7 +124,7 @@ const completeChatRequest = async (
 
 		return {
 			reply: [
-				"✅ Pesan Anda telah diteruskan ke staf/admin. Mohon tunggu, staf kami akan segera merespons Anda di obrolan ini.",
+				"✅ Pesan Anda telah diteruskan ke staf. Mohon tunggu, staf kami akan segera merespons Anda di obrolan ini.",
 				"_Pesan yang Anda kirim sambil menunggu akan diterima oleh staf._",
 				"_Ketik *batal* jika ingin membatalkan permintaan ini._",
 			].join("\n\n"),
@@ -168,7 +168,7 @@ export const contactStaffFlow: FlowDef = {
 
 			return {
 				reply: [
-					"Halo! Silakan ketik alasan atau pesan yang ingin Anda sampaikan kepada staf/admin...",
+					"Halo! Silakan ketik alasan atau pesan yang ingin Anda sampaikan kepada staf...",
 					"_(Ketik *batal* jika ingin membatalkan)_",
 				].join("\n\n"),
 				next: "collect",

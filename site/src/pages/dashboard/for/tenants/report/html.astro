@@ -12,12 +12,18 @@ const params = Astro.locals.parseQuery(
 const tenants = await fetchTenants(params);
 const tenantsStats = getTenantsStats(tenants);
 
+let title = "Laporan Penghuni";
 let subtitle = "Semua penghuni";
-if (params.status === "active") subtitle = "Status: Aktif";
-else if (params.status === "completed") subtitle = "Status: Selesai";
+if (params.status === "active") {
+	title = "Laporan Penghuni Aktif";
+	subtitle = "Status: Aktif";
+} else if (params.status === "completed") {
+	title = "Laporan Penghuni Selesai";
+	subtitle = "Status: Selesai";
+}
 ---
 
-<ReportLayout title="Daftar Penghuni Aktif" subtitle={subtitle}>
+<ReportLayout title={title} subtitle={subtitle}>
 	<ReportStats stats={tenantsStats} />
 
 	<table>

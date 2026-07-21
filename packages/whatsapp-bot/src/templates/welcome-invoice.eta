@@ -1,8 +1,8 @@
-<% const roomLabel = it.roomNumber ? `Kamar ${it.roomNumber} - ` : "" %>*🎉 Selamat Datang di <%= roomLabel %>Indekos!*
+<% const roomLabel = it.roomNumber ? `Kamar ${it.roomNumber} - ` : "" %>*🎉 Selamat Datang di <%= roomLabel %><%= it.config.siteName %>!*
 
 Halo *<%= it.fullName %>*,
 
-Data Anda telah terdaftar sebagai penghuni kos.
+Data Anda telah terdaftar sebagai penghuni indekos.
 
 *📋 Tagihan Sewa Pertama*
 💰 Jumlah: <%= it.amount %>

@@ -1,6 +1,6 @@
 *🔄 Verifikasi Ulang Diperlukan*
 
-Halo *<%= it.fullName %>*, nomor WhatsApp Anda telah diubah oleh admin.
+Halo *<%= it.fullName %>*, nomor WhatsApp Anda telah diubah oleh staf.
 
 Untuk mengaktifkan kembali akun Anda, silakan balas pesan ini dengan kata:
 

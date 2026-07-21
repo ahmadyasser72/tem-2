@@ -115,6 +115,7 @@ interface TemplateParams {
 	"complaint-prompt": Record<string, never>;
 	"no-lease-complaint": Record<string, never>;
 	"unknown-number": Record<string, never>;
+	"blocked-tenant": Record<string, never>;
 	"unknown-command": Record<string, never>;
 	"verification-success": {
 		fullName: string;

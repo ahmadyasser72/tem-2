@@ -32,28 +32,38 @@ const workers = {
 	>
 >;
 
+const shortLabels: Record<string, string> = {
+	invoice: "Invoice",
+	"payment-reminder": "Pembayaran",
+	"overdue-reminder": "Overdue",
+	overdue: "Tandai",
+	report: "Laporan",
+};
+
 const { worker: selectedWorker } = Astro.locals.parseQuery(
 	z.object({ worker: z.string().optional() }),
 );
 
 const data: Record<string, string[]> = {};
+const cumulativeCounts: Record<string, number> = {};
+const pendingByDate: Record<string, { roomNumber: string; tenantName: string }[]> = {};
 
 if (selectedWorker === "invoice") {
 	const activeLeases = await db.query.leases.findMany({
 		where: { isActive: true },
-		with: { invoices: true },
+		with: { invoices: true, tenant: true, room: true },
 	});
 
 	for (const lease of activeLeases) {
-		let cycleStart = dayjs(lease.startDate).add(1, "month");
 		const endDate = lease.endDate ? dayjs(lease.endDate) : null;
+		let cycleStart = dayjs(lease.startDate).add(1, "month");
+		const roomNumber = lease.room?.roomNumber ?? "?";
+		const tenantName = lease.tenant?.fullName ?? "?";
 
 		while (true) {
 			if (endDate && !cycleStart.isBefore(endDate, "day")) break;
 
 			const creationDate = cycleStart.subtract(7, "days");
-
-			// Don't create invoices too far in the future (arbitrary limit 2 years)
 			if (creationDate.isAfter(dayjs().add(2, "years"), "day")) break;
 
 			const existing = lease.invoices.find(({ dueDate }) =>
@@ -61,9 +71,9 @@ if (selectedWorker === "invoice") {
 			);
 
 			if (!existing) {
-				const dateStr = cycleStart.format("YYYY-MM-DD");
-				data[dateStr] ??= [];
-				data[dateStr].push("Generate Invoice");
+				const dateStr = creationDate.format("YYYY-MM-DD");
+				pendingByDate[dateStr] ??= [];
+				pendingByDate[dateStr].push({ roomNumber, tenantName });
 			}
 
 			cycleStart = cycleStart.add(1, "month");
@@ -75,10 +85,28 @@ if (selectedWorker === "invoice") {
 	selectedWorker === "overdue"
 ) {
 	const invoices = await db.query.invoices.findMany({
-		columns: { dueDate: true, status: true },
+		columns: { id: true, dueDate: true, status: true },
+		with: { lease: { with: { room: true, tenant: true } } },
 	});
 
-	const counts: Record<string, number> = {};
+	// Fetch existing notifications to mirror worker dedup (23h window)
+	const notificationType =
+		selectedWorker === "overdue-reminder" ? "overdue_reminder" : "reminder";
+	const existingNotifications = await db.query.notifications.findMany({
+		columns: { invoiceId: true, type: true, status: true, createdAt: true },
+		where: { type: notificationType, status: { NOT: "failed" } },
+	});
+
+	// Returns true if a non-failed notification of the worker's type was sent
+	// for this invoice within 23h before the given date (matches worker logic)
+	const alreadyNotified = (invoiceId: number, dateStr: string): boolean => {
+		const cutoff = dayjs(dateStr).subtract(23, "hours");
+		return existingNotifications.some(
+			(n) =>
+				n.invoiceId === invoiceId &&
+				dayjs(n.createdAt).isAfter(cutoff, "hour"),
+		);
+	};
 
 	if (selectedWorker === "payment-reminder") {
 		const unpaidInvoices = invoices.filter((inv) => inv.status === "unpaid");
@@ -86,11 +114,16 @@ if (selectedWorker === "invoice") {
 		for (const invoice of unpaidInvoices) {
 			const dueDate = dayjs(invoice.dueDate);
 			const reminderStartDate = dueDate.subtract(3, "days");
+			const roomNumber = invoice.lease?.room?.roomNumber ?? "?";
+			const tenantName = invoice.lease?.tenant?.fullName ?? "?";
 
 			let currentDate = reminderStartDate;
 			while (currentDate.isBefore(dueDate, "day")) {
-				const dateStr = currentDate.format("YYYY-MM-DD");
-				counts[dateStr] = (counts[dateStr] ?? 0) + 1;
+				if (!alreadyNotified(invoice.id, currentDate.format("YYYY-MM-DD"))) {
+					const dateStr = currentDate.format("YYYY-MM-DD");
+					pendingByDate[dateStr] ??= [];
+					pendingByDate[dateStr].push({ roomNumber, tenantName });
+				}
 				currentDate = currentDate.add(1, "day");
 			}
 		}
@@ -98,7 +131,6 @@ if (selectedWorker === "invoice") {
 		const overdueInvoices = invoices.filter((inv) => inv.status === "overdue");
 
 		if (overdueInvoices.length > 0) {
-			// Find earliest overdue dueDate
 			const earliestDueDate = overdueInvoices.reduce(
 				(min, inv) =>
 					dayjs(inv.dueDate).isBefore(dayjs(min), "day") ? inv.dueDate : min,
@@ -106,15 +138,21 @@ if (selectedWorker === "invoice") {
 			);
 
 			let currentDate = dayjs(earliestDueDate);
-			// Show 30 days from earliest overdue date
 			for (let i = 0; i < 30; i++) {
-				const countOnThisDate = overdueInvoices.filter((inv) =>
-					dayjs(inv.dueDate).isBefore(currentDate, "day"),
-				).length;
+				const dateStr = currentDate.format("YYYY-MM-DD");
+				const itemsOnDate = overdueInvoices
+					.filter(
+						(inv) =>
+							dayjs(inv.dueDate).isBefore(currentDate, "day") &&
+							!alreadyNotified(inv.id, dateStr),
+					)
+					.map((inv) => ({
+						roomNumber: inv.lease?.room?.roomNumber ?? "?",
+						tenantName: inv.lease?.tenant?.fullName ?? "?",
+					}));
 
-				if (countOnThisDate > 0) {
-					const dateStr = currentDate.format("YYYY-MM-DD");
-					counts[dateStr] = countOnThisDate;
+				if (itemsOnDate.length > 0) {
+					pendingByDate[dateStr] = itemsOnDate;
 				}
 
 				currentDate = currentDate.add(1, "day");
@@ -125,24 +163,17 @@ if (selectedWorker === "invoice") {
 
 		for (const invoice of unpaidInvoices) {
 			const dueDate = dayjs(invoice.dueDate);
+			const roomNumber = invoice.lease?.room?.roomNumber ?? "?";
+			const tenantName = invoice.lease?.tenant?.fullName ?? "?";
 
 			let currentDate = dueDate;
 			for (let i = 0; i < 30; i++) {
 				const dateStr = currentDate.format("YYYY-MM-DD");
-				counts[dateStr] = (counts[dateStr] ?? 0) + 1;
+				pendingByDate[dateStr] ??= [];
+				pendingByDate[dateStr].push({ roomNumber, tenantName });
 				currentDate = currentDate.add(1, "day");
 			}
 		}
-	}
-
-	const labelMap = {
-		"payment-reminder": "Pengingat Pembayaran",
-		"overdue-reminder": "Pengingat Overdue",
-		overdue: "Tandai Overdue",
-	} as const;
-
-	for (const [dateStr, count] of Object.entries(counts)) {
-		data[dateStr] = [`${count} ${labelMap[selectedWorker]}`];
 	}
 } else if (selectedWorker === "report") {
 	const invoices = await db.query.invoices.findMany({
@@ -150,13 +181,11 @@ if (selectedWorker === "invoice") {
 	});
 
 	if (invoices.length > 0) {
-		// Get unique months from invoices
 		const monthsWithData = new Set(
 			invoices.map((inv) => dayjs(inv.dueDate).format("YYYY-MM")),
 		);
 
 		for (const yearMonth of monthsWithData) {
-			// Show month start date
 			const monthStart = dayjs(yearMonth, "YYYY-MM")
 				.startOf("month")
 				.add(1, "month")
@@ -166,7 +195,34 @@ if (selectedWorker === "invoice") {
 	}
 }
 
-export type Data = typeof data;
+// Build cumulative counts with rolling window
+const windowDays = selectedWorker === "payment-reminder" ? 3 : 7;
+const sortedDates = Object.keys(pendingByDate).sort();
+
+	for (const dateStr of sortedDates) {
+		const windowStart = dayjs(dateStr).subtract(windowDays - 1, "day").format("YYYY-MM-DD");
+
+		const windowItems: { roomNumber: string; tenantName: string }[] = [];
+		const seen = new Set<string>();
+		for (const d of sortedDates) {
+			if (d >= windowStart && d <= dateStr) {
+				for (const item of pendingByDate[d]) {
+					const key = `${item.roomNumber}-${item.tenantName}`;
+					if (!seen.has(key)) {
+						seen.add(key);
+						windowItems.push(item);
+					}
+				}
+			}
+		}
+		cumulativeCounts[dateStr] = windowItems.length;
+
+		data[dateStr] = windowItems.map(
+			({ roomNumber, tenantName }) => `${roomNumber} - ${tenantName}`,
+		);
+	}
+
+export type Data = { items: Record<string, string[]>; cumulativeCounts: Record<string, number>; shortLabel: string };
 ---
 
 <Modal
@@ -210,7 +266,7 @@ export type Data = typeof data;
 			<div
 				class="vc"
 				id="select-trigger-date"
-				data-calendar={JSON.stringify(data)}
+				data-calendar={JSON.stringify({ items: data, cumulativeCounts, shortLabel: shortLabels[selectedWorker ?? "invoice"] ?? "Worker" })}
 			>
 			</div>
 			<input name="target" type="hidden" />
@@ -233,10 +289,11 @@ export type Data = typeof data;
 		if (!(calendarElement instanceof HTMLElement)) return;
 
 		const data = JSON.parse(calendarElement.dataset.calendar!) as Data;
+		const { items: allItems, cumulativeCounts, shortLabel } = data;
 		const calendar = new Calendar(calendarElement, {
 			disableToday: true,
 			disableAllDates: true,
-			enableDates: Object.keys(data),
+			enableDates: Object.keys(allItems),
 
 			onClickDate: ({ context }) => {
 				(context.mainElement.nextElementSibling as HTMLInputElement).value =
@@ -244,8 +301,11 @@ export type Data = typeof data;
 			},
 
 			onCreateDateEls: (_, element) => {
-				const items = data[element.dataset.vcDate!] ?? [];
-				if (items.length === 0) return;
+				const dateItems = allItems[element.dataset.vcDate!] ?? [];
+				if (dateItems.length === 0) return;
+
+				const dateStr = element.dataset.vcDate!;
+				const badgeCount = cumulativeCounts[dateStr] ?? dateItems.length;
 
 				const button = element.querySelector(
 					"[data-vc-date-btn]",
@@ -254,18 +314,21 @@ export type Data = typeof data;
 				const day = button.innerText;
 				button.innerHTML = "";
 				button.innerHTML += `<span>${day}</span>`;
-				button.innerHTML += `<span class="badge badge-xs badge-primary badge-soft">${items.length}</span>`;
+				button.innerHTML += `<span class="badge badge-xs badge-primary badge-soft">${badgeCount}</span>`;
 			},
 
 			popups: Object.fromEntries(
-				Object.entries(data).map(([date, items]) => [
+				Object.entries(allItems).map(([date, items]) => [
 					date,
 					{
 						html: [
-							'<div class="flex w-max max-w-32 min-w-full flex-wrap justify-center gap-x-1 gap-y-0.5 py-2 font-medium">',
+							'<div class="flex max-w-52 min-w-full flex-col flex-wrap items-center gap-1 py-2 text-xs font-medium">',
+							...(cumulativeCounts[date]
+								? [`<span class="badge badge-xs badge-primary">${cumulativeCounts[date]} ${shortLabel}</span>`]
+								: []),
 							...items.map(
 								(item) =>
-									`<span class="badge badge-soft badge-xs">${item}</span>`,
+									`<span class="badge badge-soft badge-xs block min-w-0 max-w-full shrink items-start overflow-hidden text-ellipsis whitespace-nowrap text-left">${item}</span>`,
 							),
 							"</div>",
 						].join(""),

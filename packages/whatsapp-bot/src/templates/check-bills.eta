@@ -22,6 +22,6 @@ Terima kasih telah membayar tepat waktu.
 💰 *Total: <%= it.total %>*
 <% if (!it.hasPaymentLink) { %>
 
-Silakan hubungi admin untuk mendapatkan link pembayaran.
+Silakan hubungi staf untuk mendapatkan link pembayaran.
 <% } %>
 <% } %>

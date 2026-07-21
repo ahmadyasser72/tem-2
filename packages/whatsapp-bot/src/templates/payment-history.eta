@@ -4,4 +4,4 @@
   Jumlah: <%= inv.amount %>
   Lunas: <%= inv.dueDate %>
 
-<% } %>Untuk detail lebih lanjut, hubungi admin.
+<% } %>Untuk detail lebih lanjut, hubungi staf.

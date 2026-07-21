@@ -37,21 +37,29 @@ export const runInvoiceGeneration: SchedulerWorkerFunction = async (
 
 				const creationDate = cycleStart.subtract(7, "days");
 
-				// Don't create invoices too far in the future
-				if (creationDate.isAfter(dayjs(referenceTime), "day")) break;
+				// Stop if creation date is too far in the future
+				if (creationDate.isAfter(dayjs(referenceTime).add(2, "years"), "day")) break;
 
-				// Avoid duplicate invoices for the same period
-				const existing = lease.invoices.find(({ dueDate }) =>
-					cycleStart.isSame(dueDate, "days"),
-				);
+				// Only create if we're within the creation window (referenceTime >= creationDate)
+				// and before the cycle end
+				if (!dayjs(referenceTime).isBefore(creationDate, "day")) {
+					// Avoid duplicate invoices for the same period
+					const existing = lease.invoices.find(({ dueDate }) =>
+						cycleStart.isSame(dueDate, "day"),
+					);
 
-				if (!existing) {
-					toCreate.push({
-						leaseId: lease.id,
-						amount: lease.room.monthlyPrice,
-						dueDate: cycleStart.toDate(),
-					});
+					if (!existing) {
+						toCreate.push({
+							leaseId: lease.id,
+							amount: lease.room.monthlyPrice,
+							dueDate: cycleStart.toDate(),
+						});
+					}
 				}
+
+				cycleStart = cycleStart.add(1, "month");
+			}
+		}
 
 				cycleStart = cycleStart.add(1, "month");
 			}

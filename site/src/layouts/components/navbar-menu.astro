@@ -65,8 +65,19 @@ const MENU_ITEMS = {
 const ROLE_MENUS = {
 	admin: {
 		dashboard: MENU_ITEMS.dashboard,
-		manajemen: [MENU_ITEMS.accountManagement],
-		laporan: [MENU_ITEMS.auditLog],
+		manajemen: [
+			MENU_ITEMS.accountManagement,
+			MENU_ITEMS.roomManagement,
+			MENU_ITEMS.tenantManagement,
+			MENU_ITEMS.complaintManagement,
+			MENU_ITEMS.invoiceManagement,
+		],
+		laporan: [
+			MENU_ITEMS.transactionReport,
+			MENU_ITEMS.notificationReport,
+			MENU_ITEMS.chatbotLog,
+			MENU_ITEMS.auditLog,
+		],
 	},
 	staff: {
 		dashboard: MENU_ITEMS.dashboard,

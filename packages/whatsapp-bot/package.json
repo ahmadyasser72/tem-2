@@ -15,7 +15,7 @@
 		"@indekos/database": "workspace:*",
 		"@indekos/utilities": "workspace:*",
 		"baileys": "7.0.0-rc13",
-		"es-toolkit": "1.49.0",
+		"es-toolkit": "1.50.0",
 		"eta": "4.6.0",
 		"uqr": "0.1.3"
 	},
